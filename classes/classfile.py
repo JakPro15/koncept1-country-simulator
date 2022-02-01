@@ -1,5 +1,6 @@
 from .constants import FOOD_CONSUMPTION, WOOD_CONSUMPTION
-from .data import State_Data
+from .state_data import State_Data
+from math import floor
 
 
 class Class:
@@ -52,9 +53,8 @@ class Class:
         Modifier 0 means no change in population.
         Also consumes the class' resources, if they are needed for growth.
         """
-        grown = self._population * modifier
+        grown = floor(self._population * modifier)
         self._population += grown
-        self._calculate_optimal_resources()
         return grown
 
     @staticmethod
@@ -89,6 +89,7 @@ class Class:
         }
 
     def get_optimal_resources(self):
+        self._calculate_optimal_resources()
         return self._optimal_resources.copy()
 
     def produce(self):

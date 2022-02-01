@@ -21,7 +21,7 @@ class Peasants(Class):
             if self.resources[resource] < 0:
                 self.class_overpopulation = \
                     max(self.class_overpopulation,
-                        ceil(self.resources[resource] / 3))
+                        ceil(-self.resources[resource] / 3))
 
     def grow_population(self, modifier: float):
         """
@@ -46,7 +46,7 @@ class Peasants(Class):
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        optimal_resources = super().optimal_resources_per_capita(month)
+        optimal_resources = Class.optimal_resources_per_capita(month)
         optimal_resources["food"] += \
             Peasants.get_food_needed_till_harvest(month) - 1
         optimal_resources["wood"] += 1
