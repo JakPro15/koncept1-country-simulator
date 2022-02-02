@@ -103,8 +103,9 @@ class Class:
         Removes resources the class consumed in the month.
         Sets missing resources to signal shortages.
         """
+        month = self._parent.month
         food_consumed = FOOD_CONSUMPTION * self._population
-        wood_consumed = WOOD_CONSUMPTION * self._population
+        wood_consumed = WOOD_CONSUMPTION[month] * self._population
 
         self.resources["food"] -= food_consumed
         self.resources["wood"] -= wood_consumed
@@ -115,7 +116,7 @@ class Class:
                 self.missing_resources[resource] = -self.resources[resource]
                 self.resources[resource] = 0
 
-    def move_population(self, number: int, demotion: bool):
+    def move_population(self, number: int, demotion: bool = False):
         """
         Moves the given number of people into or out of the class.
         Negative number signifies movement out.

@@ -402,3 +402,209 @@ def test_produce_not_enough_land():
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == approx(77.5)
     assert peasants.class_overpopulation == 0
+
+
+def test_produce_not_enough_tools():
+    state = State_Data("August")
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 32
+    }
+    land = {
+        "fields": 1000,
+        "woods": 500,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, 60, resources, land)
+
+    peasants.produce()
+    assert peasants.resources["food"] == 340
+    assert peasants.resources["wood"] == 220
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == -4
+    assert peasants.class_overpopulation == 2
+
+
+def test_consume_enough_resources():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    peasants = Peasants(state, 80, resources)
+    peasants.consume()
+    assert peasants.resources["food"] == 20
+    assert peasants.resources["wood"] == 152
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 100
+
+    assert peasants.missing_resources["food"] == 0
+    assert peasants.missing_resources["wood"] == 0
+
+
+def test_consume_not_enough_food():
+    state = State_Data()
+    resources = {
+        "food": 50,
+        "wood": 100,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    peasants = Peasants(state, 80, resources)
+    peasants.consume()
+    assert peasants.resources["food"] == 0
+    assert peasants.resources["wood"] == 52
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 100
+
+    assert peasants.missing_resources["food"] == 30
+    assert peasants.missing_resources["wood"] == 0
+
+
+def test_consume_not_enough_wood():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 40,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    peasants = Peasants(state, 80, resources)
+    peasants.consume()
+    assert peasants.resources["food"] == 20
+    assert peasants.resources["wood"] == 0
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 100
+
+    assert peasants.missing_resources["food"] == 0
+    assert peasants.missing_resources["wood"] == 8
+
+
+def test_consume_not_enough_both():
+    state = State_Data()
+    resources = {
+        "food": 50,
+        "wood": 40,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    peasants = Peasants(state, 80, resources)
+    peasants.consume()
+    assert peasants.resources["food"] == 0
+    assert peasants.resources["wood"] == 0
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 100
+
+    assert peasants.missing_resources["food"] == 30
+    assert peasants.missing_resources["wood"] == 8
+
+
+def test_move_population_in_enough_resources():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    peasants = Peasants(state, 80, resources)
+
+    peasants.move_population(20)
+
+    assert peasants._population == 100
+
+    assert peasants.resources["food"] == 100
+    assert peasants.resources["wood"] == 140
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 40
+
+    assert peasants.class_overpopulation == 0
+
+
+def test_move_population_in_not_enough_resources():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 120,
+        "iron": 0,
+        "stone": 0,
+        "tools": 200
+    }
+    peasants = Peasants(state, 80, resources)
+
+    peasants.move_population(50, True)
+
+    assert peasants._population == 130
+
+    assert peasants.resources["food"] == 100
+    assert peasants.resources["wood"] == -30
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 50
+
+    assert peasants.class_overpopulation == 10
+
+
+def test_move_population_out_no_demotion():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 120,
+        "iron": 0,
+        "stone": 0,
+        "tools": 200
+    }
+    peasants = Peasants(state, 80, resources)
+
+    peasants.move_population(-20)
+
+    assert peasants._population == 60
+
+    assert peasants.resources["food"] == 100
+    assert peasants.resources["wood"] == 120
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 200
+
+    assert peasants.class_overpopulation == 0
+
+
+def test_move_population_out_demotion():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 120,
+        "iron": 0,
+        "stone": 0,
+        "tools": 200
+    }
+    peasants = Peasants(state, 80, resources)
+
+    peasants.move_population(-20, True)
+
+    assert peasants._population == 60
+
+    assert peasants.resources["food"] == 100
+    assert peasants.resources["wood"] == 180
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 260
+
+    assert peasants.class_overpopulation == 0

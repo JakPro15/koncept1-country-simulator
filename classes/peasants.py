@@ -28,7 +28,7 @@ class Peasants(Class):
         Modifier specifies by how much to modify the population,
         negative means decrease in numbers.
         Modifier 0 means no change in population.
-        Also consumes the class' resources, if they are needed for growth.
+        Also consumes the class' resources, if th ey are needed for growth.
         """
         grown = super().grow_population(modifier)
         self._add_population(grown)
@@ -88,7 +88,7 @@ class Peasants(Class):
         self.resources["food"] += new_food
         self.resources["wood"] += new_wood
 
-    def move_population(self, number: int, demotion: bool):
+    def move_population(self, number: int, demotion: bool = False):
         """
         Moves the given number of people into or out of the class.
         Negative number signifies movement out.
@@ -99,5 +99,5 @@ class Peasants(Class):
         if number > 0:
             self._add_population(number)
         elif demotion:
-            self.resources["wood"] += 3 * number
-            self.resources["tools"] += 3 * number
+            self.resources["wood"] += -3 * number
+            self.resources["tools"] += -3 * number
