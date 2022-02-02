@@ -1,4 +1,4 @@
-from .classfile import Class
+from .class_file import Class
 from .constants import (
     ARTISAN_IRON_USAGE,
     ARTISAN_TOOL_USAGE,
@@ -9,6 +9,15 @@ from math import ceil
 
 
 class Artisans(Class):
+    @property
+    def class_overpopulation(self):
+        overpop = 0
+        if self._resources["wood"] < 0:
+            overpop = max(overpop, ceil(self._resources["wood"] / 2))
+        if self._resources["tools"] < 0:
+            overpop = max(overpop, ceil(self._resources["tools"] / 3))
+        return overpop
+
     def _add_population(self, number: int):
         """
         Adds new artisans to the class. Does not modify _population, only
@@ -16,12 +25,6 @@ class Artisans(Class):
         """
         self._resources["wood"] -= 2 * number
         self._resources["tools"] -= 3 * number
-        resources = {"tools", "wood"}
-        for resource in resources:
-            if self._resources[resource] < 0:
-                self._class_overpopulation = \
-                    max(self._class_overpopulation,
-                        ceil(self._resources[resource] / 3))
 
     def grow_population(self, modifier: float):
         """

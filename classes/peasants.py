@@ -1,4 +1,4 @@
-from .classfile import Class
+from .class_file import Class
 from .constants import (
     PEASANT_FOOD_NEEDED,
     PEASANT_TOOL_USAGE,
@@ -9,6 +9,15 @@ from math import ceil
 
 
 class Peasants(Class):
+    @property
+    def class_overpopulation(self):
+        resources = {"tools", "wood"}
+        overpop = 0
+        for resource in resources:
+            if self._resources[resource] < 0:
+                overpop = max(overpop, ceil(-self._resources[resource] / 3))
+        return overpop
+
     def _add_population(self, number: int):
         """
         Adds new peasants to the class. Does not modify _population, only
@@ -16,12 +25,6 @@ class Peasants(Class):
         """
         self._resources["wood"] -= 3 * number
         self._resources["tools"] -= 3 * number
-        resources = {"tools", "wood"}
-        for resource in resources:
-            if self._resources[resource] < 0:
-                self._class_overpopulation = \
-                    max(self._class_overpopulation,
-                        ceil(-self._resources[resource] / 3))
 
     def grow_population(self, modifier: float):
         """
@@ -82,8 +85,6 @@ class Peasants(Class):
 
         tools_consumed = PEASANT_TOOL_USAGE[month] * peasants
         self._resources["tools"] -= tools_consumed
-        if self._resources["tools"] < 0:
-            self._class_overpopulation = ceil(-self._resources["tools"] / 3)
 
         self._resources["food"] += new_food
         self._resources["wood"] += new_wood

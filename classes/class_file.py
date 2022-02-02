@@ -13,8 +13,6 @@ class Class:
     _land - dictionary containing info on the land the class owns
     _optimal_resources - how much the class needs in total
     _missing_resources - how much the class is starving/freezing
-    _class_overpopulation - how many of the class need to be moved to lower
-                            classes
     """
     def __init__(self, parent: "State_Data", population: int,
                  resources: dict = None, land: dict = None):
@@ -70,7 +68,7 @@ class Class:
 
     @property
     def class_overpopulation(self):
-        return self._class_overpopulation
+        pass
 
     def grow_population(self, modifier: float):
         """
