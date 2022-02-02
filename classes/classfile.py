@@ -9,18 +9,19 @@ class Class:
     Attributes:
     _parent - state this class is part of
     _population - population of the class
-    resources - dictionary containing all the resources the class owns
+    _resources - dictionary containing all the resources the class owns
+    _land - dictionary containing info on the land the class owns
     _optimal_resources - how much the class needs in total
-    missing_resources - how much the class is starving/freezing
-    class_overpopulation - how many of the class need to be moved to lower
-                           classes
+    _missing_resources - how much the class is starving/freezing
+    _class_overpopulation - how many of the class need to be moved to lower
+                            classes
     """
     def __init__(self, parent: "State_Data", population: int,
                  resources: dict = None, land: dict = None):
         self._parent = parent
         self._population = population
         if resources is None:
-            self.resources = {
+            self._resources = {
                 "food": 0,
                 "wood": 0,
                 "iron": 0,
@@ -28,23 +29,48 @@ class Class:
                 "tools": 0
             }
         else:
-            self.resources = resources.copy()
+            self._resources = resources.copy()
 
         if land is None:
-            self._land = {
+            self.land = {
                 "fields": 0,
                 "woods": 0,
                 "stone_mines": 0,
                 "iron_mines": 0
             }
         else:
-            self._land = land.copy()
+            self.land = land.copy()
 
-        self.missing_resources = {
+        self._missing_resources = {
             "food": 0,
             "wood": 0
         }
-        self.class_overpopulation = 0
+        self._class_overpopulation = 0
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @property
+    def population(self):
+        return self._population
+
+    @property
+    def resources(self):
+        return self._resources.copy()
+
+    @property
+    def optimal_resources(self):
+        self._calculate_optimal_resources()
+        return self._optimal_resources.copy()
+
+    @property
+    def missing_resources(self):
+        return self._missing_resources.copy()
+
+    @property
+    def class_overpopulation(self):
+        return self._class_overpopulation
 
     def grow_population(self, modifier: float):
         """
@@ -88,10 +114,6 @@ class Class:
             ).items()
         }
 
-    def get_optimal_resources(self):
-        self._calculate_optimal_resources()
-        return self._optimal_resources.copy()
-
     def produce(self):
         """
         Adds resources the class produced in the current month.
@@ -107,14 +129,14 @@ class Class:
         food_consumed = FOOD_CONSUMPTION * self._population
         wood_consumed = WOOD_CONSUMPTION[month] * self._population
 
-        self.resources["food"] -= food_consumed
-        self.resources["wood"] -= wood_consumed
+        self._resources["food"] -= food_consumed
+        self._resources["wood"] -= wood_consumed
 
         resources = {"food", "wood"}
         for resource in resources:
-            if self.resources[resource] < 0:
-                self.missing_resources[resource] = -self.resources[resource]
-                self.resources[resource] = 0
+            if self._resources[resource] < 0:
+                self._missing_resources[resource] = -self._resources[resource]
+                self._resources[resource] = 0
 
     def move_population(self, number: int, demotion: bool = False):
         """

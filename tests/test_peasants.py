@@ -21,9 +21,9 @@ def test_constructor():
     }
     peasants = Peasants(state, 80, resources, land)
 
-    assert peasants._parent == state
+    assert peasants.parent == state
 
-    assert peasants._population == 80
+    assert peasants.population == 80
 
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == 200
@@ -31,10 +31,10 @@ def test_constructor():
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == 100
 
-    assert peasants._land["fields"] == 1000
-    assert peasants._land["woods"] == 500
-    assert peasants._land["stone_mines"] == 0
-    assert peasants._land["iron_mines"] == 0
+    assert peasants.land["fields"] == 1000
+    assert peasants.land["woods"] == 500
+    assert peasants.land["stone_mines"] == 0
+    assert peasants.land["iron_mines"] == 0
 
     assert peasants.missing_resources["food"] == 0
     assert peasants.missing_resources["wood"] == 0
@@ -46,9 +46,9 @@ def test_default_constructor():
     state = State_Data()
     peasants = Peasants(state, 200)
 
-    assert peasants._parent == state
+    assert peasants.parent == state
 
-    assert peasants._population == 200
+    assert peasants.population == 200
 
     assert peasants.resources["food"] == 0
     assert peasants.resources["wood"] == 0
@@ -56,10 +56,10 @@ def test_default_constructor():
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == 0
 
-    assert peasants._land["fields"] == 0
-    assert peasants._land["woods"] == 0
-    assert peasants._land["stone_mines"] == 0
-    assert peasants._land["iron_mines"] == 0
+    assert peasants.land["fields"] == 0
+    assert peasants.land["woods"] == 0
+    assert peasants.land["stone_mines"] == 0
+    assert peasants.land["iron_mines"] == 0
 
     assert peasants.missing_resources["food"] == 0
     assert peasants.missing_resources["wood"] == 0
@@ -304,7 +304,7 @@ def test_get_optimal_resources():
         "tools": 100
     }
 
-    opt_res = peasants.get_optimal_resources()
+    opt_res = peasants.optimal_resources
     assert opt_res["food"] == 600
     assert opt_res["wood"] == 680
     assert opt_res["iron"] == 0
@@ -527,7 +527,7 @@ def test_move_population_in_enough_resources():
 
     peasants.move_population(20)
 
-    assert peasants._population == 100
+    assert peasants.population == 100
 
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == 140
@@ -551,7 +551,7 @@ def test_move_population_in_not_enough_resources():
 
     peasants.move_population(50, True)
 
-    assert peasants._population == 130
+    assert peasants.population == 130
 
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == -30
@@ -575,7 +575,7 @@ def test_move_population_out_no_demotion():
 
     peasants.move_population(-20)
 
-    assert peasants._population == 60
+    assert peasants.population == 60
 
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == 120
@@ -599,7 +599,7 @@ def test_move_population_out_demotion():
 
     peasants.move_population(-20, True)
 
-    assert peasants._population == 60
+    assert peasants.population == 60
 
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == 180

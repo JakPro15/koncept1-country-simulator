@@ -14,14 +14,14 @@ class Peasants(Class):
         Adds new peasants to the class. Does not modify _population, only
         handles the initiation resources.
         """
-        self.resources["wood"] -= 3 * number
-        self.resources["tools"] -= 3 * number
+        self._resources["wood"] -= 3 * number
+        self._resources["tools"] -= 3 * number
         resources = {"tools", "wood"}
         for resource in resources:
-            if self.resources[resource] < 0:
-                self.class_overpopulation = \
-                    max(self.class_overpopulation,
-                        ceil(-self.resources[resource] / 3))
+            if self._resources[resource] < 0:
+                self._class_overpopulation = \
+                    max(self._class_overpopulation,
+                        ceil(-self._resources[resource] / 3))
 
     def grow_population(self, modifier: float):
         """
@@ -57,7 +57,7 @@ class Peasants(Class):
         """
         Returns the number of fully working peasants.
         """
-        land_available = (self._land['fields'] + self._land['woods']) / 20
+        land_available = (self.land['fields'] + self.land['woods']) / 20
         working_peasants = min(land_available, self._population)
         return working_peasants
 
@@ -71,8 +71,8 @@ class Peasants(Class):
         food_per_capita = FOOD_PRODUCTION[month]
         wood_per_capita = WOOD_PRODUCTION
 
-        total_land = self._land["fields"] + self._land["woods"]
-        food_ratio = self._land["fields"] / total_land
+        total_land = self.land["fields"] + self.land["woods"]
+        food_ratio = self.land["fields"] / total_land
 
         food_peasants = ceil(food_ratio * peasants)
         wood_peasants = peasants - food_peasants
@@ -81,12 +81,12 @@ class Peasants(Class):
         new_wood = wood_per_capita * wood_peasants
 
         tools_consumed = PEASANT_TOOL_USAGE[month] * peasants
-        self.resources["tools"] -= tools_consumed
-        if self.resources["tools"] < 0:
-            self.class_overpopulation = ceil(-self.resources["tools"] / 3)
+        self._resources["tools"] -= tools_consumed
+        if self._resources["tools"] < 0:
+            self._class_overpopulation = ceil(-self._resources["tools"] / 3)
 
-        self.resources["food"] += new_food
-        self.resources["wood"] += new_wood
+        self._resources["food"] += new_food
+        self._resources["wood"] += new_wood
 
     def move_population(self, number: int, demotion: bool = False):
         """
@@ -99,5 +99,5 @@ class Peasants(Class):
         if number > 0:
             self._add_population(number)
         elif demotion:
-            self.resources["wood"] += -3 * number
-            self.resources["tools"] += -3 * number
+            self._resources["wood"] += -3 * number
+            self._resources["tools"] += -3 * number

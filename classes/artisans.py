@@ -14,14 +14,14 @@ class Artisans(Class):
         Adds new artisans to the class. Does not modify _population, only
         handles the initiation resources.
         """
-        self.resources["wood"] -= 2 * number
-        self.resources["tools"] -= 3 * number
+        self._resources["wood"] -= 2 * number
+        self._resources["tools"] -= 3 * number
         resources = {"tools", "wood"}
         for resource in resources:
-            if self.resources[resource] < 0:
-                self.class_overpopulation = \
-                    max(self.class_overpopulation,
-                        ceil(self.resources[resource] / 3))
+            if self._resources[resource] < 0:
+                self._class_overpopulation = \
+                    max(self._class_overpopulation,
+                        ceil(self._resources[resource] / 3))
 
     def grow_population(self, modifier: float):
         """
@@ -51,8 +51,8 @@ class Artisans(Class):
         """
         Returns the number of fully working artisans.
         """
-        wood_available = self.resources["wood"] / ARTISAN_WOOD_USAGE
-        iron_available = self.resources["iron"] / ARTISAN_IRON_USAGE
+        wood_available = self._resources["wood"] / ARTISAN_WOOD_USAGE
+        iron_available = self._resources["iron"] / ARTISAN_IRON_USAGE
         working_artisans = min(
             wood_available,
             iron_available,
@@ -65,11 +65,11 @@ class Artisans(Class):
         Adds resources the class produced in the current month.
         """
         artisans = self._get_working_artisans()
-        self.resources["wood"] -= \
+        self._resources["wood"] -= \
             TOOLS_PRODUCTION * artisans * ARTISAN_WOOD_USAGE
-        self.resources["iron"] -= \
+        self._resources["iron"] -= \
             TOOLS_PRODUCTION * artisans * ARTISAN_IRON_USAGE
-        self.resources["tools"] += \
+        self._resources["tools"] += \
             (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * artisans
 
     def move_population(self, number: int, demotion: bool):
@@ -83,5 +83,5 @@ class Artisans(Class):
         if number > 0:
             self._add_population(number)
         elif demotion:
-            self.resources["wood"] += 2 * number
-            self.resources["tools"] += 3 * number
+            self._resources["wood"] += 2 * number
+            self._resources["tools"] += 3 * number
