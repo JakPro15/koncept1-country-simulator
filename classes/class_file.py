@@ -1,4 +1,9 @@
-from .constants import FOOD_CONSUMPTION, WOOD_CONSUMPTION
+from .constants import (
+    FOOD_CONSUMPTION,
+    LAND_TYPES,
+    RESOURCES,
+    WOOD_CONSUMPTION
+)
 from .state_data import State_Data
 from math import floor
 
@@ -11,15 +16,13 @@ class Class:
     _population - population of the class
     _resources - dictionary containing all the resources the class owns
     _land - dictionary containing info on the land the class owns
-    _optimal_resources - how much the class needs in total
-    _missing_resources - how much the class is starving/freezing
     """
     def __init__(self, parent: "State_Data", population: int,
                  resources: dict = None, land: dict = None):
-        self._parent = parent
-        self._population = population
+        self.parent = parent
+        self.population = population
         if resources is None:
-            self._resources = {
+            self.resources = {
                 "food": 0,
                 "wood": 0,
                 "iron": 0,
@@ -27,7 +30,7 @@ class Class:
                 "tools": 0
             }
         else:
-            self._resources = resources.copy()
+            self.resources = resources
 
         if land is None:
             self.land = {
@@ -37,34 +40,65 @@ class Class:
                 "iron_mines": 0
             }
         else:
-            self.land = land.copy()
-
-        self._missing_resources = {
-            "food": 0,
-            "wood": 0
-        }
-        self._class_overpopulation = 0
+            self.land = land
 
     @property
     def parent(self):
         return self._parent
 
+    @parent.setter
+    def parent(self, new_parent):
+        assert new_parent.month in WOOD_CONSUMPTION
+        self._parent = new_parent
+
     @property
     def population(self):
         return self._population
+
+    @population.setter
+    def population(self, number):
+        assert number >= 0
+        self._population = number
 
     @property
     def resources(self):
         return self._resources.copy()
 
+    @resources.setter
+    def resources(self, new_resources: dict):
+        for resource in RESOURCES:
+            assert resource in new_resources
+        self._resources = new_resources.copy()
+
+    @property
+    def land(self):
+        return self._land.copy()
+
+    @land.setter
+    def land(self, new_land: dict):
+        for land_type in LAND_TYPES:
+            assert land_type in new_land
+        self._land = new_land.copy()
+
     @property
     def optimal_resources(self):
-        self._calculate_optimal_resources()
-        return self._optimal_resources.copy()
+        opt_res = {
+            resource: resource_per_capita * self._population
+            for resource, resource_per_capita
+            in self.optimal_resources_per_capita(
+                self._parent.month
+            ).items()
+        }
+        return opt_res
 
     @property
     def missing_resources(self):
-        return self._missing_resources.copy()
+        miss_res = {
+            resource: -amount if amount < 0 else 0
+            for resource, amount
+            in self.resources.items()
+        }
+        return miss_res
 
     @property
     def class_overpopulation(self):
@@ -100,18 +134,6 @@ class Class:
         }
         return optimal_resources
 
-    def _calculate_optimal_resources(self):
-        """
-        Updates the class' optimal resources.
-        """
-        self._optimal_resources = {
-            resource: resource_per_capita * self._population
-            for resource, resource_per_capita
-            in self.optimal_resources_per_capita(
-                self._parent.month
-            ).items()
-        }
-
     def produce(self):
         """
         Adds resources the class produced in the current month.
@@ -129,12 +151,6 @@ class Class:
 
         self._resources["food"] -= food_consumed
         self._resources["wood"] -= wood_consumed
-
-        resources = {"food", "wood"}
-        for resource in resources:
-            if self._resources[resource] < 0:
-                self._missing_resources[resource] = -self._resources[resource]
-                self._resources[resource] = 0
 
     def move_population(self, number: int, demotion: bool = False):
         """

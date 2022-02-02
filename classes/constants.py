@@ -1,3 +1,10 @@
+RESOURCES = {
+    "food", "wood", "iron", "stone", "tools"
+}
+LAND_TYPES = {
+    "fields", "woods", "stone_mines", "iron_mines"
+}
+
 FOOD_CONSUMPTION = 1
 WOOD_CONSUMPTION = {
     # Per person, per month.

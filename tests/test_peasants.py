@@ -273,43 +273,23 @@ def test_optimal_resources_per_capita_november():
 def test_calculate_optimal_resources_february():
     state = State_Data("February")
     peasants = Peasants(state, 200)
-    peasants._calculate_optimal_resources()
-    assert peasants._optimal_resources["food"] == 600
-    assert peasants._optimal_resources["wood"] == 680
-    assert peasants._optimal_resources["iron"] == 0
-    assert peasants._optimal_resources["stone"] == 0
-    assert peasants._optimal_resources["tools"] == 380
-
-
-def test_calculate_optimal_resources_october():
-    state = State_Data("October")
-    peasants = Peasants(state, 100)
-    peasants._calculate_optimal_resources()
-    assert peasants._optimal_resources["food"] == 700
-    assert peasants._optimal_resources["wood"] == 340
-    assert peasants._optimal_resources["iron"] == 0
-    assert peasants._optimal_resources["stone"] == 0
-    assert peasants._optimal_resources["tools"] == 190
-
-
-def test_get_optimal_resources():
-    state = State_Data("February")
-    peasants = Peasants(state, 200)
-    peasants._calculate_optimal_resources()
-    peasants._optimal_resources = {
-        "food": 100,
-        "wood": 100,
-        "iron": 50,
-        "stone": 0,
-        "tools": 100
-    }
-
     opt_res = peasants.optimal_resources
     assert opt_res["food"] == 600
     assert opt_res["wood"] == 680
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
     assert opt_res["tools"] == 380
+
+
+def test_calculate_optimal_resources_october():
+    state = State_Data("October")
+    peasants = Peasants(state, 100)
+    opt_res = peasants.optimal_resources
+    assert opt_res["food"] == 700
+    assert opt_res["wood"] == 340
+    assert opt_res["iron"] == 0
+    assert opt_res["stone"] == 0
+    assert opt_res["tools"] == 190
 
 
 def test_get_working_peasants_not_enough_land():
@@ -462,7 +442,7 @@ def test_consume_not_enough_food():
     }
     peasants = Peasants(state, 80, resources)
     peasants.consume()
-    assert peasants.resources["food"] == 0
+    assert peasants.resources["food"] == -30
     assert peasants.resources["wood"] == 52
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
@@ -484,7 +464,7 @@ def test_consume_not_enough_wood():
     peasants = Peasants(state, 80, resources)
     peasants.consume()
     assert peasants.resources["food"] == 20
-    assert peasants.resources["wood"] == 0
+    assert peasants.resources["wood"] == -8
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == 100
@@ -504,8 +484,8 @@ def test_consume_not_enough_both():
     }
     peasants = Peasants(state, 80, resources)
     peasants.consume()
-    assert peasants.resources["food"] == 0
-    assert peasants.resources["wood"] == 0
+    assert peasants.resources["food"] == -30
+    assert peasants.resources["wood"] == -8
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == 100
