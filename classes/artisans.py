@@ -1,3 +1,4 @@
+from .constants import LAND_TYPES
 from .class_file import Class
 from .constants import (
     ARTISAN_IRON_USAGE,
@@ -9,6 +10,22 @@ from math import ceil
 
 
 class Artisans(Class):
+    """
+    Represents the Artisans of the country.
+    Artisans use wood and iron to make tools.
+    They do not own land and they cannot work as employees.
+    """
+    @property
+    def land(self):
+        return self._land.copy()
+
+    @land.setter
+    def land(self, new_land: dict):
+        for land_type in LAND_TYPES:
+            assert land_type in new_land
+            assert new_land[land_type] == 0
+        self._land = new_land.copy()
+
     @property
     def class_overpopulation(self):
         overpop = 0

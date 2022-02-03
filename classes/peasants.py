@@ -3,12 +3,30 @@ from .constants import (
     PEASANT_FOOD_NEEDED,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
-    WOOD_PRODUCTION
+    WOOD_PRODUCTION,
+    LAND_TYPES
 )
 from math import ceil
 
 
 class Peasants(Class):
+    """
+    Represents the Peasants of the country.
+    Peasants make food and wood.
+    They own land (but not mines) and they cannot work as employees.
+    """
+    @property
+    def land(self):
+        return self._land.copy()
+
+    @land.setter
+    def land(self, new_land: dict):
+        for land_type in LAND_TYPES:
+            assert land_type in new_land
+            if land_type in {"stone_mines", "iron_mines"}:
+                assert new_land[land_type] == 0
+        self._land = new_land.copy()
+
     @property
     def class_overpopulation(self):
         resources = {"tools", "wood"}

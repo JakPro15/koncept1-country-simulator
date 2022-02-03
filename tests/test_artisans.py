@@ -1,6 +1,6 @@
 from ..classes.state_data import State_Data
 from ..classes.artisans import Artisans
-from pytest import approx
+from pytest import approx, raises
 
 
 def test_constructor():
@@ -64,6 +64,52 @@ def test_default_constructor():
     assert artisans.missing_resources["wood"] == 0
 
     assert artisans.class_overpopulation == 0
+
+
+def test_land():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    land = {
+        "fields": 20,
+        "woods": 0,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    with raises(AssertionError):
+        Artisans(state, 80, resources, land)
+
+    land = {
+        "fields": 0,
+        "woods": 30,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    with raises(AssertionError):
+        Artisans(state, 80, resources, land)
+
+    land = {
+        "fields": 0,
+        "woods": 0,
+        "stone_mines": 3,
+        "iron_mines": 0
+    }
+    with raises(AssertionError):
+        Artisans(state, 80, resources, land)
+
+    land = {
+        "fields": 0,
+        "woods": 0,
+        "stone_mines": 0,
+        "iron_mines": 1
+    }
+    with raises(AssertionError):
+        Artisans(state, 80, resources, land)
 
 
 def test_add_population_enough_resources():
