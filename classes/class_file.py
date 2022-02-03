@@ -11,11 +11,15 @@ from math import floor
 class Class:
     """
     Represents one social class of the country.
-    Attributes:
-    _parent - state this class is part of
-    _population - population of the class
-    _resources - dictionary containing all the resources the class owns
-    _land - dictionary containing info on the land the class owns
+    Properties:
+    parent - state this class is part of
+    population - population of the class
+    resources - dictionary containing info on the resources the class owns
+    land - dictionary containing info on the land the class owns
+    optimal_resources - how much resources the class wants to own
+    missing_resources - how much resources the class needs to own to not die
+    class_overpopulation - how many of the class need to be demoted because of
+                           no resources
     """
     def __init__(self, parent: "State_Data", population: int,
                  resources: dict = None, land: dict = None):
@@ -23,21 +27,14 @@ class Class:
         self.population = population
         if resources is None:
             self.resources = {
-                "food": 0,
-                "wood": 0,
-                "iron": 0,
-                "stone": 0,
-                "tools": 0
+                resource: 0 for resource in RESOURCES
             }
         else:
             self.resources = resources
 
         if land is None:
             self.land = {
-                "fields": 0,
-                "woods": 0,
-                "stone_mines": 0,
-                "iron_mines": 0
+                land_type: 0 for land_type in LAND_TYPES
             }
         else:
             self.land = land

@@ -13,9 +13,9 @@ class Artisans(Class):
     def class_overpopulation(self):
         overpop = 0
         if self._resources["wood"] < 0:
-            overpop = max(overpop, ceil(self._resources["wood"] / 2))
+            overpop = max(overpop, ceil(-self._resources["wood"] / 2))
         if self._resources["tools"] < 0:
-            overpop = max(overpop, ceil(self._resources["tools"] / 3))
+            overpop = max(overpop, ceil(-self._resources["tools"] / 3))
         return overpop
 
     def _add_population(self, number: int):
@@ -39,13 +39,13 @@ class Artisans(Class):
     @staticmethod
     def optimal_resources_per_capita(month: str):
         """
-        Food needed: enough to survive till harvest, plus three months
+        Food needed: four months' consumption
         Wood needed: yearly consumption + 1 (3 needed for new peasant)
         Iron needed: none
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        optimal_resources = super().optimal_resources_per_capita(month)
+        optimal_resources = Class.optimal_resources_per_capita(month)
         optimal_resources["wood"] += 0.5
         optimal_resources["tools"] += ARTISAN_TOOL_USAGE * 6 + 1
         return optimal_resources
@@ -75,7 +75,7 @@ class Artisans(Class):
         self._resources["tools"] += \
             (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * artisans
 
-    def move_population(self, number: int, demotion: bool):
+    def move_population(self, number: int, demotion: bool = False):
         """
         Moves the given number of people into or out of the class.
         Negative number signifies movement out.
@@ -86,5 +86,5 @@ class Artisans(Class):
         if number > 0:
             self._add_population(number)
         elif demotion:
-            self._resources["wood"] += 2 * number
-            self._resources["tools"] += 3 * number
+            self._resources["wood"] += -2 * number
+            self._resources["tools"] += -3 * number

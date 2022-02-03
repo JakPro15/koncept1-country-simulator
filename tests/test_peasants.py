@@ -302,14 +302,14 @@ def test_get_working_peasants_not_enough_land():
         "tools": 100
     }
     land = {
-        "fields": 1000,
+        "fields": 1010,
         "woods": 500,
         "stone_mines": 0,
         "iron_mines": 0
     }
     peasants = Peasants(state, 80, resources, land)
 
-    assert peasants._get_working_peasants() == 75
+    assert peasants._get_working_peasants() == approx(75.5)
 
 
 def test_get_working_peasants_enough_land():
