@@ -64,7 +64,7 @@ def test_default_constructor():
     assert peasants.missing_resources["food"] == 0
     assert peasants.missing_resources["wood"] == 0
 
-    assert peasants.class_overpopulation == 0
+    assert peasants.class_overpopulation == 200
 
 
 def test_land():
@@ -241,7 +241,7 @@ def test_grow_population_not_enough_resources():
     }
     land = {
         "fields": 1000,
-        "woods": 500,
+        "woods": 950,
         "stone_mines": 0,
         "iron_mines": 0
     }
@@ -531,7 +531,13 @@ def test_move_population_in_enough_resources():
         "stone": 0,
         "tools": 100
     }
-    peasants = Peasants(state, 80, resources)
+    land = {
+        "fields": 1000,
+        "woods": 500,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, 80, resources, land)
 
     peasants.move_population(20)
 
@@ -555,7 +561,13 @@ def test_move_population_in_not_enough_resources():
         "stone": 0,
         "tools": 200
     }
-    peasants = Peasants(state, 80, resources)
+    land = {
+        "fields": 1000,
+        "woods": 1000,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, 80, resources, land)
 
     peasants.move_population(50, True)
 
@@ -570,6 +582,36 @@ def test_move_population_in_not_enough_resources():
     assert peasants.class_overpopulation == 10
 
 
+def test_move_population_in_not_enough_land():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    }
+    land = {
+        "fields": 850,
+        "woods": 500,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, 80, resources, land)
+
+    peasants.move_population(20)
+
+    assert peasants.population == 100
+
+    assert peasants.resources["food"] == 100
+    assert peasants.resources["wood"] == 140
+    assert peasants.resources["iron"] == 0
+    assert peasants.resources["stone"] == 0
+    assert peasants.resources["tools"] == 40
+
+    assert peasants.class_overpopulation == 10
+
+
 def test_move_population_out_no_demotion():
     state = State_Data()
     resources = {
@@ -579,7 +621,13 @@ def test_move_population_out_no_demotion():
         "stone": 0,
         "tools": 200
     }
-    peasants = Peasants(state, 80, resources)
+    land = {
+        "fields": 850,
+        "woods": 500,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, 80, resources, land)
 
     peasants.move_population(-20)
 
@@ -603,7 +651,13 @@ def test_move_population_out_demotion():
         "stone": 0,
         "tools": 200
     }
-    peasants = Peasants(state, 80, resources)
+    land = {
+        "fields": 1000,
+        "woods": 500,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, 80, resources, land)
 
     peasants.move_population(-20, True)
 

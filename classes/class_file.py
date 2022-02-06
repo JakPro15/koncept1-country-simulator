@@ -75,6 +75,7 @@ class Class:
     def land(self, new_land: dict):
         for land_type in LAND_TYPES:
             assert land_type in new_land
+            assert new_land[land_type] >= 0
         self._land = new_land.copy()
 
     @property
@@ -97,10 +98,6 @@ class Class:
         }
         return miss_res
 
-    @property
-    def class_overpopulation(self):
-        pass
-
     def grow_population(self, modifier: float):
         """
         Modifier specifies by how much to modify the population,
@@ -110,6 +107,7 @@ class Class:
         """
         grown = floor(self._population * modifier)
         self._population += grown
+        self._add_population(grown)
         return grown
 
     @staticmethod
@@ -130,12 +128,6 @@ class Class:
             "tools": 0
         }
         return optimal_resources
-
-    def produce(self):
-        """
-        Adds resources the class produced in the current month.
-        """
-        pass
 
     def consume(self):
         """

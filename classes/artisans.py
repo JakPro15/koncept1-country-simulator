@@ -43,16 +43,6 @@ class Artisans(Class):
         self._resources["wood"] -= 2 * number
         self._resources["tools"] -= 3 * number
 
-    def grow_population(self, modifier: float):
-        """
-        Modifier specifies by how much to modify the population,
-        negative means decrease in numbers.
-        Modifier 0 means no change in population.
-        Also consumes the class' resources, if they are needed for growth.
-        """
-        grown = super().grow_population(modifier)
-        self._add_population(grown)
-
     @staticmethod
     def optimal_resources_per_capita(month: str):
         """

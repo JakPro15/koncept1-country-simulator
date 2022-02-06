@@ -25,6 +25,8 @@ class Peasants(Class):
             assert land_type in new_land
             if land_type in {"stone_mines", "iron_mines"}:
                 assert new_land[land_type] == 0
+            else:
+                assert new_land[land_type] >= 0
         self._land = new_land.copy()
 
     @property
@@ -34,6 +36,10 @@ class Peasants(Class):
         for resource in resources:
             if self._resources[resource] < 0:
                 overpop = max(overpop, ceil(-self._resources[resource] / 3))
+        total_land = self._land["fields"] + self._land["woods"]
+        minimum_land = 15 * self._population
+        if total_land < minimum_land:
+            overpop = max(overpop, ceil((minimum_land - total_land) / 15))
         return overpop
 
     def _add_population(self, number: int):
@@ -43,16 +49,6 @@ class Peasants(Class):
         """
         self._resources["wood"] -= 3 * number
         self._resources["tools"] -= 3 * number
-
-    def grow_population(self, modifier: float):
-        """
-        Modifier specifies by how much to modify the population,
-        negative means decrease in numbers.
-        Modifier 0 means no change in population.
-        Also consumes the class' resources, if th ey are needed for growth.
-        """
-        grown = super().grow_population(modifier)
-        self._add_population(grown)
 
     @staticmethod
     def get_food_needed_till_harvest(month: str):

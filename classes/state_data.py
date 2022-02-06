@@ -17,3 +17,6 @@ class State_Data:
             for month1, month2
             in zip(months, months_moved)}
         self._month = next_months[self.month]
+
+    def get_available_employees(self):
+        pass
