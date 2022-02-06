@@ -4,6 +4,13 @@ from .constants import WOOD_CONSUMPTION
 class State_Data:
     def __init__(self, starting_month="January"):
         self._month = starting_month
+        self.payments = {
+            "food": 0,
+            "wood": 0,
+            "iron": 0,
+            "stone": 0,
+            "tools": 0
+        }
 
     @property
     def month(self):

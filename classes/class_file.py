@@ -83,9 +83,7 @@ class Class:
         opt_res = {
             resource: resource_per_capita * self._population
             for resource, resource_per_capita
-            in self.optimal_resources_per_capita(
-                self._parent.month
-            ).items()
+            in self.optimal_resources_per_capita().items()
         }
         return opt_res
 
@@ -110,8 +108,7 @@ class Class:
         self._add_population(grown)
         return grown
 
-    @staticmethod
-    def optimal_resources_per_capita(month: str):
+    def optimal_resources_per_capita(self):
         """
         Food needed: four months' consumption, producers
                      may need more as stockpile

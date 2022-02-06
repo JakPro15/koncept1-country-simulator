@@ -269,8 +269,9 @@ def test_get_food_needed_till_harvest_empty_months():
 
 
 def test_optimal_resources_per_capita_february():
-    month = "February"
-    opt_res = Peasants.optimal_resources_per_capita(month)
+    state = State_Data("February")
+    peasants = Peasants(state, 200)
+    opt_res = peasants.optimal_resources_per_capita()
     assert opt_res["food"] == 3
     assert opt_res["wood"] == 3.4
     assert opt_res["iron"] == 0
@@ -279,8 +280,9 @@ def test_optimal_resources_per_capita_february():
 
 
 def test_optimal_resources_per_capita_august():
-    month = "August"
-    opt_res = Peasants.optimal_resources_per_capita(month)
+    state = State_Data("August")
+    peasants = Peasants(state, 200)
+    opt_res = peasants.optimal_resources_per_capita()
     assert opt_res["food"] == 5
     assert opt_res["wood"] == 3.4
     assert opt_res["iron"] == 0
@@ -289,8 +291,9 @@ def test_optimal_resources_per_capita_august():
 
 
 def test_optimal_resources_per_capita_november():
-    month = "November"
-    opt_res = Peasants.optimal_resources_per_capita(month)
+    state = State_Data("November")
+    peasants = Peasants(state, 200)
+    opt_res = peasants.optimal_resources_per_capita()
     assert opt_res["food"] == 6
     assert opt_res["wood"] == 3.4
     assert opt_res["iron"] == 0

@@ -43,8 +43,7 @@ class Artisans(Class):
         self._resources["wood"] -= 2 * number
         self._resources["tools"] -= 3 * number
 
-    @staticmethod
-    def optimal_resources_per_capita(month: str):
+    def optimal_resources_per_capita(self):
         """
         Food needed: four months' consumption
         Wood needed: yearly consumption + 1 (3 needed for new peasant)
@@ -52,7 +51,7 @@ class Artisans(Class):
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        optimal_resources = Class.optimal_resources_per_capita(month)
+        optimal_resources = super().optimal_resources_per_capita()
         optimal_resources["wood"] += 0.5
         optimal_resources["tools"] += ARTISAN_TOOL_USAGE * 6 + 1
         return optimal_resources

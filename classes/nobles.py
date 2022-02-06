@@ -41,8 +41,7 @@ class Nobles(Class):
         self._resources["stone"] -= 4 * number
         self._resources["tools"] -= 4 * number
 
-    @staticmethod
-    def optimal_resources_per_capita(month: str):
+    def optimal_resources_per_capita(self):
         """
         Food needed: enough to survive till harvest, plus three months
         Wood needed: yearly consumption + 1 (3 needed for new peasant)
@@ -50,66 +49,106 @@ class Nobles(Class):
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        optimal_resources = Class.optimal_resources_per_capita(month)
-        optimal_resources["food"] += 9
+        month = self._parent.month
+        self._parent._advance_month()  # illegal
+        max_tool_usage = self._get_tools_used(2**32)
+        self._parent._month = month  # very illegal
+
+        optimal_resources = super().optimal_resources_per_capita()
+        optimal_resources["food"] += 8
         optimal_resources["wood"] += 4.6
         optimal_resources["stone"] += 8
-        optimal_resources["tools"] += 10
+        optimal_resources["tools"] += 4 + max_tool_usage
         return optimal_resources
 
-    def _get_working_peasants(self):
+    def _get_total_land_for_produce(self):
         """
-        Returns the number of fully working peasants.
+        Returns the total amount of land the nobles own, with mines translated.
+        to 2000 ha
         """
-        land_available = (self.land['fields'] + self.land['woods']) / 20
-        working_peasants = min(land_available, self._population)
-        return working_peasants
+        return self._land["fields"] + self._land["woods"] + \
+            self._land["stone_mines"] * 2000 + self._land["iron_mines"] * 2000
+
+    def _get_employees(self, available_people=None):
+        """
+        Returns the number of people the nobles will employ this month.
+        """
+        total_land = self._get_total_land_for_produce()
+        wanted_employees = min(total_land // 20, self.resources["tools"] / 3)
+        if available_people is None:
+            available_employees = self._parent.get_available_employees()
+        else:
+            available_employees = available_people
+        return min(wanted_employees, available_employees)
+
+    def _get_ratios(self):
+        """
+        Returns a dict of ratios: resource producers to total employees.
+        """
+        total_land = self._get_total_land_for_produce()
+        ratios = {
+            "food": self._land["fields"] / total_land,
+            "wood": self._land["woods"] / total_land,
+            "stone": 2000 * self._land["stone_mines"] / total_land,
+            "iron": 2000 * self._land["iron_mines"] / total_land
+        }
+        return ratios
+
+    def _get_ratioed_employees(self, available_people=None):
+        """
+        Returns a dict of particular resource producing employees.
+        """
+        employees = self._get_employees(available_people)
+        ratios = self._get_ratios()
+        ratioed = {
+            resource: value * employees
+            for resource, value
+            in ratios.items()
+        }
+        return ratioed
+
+    def _get_produced_resources(self):
+        """
+        Returns a dict of resources produced this month.
+        """
+        month = self._parent.month
+        per_capita = {
+            "food": FOOD_PRODUCTION[month],
+            "wood": WOOD_PRODUCTION,
+            "stone": STONE_PRODUCTION,
+            "iron": IRON_PRODUCTION
+        }
+        employees = self._get_ratioed_employees()
+        produced = {
+            resource: per_capita[resource] * employees[resource]
+            for resource
+            in per_capita
+        }
+        return produced
+
+    def _get_tools_used(self, available_people=None):
+        """
+        Returns the amount of tools that will be used in production this month.
+        """
+        month = self._parent.month
+        employees = self._get_ratioed_employees(available_people)
+        peasant_tools_used = PEASANT_TOOL_USAGE[month] * \
+            (employees["food"] + employees["wood"])
+        miner_tools_used = MINER_TOOL_USAGE * \
+            (employees["stone"] + employees["iron"])
+
+        return peasant_tools_used + miner_tools_used
 
     def produce(self):
         """
-        Adds resources the class produced in the current month.
+        Adds resources the class' employees produced in the current month.
         """
-        total_land = self._land["fields"] + self._land["woods"] + \
-            self._land["stone_mines"] * 2000 + self._land["iron_mines"] * 2000
-        wanted_employees = min(total_land // 20, self.resources["tools"] / 3)
-        available_employees = self._parent.get_available_employees()
-        employees = min(wanted_employees, available_employees)
+        produced = self._get_produced_resources()
 
-        food_ratio = self._land["fields"] / total_land
-        wood_ratio = self._land["wood"] / total_land
-        stone_ratio = self._land["stone"] / total_land
-        iron_ratio = self._land["iron"] / total_land
-
-        farmers = food_ratio * employees
-        lumberjacks = wood_ratio * employees
-        stone_miners = stone_ratio * employees
-        iron_miners = iron_ratio * employees
-
-        month = self._parent.month
-
-        food_per_capita = FOOD_PRODUCTION[month]
-        wood_per_capita = WOOD_PRODUCTION
-        stone_per_capita = STONE_PRODUCTION
-        iron_per_capita = IRON_PRODUCTION
-
-        new_food = food_per_capita * farmers
-        new_wood = wood_per_capita * lumberjacks
-        new_stone = stone_per_capita * stone_miners
-        new_iron = iron_per_capita * iron_miners
-
-        peasant_tools_used = PEASANT_TOOL_USAGE[month] * \
-            (farmers + lumberjacks)
-        miner_tools_used = MINER_TOOL_USAGE * \
-            (stone_miners + iron_miners)
-
-        tools_consumed = peasant_tools_used + miner_tools_used
-
-        self._resources["tools"] -= tools_consumed
-
-        self._resources["food"] += new_food
-        self._resources["wood"] += new_wood
-        self._resources["stone"] += new_stone
-        self._resources["iron"] += new_iron
+        self._resources["tools"] -= self._get_tools_used()
+        for resource in produced:
+            self._resources[resource] += 0.2 * produced[resource]
+            self._parent.payments[resource] += 0.8 * produced[resource]
 
     def move_population(self, number: int, demotion: bool = False):
         """

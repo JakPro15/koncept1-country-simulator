@@ -54,8 +54,7 @@ class Peasants(Class):
     def get_food_needed_till_harvest(month: str):
         return PEASANT_FOOD_NEEDED.get(month, 0)
 
-    @staticmethod
-    def optimal_resources_per_capita(month: str):
+    def optimal_resources_per_capita(self):
         """
         Food needed: enough to survive till harvest, plus three months
         Wood needed: yearly consumption + 1 (3 needed for new peasant)
@@ -63,7 +62,8 @@ class Peasants(Class):
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        optimal_resources = Class.optimal_resources_per_capita(month)
+        month = self._parent.month
+        optimal_resources = super().optimal_resources_per_capita()
         optimal_resources["food"] += \
             Peasants.get_food_needed_till_harvest(month) - 1
         optimal_resources["wood"] += 1

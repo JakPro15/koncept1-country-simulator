@@ -239,8 +239,9 @@ def test_grow_population_not_enough_resources():
 
 
 def test_optimal_resources_per_capita_february():
-    month = "February"
-    opt_res = Artisans.optimal_resources_per_capita(month)
+    state = State_Data("February")
+    artisans = Artisans(state, 200)
+    opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
     assert opt_res["wood"] == 2.9
     assert opt_res["iron"] == 0
@@ -249,8 +250,9 @@ def test_optimal_resources_per_capita_february():
 
 
 def test_optimal_resources_per_capita_august():
-    month = "August"
-    opt_res = Artisans.optimal_resources_per_capita(month)
+    state = State_Data("August")
+    artisans = Artisans(state, 200)
+    opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
     assert opt_res["wood"] == 2.9
     assert opt_res["iron"] == 0
