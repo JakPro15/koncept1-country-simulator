@@ -13,6 +13,7 @@ class Class:
     Represents one social class of the country.
     Properties:
     parent - state this class is part of
+    employable - whether the class can be hired as employees
     population - population of the class
     resources - dictionary containing info on the resources the class owns
     land - dictionary containing info on the land the class owns
@@ -47,6 +48,10 @@ class Class:
     def parent(self, new_parent):
         assert new_parent.month in WOOD_CONSUMPTION
         self._parent = new_parent
+
+    @property
+    def employable(self):
+        return False
 
     @property
     def population(self):

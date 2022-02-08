@@ -23,6 +23,8 @@ def test_constructor():
 
     assert peasants.parent == state
 
+    assert not peasants.employable
+
     assert peasants.population == 80
 
     assert peasants.resources["food"] == 100
@@ -47,6 +49,8 @@ def test_default_constructor():
     peasants = Peasants(state, 200)
 
     assert peasants.parent == state
+
+    assert not peasants.employable
 
     assert peasants.population == 200
 

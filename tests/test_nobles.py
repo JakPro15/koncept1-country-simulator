@@ -22,6 +22,8 @@ def test_constructor():
 
     assert nobles.parent == state
 
+    assert not nobles.employable
+
     assert nobles.population == 80
 
     assert nobles.resources["food"] == 100
@@ -46,6 +48,8 @@ def test_default_constructor():
     nobles = Nobles(state, 200)
 
     assert nobles.parent == state
+
+    assert not nobles.employable
 
     assert nobles.population == 200
 

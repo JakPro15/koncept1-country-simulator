@@ -22,6 +22,8 @@ def test_constructor():
 
     assert artisans.parent == state
 
+    assert not artisans.employable
+
     assert artisans.population == 80
 
     assert artisans.resources["food"] == 100
@@ -46,6 +48,8 @@ def test_default_constructor():
     artisans = Artisans(state, 200)
 
     assert artisans.parent == state
+
+    assert not artisans.employable
 
     assert artisans.population == 200
 
