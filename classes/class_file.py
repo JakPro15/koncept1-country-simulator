@@ -5,7 +5,6 @@ from .constants import (
     WOOD_CONSUMPTION
 )
 from .state_data import State_Data
-from math import floor
 
 
 class Class:
@@ -108,7 +107,7 @@ class Class:
         Modifier 0 means no change in population.
         Also consumes the class' resources, if they are needed for growth.
         """
-        grown = floor(self._population * modifier)
+        grown = self._population * modifier
         self._population += grown
         self._add_population(grown)
         return grown

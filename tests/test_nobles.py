@@ -222,7 +222,7 @@ def test_grow_population():
     }
     nobles = Nobles(state, 80, resources, land)
 
-    nobles.grow_population(0.256)
+    nobles.grow_population(0.25)
     assert nobles.resources["food"] == 100
     assert nobles.resources["wood"] == 0
     assert nobles.resources["iron"] == 0
@@ -249,7 +249,7 @@ def test_grow_population_not_enough_resources():
     }
     nobles = Nobles(state, 80, resources, land)
 
-    nobles.grow_population(0.63)
+    nobles.grow_population(0.625)
     assert nobles.resources["food"] == 100
     assert nobles.resources["wood"] == 19500
     assert nobles.resources["iron"] == 0

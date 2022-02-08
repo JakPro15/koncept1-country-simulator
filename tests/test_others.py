@@ -160,7 +160,7 @@ def test_grow_population():
     }
     others = Others(state, 80, resources, land)
 
-    others.grow_population(0.256)
+    others.grow_population(0.25)
 
     assert others.population == 100
 

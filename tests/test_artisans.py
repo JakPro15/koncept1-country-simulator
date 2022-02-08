@@ -211,7 +211,7 @@ def test_grow_population():
     }
     artisans = Artisans(state, 80, resources)
 
-    artisans.grow_population(0.256)
+    artisans.grow_population(0.25)
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == 160
     assert artisans.resources["iron"] == 0
@@ -232,7 +232,7 @@ def test_grow_population_not_enough_resources():
     }
     artisans = Artisans(state, 80, resources)
 
-    artisans.grow_population(0.63)
+    artisans.grow_population(0.625)
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == -30
     assert artisans.resources["iron"] == 0
@@ -247,10 +247,10 @@ def test_optimal_resources_per_capita_february():
     artisans = Artisans(state, 200)
     opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
-    assert opt_res["wood"] == 2.9
-    assert opt_res["iron"] == 0
+    assert opt_res["wood"] == 3.7
+    assert opt_res["iron"] == 2
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.9
+    assert opt_res["tools"] == 1.6
 
 
 def test_optimal_resources_per_capita_august():
@@ -258,10 +258,10 @@ def test_optimal_resources_per_capita_august():
     artisans = Artisans(state, 200)
     opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
-    assert opt_res["wood"] == 2.9
-    assert opt_res["iron"] == 0
+    assert opt_res["wood"] == 3.7
+    assert opt_res["iron"] == 2
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.9
+    assert opt_res["tools"] == 1.6
 
 
 def test_calculate_optimal_resources_february():
@@ -269,10 +269,10 @@ def test_calculate_optimal_resources_february():
     artisans = Artisans(state, 200)
     opt_res = artisans.optimal_resources
     assert opt_res["food"] == 800
-    assert opt_res["wood"] == 580
-    assert opt_res["iron"] == 0
+    assert opt_res["wood"] == 740
+    assert opt_res["iron"] == 400
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 380
+    assert opt_res["tools"] == 320
 
 
 def test_calculate_optimal_resources_october():
@@ -280,10 +280,10 @@ def test_calculate_optimal_resources_october():
     artisans = Artisans(state, 100)
     opt_res = artisans.optimal_resources
     assert opt_res["food"] == 400
-    assert opt_res["wood"] == 290
-    assert opt_res["iron"] == 0
+    assert opt_res["wood"] == 370
+    assert opt_res["iron"] == 200
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 190
+    assert opt_res["tools"] == 160
 
 
 def test_get_working_artisans_enough_resources():

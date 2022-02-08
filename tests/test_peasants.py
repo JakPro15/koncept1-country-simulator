@@ -224,7 +224,7 @@ def test_grow_population():
     }
     peasants = Peasants(state, 80, resources, land)
 
-    peasants.grow_population(0.256)
+    peasants.grow_population(0.25)
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == 140
     assert peasants.resources["iron"] == 0
@@ -251,7 +251,7 @@ def test_grow_population_not_enough_resources():
     }
     peasants = Peasants(state, 80, resources, land)
 
-    peasants.grow_population(0.63)
+    peasants.grow_population(0.625)
     assert peasants.resources["food"] == 100
     assert peasants.resources["wood"] == -30
     assert peasants.resources["iron"] == 0
