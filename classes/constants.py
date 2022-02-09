@@ -4,6 +4,10 @@ RESOURCES = {
 LAND_TYPES = {
     "fields", "woods", "stone_mines", "iron_mines"
 }
+MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+]
 
 FOOD_CONSUMPTION = 1
 WOOD_CONSUMPTION = {
@@ -42,17 +46,6 @@ WOOD_PRODUCTION = 1
 IRON_PRODUCTION = 1
 STONE_PRODUCTION = 1
 TOOLS_PRODUCTION = 1
-
-
-PEASANT_FOOD_NEEDED = {
-    'January': 1,
-    'August': 2,
-    'September': 4,
-    'October': 4,
-    'November': 3,
-    'December': 2,
-}
-
 
 PEASANT_TOOL_USAGE = {
     # Per fully working peasant or serf-peasant (20 ha of land), per month.

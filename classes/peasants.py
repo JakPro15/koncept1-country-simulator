@@ -1,6 +1,5 @@
 from .class_file import Class
 from .constants import (
-    PEASANT_FOOD_NEEDED,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
     WOOD_PRODUCTION,
@@ -15,6 +14,13 @@ class Peasants(Class):
     Peasants make food and wood.
     They own land (but not mines) and they cannot work as employees.
     """
+    @staticmethod
+    def create_from_dict(parent, data):
+        population = data["population"]
+        resources = data["resources"]
+        land = data["land"]
+        return Peasants(parent, population, resources, land)
+
     @property
     def land(self):
         return self._land.copy()
@@ -50,22 +56,15 @@ class Peasants(Class):
         self._resources["wood"] -= 3 * number
         self._resources["tools"] -= 3 * number
 
-    @staticmethod
-    def get_food_needed_till_harvest(month: str):
-        return PEASANT_FOOD_NEEDED.get(month, 0)
-
     def optimal_resources_per_capita(self):
         """
-        Food needed: enough to survive till harvest, plus three months
+        Food needed: four months' consumption
         Wood needed: yearly consumption + 1 (3 needed for new peasant)
         Iron needed: none
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        month = self._parent.month
         optimal_resources = super().optimal_resources_per_capita()
-        optimal_resources["food"] += \
-            Peasants.get_food_needed_till_harvest(month) - 1
         optimal_resources["wood"] += 1
         optimal_resources["tools"] += sum(PEASANT_TOOL_USAGE.values()) / 2 + 1
         return optimal_resources

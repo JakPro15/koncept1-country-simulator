@@ -1,0 +1,76 @@
+{
+    "month": "January",
+    "classes": {
+        "nobles": {
+            "population": 20,
+            "resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0
+            },
+            "land": {
+                "fields": 0,
+                "woods": 0,
+                "stone_mines": 0,
+                "iron_mines": 0
+            }
+        },
+        "artisans": {
+            "population": 20,
+            "resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0
+            },
+            "land": {
+                "fields": 0,
+                "woods": 0,
+                "stone_mines": 0,
+                "iron_mines": 0
+            }
+        },
+        "peasants": {
+            "population": 20,
+            "resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0
+            },
+            "land": {
+                "fields": 0,
+                "woods": 0,
+                "stone_mines": 0,
+                "iron_mines": 0
+            }
+        },
+        "others": {
+            "population": 20,
+            "resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0
+            },
+            "land": {
+                "fields": 0,
+                "woods": 0,
+                "stone_mines": 0,
+                "iron_mines": 0
+            }
+        }
+    },
+    "prices": {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0
+    }
+}

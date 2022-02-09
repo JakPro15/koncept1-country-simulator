@@ -1,4 +1,3 @@
-from classes.constants import PEASANT_FOOD_NEEDED
 from ..classes.state_data import State_Data
 from ..classes.peasants import Peasants
 from pytest import approx, raises
@@ -261,22 +260,11 @@ def test_grow_population_not_enough_resources():
     assert peasants.class_overpopulation == 24
 
 
-def test_get_food_needed_till_harvest():
-    for month in PEASANT_FOOD_NEEDED:
-        assert Peasants.get_food_needed_till_harvest(month) == \
-            PEASANT_FOOD_NEEDED[month]
-
-
-def test_get_food_needed_till_harvest_empty_months():
-    for month in {'February', 'March', 'April', 'May', 'June', 'July'}:
-        assert Peasants.get_food_needed_till_harvest(month) == 0
-
-
 def test_optimal_resources_per_capita_february():
     state = State_Data("February")
     peasants = Peasants(state, 200)
     opt_res = peasants.optimal_resources_per_capita()
-    assert opt_res["food"] == 3
+    assert opt_res["food"] == 4
     assert opt_res["wood"] == 3.4
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
@@ -287,18 +275,7 @@ def test_optimal_resources_per_capita_august():
     state = State_Data("August")
     peasants = Peasants(state, 200)
     opt_res = peasants.optimal_resources_per_capita()
-    assert opt_res["food"] == 5
-    assert opt_res["wood"] == 3.4
-    assert opt_res["iron"] == 0
-    assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.9
-
-
-def test_optimal_resources_per_capita_november():
-    state = State_Data("November")
-    peasants = Peasants(state, 200)
-    opt_res = peasants.optimal_resources_per_capita()
-    assert opt_res["food"] == 6
+    assert opt_res["food"] == 4
     assert opt_res["wood"] == 3.4
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
@@ -309,7 +286,7 @@ def test_calculate_optimal_resources_february():
     state = State_Data("February")
     peasants = Peasants(state, 200)
     opt_res = peasants.optimal_resources
-    assert opt_res["food"] == 600
+    assert opt_res["food"] == 800
     assert opt_res["wood"] == 680
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
@@ -320,7 +297,7 @@ def test_calculate_optimal_resources_october():
     state = State_Data("October")
     peasants = Peasants(state, 100)
     opt_res = peasants.optimal_resources
-    assert opt_res["food"] == 700
+    assert opt_res["food"] == 400
     assert opt_res["wood"] == 340
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0

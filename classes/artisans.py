@@ -15,6 +15,13 @@ class Artisans(Class):
     Artisans use wood and iron to make tools.
     They do not own land and they cannot work as employees.
     """
+    @staticmethod
+    def create_from_dict(parent, data):
+        population = data["population"]
+        resources = data["resources"]
+        land = data["land"]
+        return Artisans(parent, population, resources, land)
+
     @property
     def land(self):
         return self._land.copy()

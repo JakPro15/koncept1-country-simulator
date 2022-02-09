@@ -114,8 +114,7 @@ class Class:
 
     def optimal_resources_per_capita(self):
         """
-        Food needed: four months' consumption, producers
-                     may need more as stockpile
+        Food needed: four months' consumption
         Wood needed: yearly consumption + depending on class
         Iron needed: depends on particular class
         Stone needed: depends on particular class
@@ -150,3 +149,11 @@ class Class:
         no resources.
         """
         self._population += number
+
+    def to_dict(self):
+        data = {
+            "population": self.population,
+            "resources": self.resources,
+            "land": self.land
+        }
+        return data

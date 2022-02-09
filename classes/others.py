@@ -8,6 +8,13 @@ class Others(Class):
     They can work as peasants or in mines, on noble or government land.
     They do not own land and they can work as employees.
     """
+    @staticmethod
+    def create_from_dict(parent, data):
+        population = data["population"]
+        resources = data["resources"]
+        land = data["land"]
+        return Others(parent, population, resources, land)
+
     @property
     def employable(self):
         return True

@@ -16,6 +16,13 @@ class Nobles(Class):
     Nobles do not make anything.
     They own land and they cannot work as employees.
     """
+    @staticmethod
+    def create_from_dict(parent, data):
+        population = data["population"]
+        resources = data["resources"]
+        land = data["land"]
+        return Nobles(parent, population, resources, land)
+
     @property
     def class_overpopulation(self):
         overpop = 0
