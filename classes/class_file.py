@@ -4,7 +4,6 @@ from .constants import (
     RESOURCES,
     WOOD_CONSUMPTION
 )
-from .state_data import State_Data
 
 
 class Class:
@@ -21,7 +20,7 @@ class Class:
     class_overpopulation - how many of the class need to be demoted because of
                            no resources
     """
-    def __init__(self, parent: "State_Data", population: int,
+    def __init__(self, parent, population: int,
                  resources: dict = None, land: dict = None):
         self.parent = parent
         self.population = population
