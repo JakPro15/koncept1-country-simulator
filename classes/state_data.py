@@ -18,8 +18,15 @@ class State_Data:
     prices - last month's resource prices on the market
     """
     def __init__(self, starting_month: str = "January"):
-        self._month = starting_month
+        self.month = starting_month
         self.payments = {
+            "food": 0,
+            "wood": 0,
+            "iron": 0,
+            "stone": 0,
+            "tools": 0
+        }
+        self.prices = {
             "food": 0,
             "wood": 0,
             "iron": 0,
@@ -56,7 +63,7 @@ class State_Data:
             in zip(MONTHS, months_moved)}
         self._month = next_months[self.month]
 
-    def create_market(self):
+    def _create_market(self):
         self._market = Market(self.classes)
 
     def get_available_employees(self):
@@ -72,11 +79,11 @@ class State_Data:
         classes_list = [nobles, artisans, peasants, others]
         self.classes = classes_list
 
-        self.create_market()
+        self._create_market()
 
         self.prices = data["prices"]
 
-    def to_dict(self, data: dict):
+    def to_dict(self):
         data = {
             "month": self.month,
             "classes": {
