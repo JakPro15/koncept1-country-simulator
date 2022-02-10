@@ -1,4 +1,10 @@
-from .constants import MONTHS
+from .constants import (
+    DEFAULT_GROWTH_FACTOR,
+    FREEZING_MORTALITY,
+    MONTHS,
+    STARVATION_MORTALITY,
+    WOOD_CONSUMPTION
+)
 from .class_file import Class
 from .nobles import Nobles
 from .artisans import Artisans
@@ -54,6 +60,7 @@ class State_Data:
         assert isinstance(new_classes_list[2], Peasants)
         assert isinstance(new_classes_list[3], Others)
         self._classes = new_classes_list.copy()
+        self._create_market()
 
     def _advance_month(self):
         months_moved = MONTHS[1:] + [MONTHS[0]]
@@ -67,7 +74,11 @@ class State_Data:
         self._market = Market(self.classes)
 
     def get_available_employees(self):
-        pass
+        employees = 0
+        for social_class in self.classes:
+            if social_class.employable:
+                employees += social_class.population
+        return employees
 
     def from_dict(self, data: dict):
         self.month = data["month"]
@@ -78,8 +89,6 @@ class State_Data:
         others = Others.create_from_dict(self, data["classes"]["others"])
         classes_list = [nobles, artisans, peasants, others]
         self.classes = classes_list
-
-        self._create_market()
 
         self.prices = data["prices"]
 
@@ -95,3 +104,32 @@ class State_Data:
             "prices": self.prices
         }
         return data
+
+    def _grow_populations(self):
+        for social_class in self.classes:
+            growth_modifiers = {}
+            growth_modifiers["Base"] = DEFAULT_GROWTH_FACTOR / 12
+
+            missing_food = social_class.missing_resources["food"]
+            if missing_food > 0:
+                starving_part = missing_food / social_class.population
+                growth_modifiers["Starving"] = \
+                    -starving_part * STARVATION_MORTALITY
+
+            missing_wood = social_class.missing_resources["wood"]
+            if missing_wood > 0:
+                freezing_number = missing_wood / WOOD_CONSUMPTION[self.month]
+                freezing_part = freezing_number / social_class.population
+                growth_modifiers["Freezing"] = \
+                    -freezing_part * FREEZING_MORTALITY
+
+            total_modifier = sum(growth_modifiers.values())
+            social_class.grow_population(total_modifier)
+
+    def do_month(self):
+        for social_class in self.classes:
+            social_class.produce()
+        self._market.do_trade()
+        for social_class in self.classes:
+            social_class.consume()
+        self._grow_populations()
