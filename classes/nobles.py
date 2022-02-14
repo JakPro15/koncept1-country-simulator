@@ -56,16 +56,12 @@ class Nobles(Class):
         Stone needed: none
         Tools needed: enough to work half a year + 1 (3 needed for new peasant)
         """
-        month = self._parent.month
-        self._parent._advance_month()  # illegal
-        max_tool_usage = self._get_tools_used(2**32)
-        self._parent._month = month  # very illegal
-
         optimal_resources = super().optimal_resources_per_capita()
         optimal_resources["food"] += 8
         optimal_resources["wood"] += 4.6
         optimal_resources["stone"] += 8
-        optimal_resources["tools"] += 4 + max_tool_usage
+        optimal_resources["tools"] += \
+            4 + (self._get_employees(assesment=True) * 3) / self.population
         return optimal_resources
 
     def _get_total_land_for_produce(self):
@@ -76,16 +72,18 @@ class Nobles(Class):
         return self._land["fields"] + self._land["woods"] + \
             self._land["stone_mines"] * 2000 + self._land["iron_mines"] * 2000
 
-    def _get_employees(self, available_people=None):
+    def _get_employees(self, assesment=False):
         """
         Returns the number of people the nobles will employ this month.
         """
         total_land = self._get_total_land_for_produce()
-        wanted_employees = min(total_land // 20, self.resources["tools"] / 3)
-        if available_people is None:
-            available_employees = self._parent.get_available_employees()
+        available_employees = self._parent.get_available_employees()
+        if not assesment:
+            wanted_employees = min(total_land // 20,
+                                   self.resources["tools"] / 3)
         else:
-            available_employees = available_people
+            # For assesing the amount of tools nobles want
+            wanted_employees = total_land // 20
         return min(wanted_employees, available_employees)
 
     def _get_ratios(self):
@@ -101,11 +99,11 @@ class Nobles(Class):
         }
         return ratios
 
-    def _get_ratioed_employees(self, available_people=None):
+    def _get_ratioed_employees(self):
         """
         Returns a dict of particular resource producing employees.
         """
-        employees = self._get_employees(available_people)
+        employees = self._get_employees()
         ratios = self._get_ratios()
         ratioed = {
             resource: value * employees
@@ -133,12 +131,12 @@ class Nobles(Class):
         }
         return produced
 
-    def _get_tools_used(self, available_people=None):
+    def _get_tools_used(self):
         """
         Returns the amount of tools that will be used in production this month.
         """
         month = self._parent.month
-        employees = self._get_ratioed_employees(available_people)
+        employees = self._get_ratioed_employees()
         peasant_tools_used = PEASANT_TOOL_USAGE[month] * \
             (employees["food"] + employees["wood"])
         miner_tools_used = MINER_TOOL_USAGE * \
@@ -151,11 +149,16 @@ class Nobles(Class):
         Adds resources the class' employees produced in the current month.
         """
         produced = self._get_produced_resources()
+        used = {
+            "tools": self._get_tools_used()
+        }
 
-        self._resources["tools"] -= self._get_tools_used()
+        self._resources["tools"] -= used["tools"]
         for resource in produced:
-            self._resources[resource] += 0.2 * produced[resource]
-            self._parent.payments[resource] += 0.8 * produced[resource]
+            self._resources[resource] += 0.5 * produced[resource]
+            self._parent.payments[resource] += 0.5 * produced[resource]
+
+        return produced, used
 
     def move_population(self, number: int, demotion: bool = False):
         """

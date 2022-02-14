@@ -45,4 +45,7 @@ class Others(Class):
         """
         Adds resources the class produced in the current month.
         """
-        pass
+        produced = {}
+        used = {}
+
+        return produced, used

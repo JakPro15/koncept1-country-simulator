@@ -3,7 +3,8 @@ from .constants import (
     FREEZING_MORTALITY,
     MONTHS,
     STARVATION_MORTALITY,
-    WOOD_CONSUMPTION
+    WOOD_CONSUMPTION,
+    INDEX_TO_CLASS_NAME
 )
 from .class_file import Class
 from .nobles import Nobles
@@ -22,8 +23,11 @@ class State_Data:
     _market - Market of the country
     payments - employee payments from the last produce
     prices - last month's resource prices on the market
+    log - whether to log the actions
     """
-    def __init__(self, starting_month: str = "January"):
+    def __init__(self, starting_month: str = "January",
+                 starting_year: int = 0):
+        self.year = starting_year
         self.month = starting_month
         self.payments = {
             "food": 0,
@@ -50,6 +54,15 @@ class State_Data:
         self._month = new_month
 
     @property
+    def year(self):
+        return self._year
+
+    @year.setter
+    def year(self, new_year: int):
+        assert new_year >= 0
+        self._year = new_year
+
+    @property
     def classes(self):
         return self._classes.copy()
 
@@ -69,6 +82,8 @@ class State_Data:
             for month1, month2
             in zip(MONTHS, months_moved)}
         self._month = next_months[self.month]
+        if self._month == "January":
+            self.year += 1
 
     def _create_market(self):
         self._market = Market(self.classes)
@@ -81,6 +96,7 @@ class State_Data:
         return employees
 
     def from_dict(self, data: dict):
+        self.year = data["year"]
         self.month = data["month"]
 
         nobles = Nobles.create_from_dict(self, data["classes"]["nobles"])
@@ -94,6 +110,7 @@ class State_Data:
 
     def to_dict(self):
         data = {
+            "year": self.year,
             "month": self.month,
             "classes": {
                 "nobles": self.classes[0].to_dict(),
@@ -106,30 +123,78 @@ class State_Data:
         return data
 
     def _grow_populations(self):
-        for social_class in self.classes:
-            growth_modifiers = {}
-            growth_modifiers["Base"] = DEFAULT_GROWTH_FACTOR / 12
+        modifiers = {}
+        grown = {}
+        for index, social_class in enumerate(self.classes):
+            class_name = INDEX_TO_CLASS_NAME[index]
+            modifiers[class_name] = {}
+            modifiers[class_name]["Base"] = DEFAULT_GROWTH_FACTOR / 12
 
             missing_food = social_class.missing_resources["food"]
             if missing_food > 0:
                 starving_part = missing_food / social_class.population
-                growth_modifiers["Starving"] = \
+                modifiers[class_name]["Starving"] = \
                     -starving_part * STARVATION_MORTALITY
 
             missing_wood = social_class.missing_resources["wood"]
             if missing_wood > 0:
                 freezing_number = missing_wood / WOOD_CONSUMPTION[self.month]
                 freezing_part = freezing_number / social_class.population
-                growth_modifiers["Freezing"] = \
+                modifiers[class_name]["Freezing"] = \
                     -freezing_part * FREEZING_MORTALITY
 
-            total_modifier = sum(growth_modifiers.values())
-            social_class.grow_population(total_modifier)
+            total_modifier = sum(modifiers[class_name].values())
+            grown[class_name] = social_class.grow_population(total_modifier)
+
+        return modifiers, grown
+
+    def _do_payments(self):
+        for resource in self.payments:
+            self.classes[3].resources[resource] += self.payments[resource]
+            self.payments[resource] = 0
 
     def do_month(self):
-        for social_class in self.classes:
-            social_class.produce()
+        month_data = {
+            "year": self.year,
+            "month": self.month,
+            "produced": {},
+            "used": {},
+            "consumed": {},
+            "resources_after": {}
+        }
+
+        for index, social_class in enumerate(self.classes):
+            produced, used = social_class.produce()
+            class_name = INDEX_TO_CLASS_NAME[index]
+            month_data["produced"][class_name] = produced
+            month_data["used"][class_name] = used
+
+        self._do_payments()
+
         self._market.do_trade()
-        for social_class in self.classes:
-            social_class.consume()
-        self._grow_populations()
+        self.prices = self._market.prices
+        month_data["trade_prices"] = self.prices
+
+        for index, social_class in enumerate(self.classes):
+            consumed = social_class.consume()
+            class_name = INDEX_TO_CLASS_NAME[index]
+            month_data["consumed"][class_name] = consumed
+
+        modifiers, grown = self._grow_populations()
+        month_data["growth_modifiers"] = modifiers
+        month_data["grown"] = grown
+        self._advance_month()
+
+        month_data["resources_after"] = {
+            "nobles": self.classes[0].resources,
+            "artisans": self.classes[1].resources,
+            "peasants": self.classes[2].resources,
+            "others": self.classes[3].resources
+        }
+        month_data["population_after"] = {
+            "nobles": self.classes[0].population,
+            "artisans": self.classes[1].population,
+            "peasants": self.classes[2].population,
+            "others": self.classes[3].population
+        }
+        return month_data

@@ -70,3 +70,10 @@ ARTISAN_IRON_USAGE = 0.5
 DEFAULT_GROWTH_FACTOR = 0.1  # monthly is 1/12 of that
 STARVATION_MORTALITY = 0.2
 FREEZING_MORTALITY = 0.2
+
+INDEX_TO_CLASS_NAME = {
+    0: "nobles",
+    1: "artisans",
+    2: "peasants",
+    3: "others"
+}

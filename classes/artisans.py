@@ -82,12 +82,21 @@ class Artisans(Class):
         Adds resources the class produced in the current month.
         """
         artisans = self._get_working_artisans()
-        self._resources["wood"] -= \
-            TOOLS_PRODUCTION * artisans * ARTISAN_WOOD_USAGE
-        self._resources["iron"] -= \
-            TOOLS_PRODUCTION * artisans * ARTISAN_IRON_USAGE
-        self._resources["tools"] += \
-            (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * artisans
+
+        produced = {
+            "tools": TOOLS_PRODUCTION * artisans
+        }
+        used = {
+            "wood": TOOLS_PRODUCTION * artisans * ARTISAN_WOOD_USAGE,
+            "iron": TOOLS_PRODUCTION * artisans * ARTISAN_IRON_USAGE,
+            "tools": ARTISAN_TOOL_USAGE * artisans
+        }
+
+        self._resources["wood"] -= used["wood"]
+        self._resources["iron"] -= used["iron"]
+        self._resources["tools"] += produced["tools"] - used["tools"]
+
+        return produced, used
 
     def move_population(self, number: int, demotion: bool = False):
         """

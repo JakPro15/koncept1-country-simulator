@@ -93,14 +93,19 @@ class Peasants(Class):
         food_peasants = ceil(food_ratio * peasants)
         wood_peasants = peasants - food_peasants
 
-        new_food = food_per_capita * food_peasants
-        new_wood = wood_per_capita * wood_peasants
+        produced = {
+            "food": food_per_capita * food_peasants,
+            "wood": wood_per_capita * wood_peasants
+        }
+        used = {
+            "tools": PEASANT_TOOL_USAGE[month] * peasants
+        }
 
-        tools_consumed = PEASANT_TOOL_USAGE[month] * peasants
-        self._resources["tools"] -= tools_consumed
+        self._resources["tools"] -= used["tools"]
+        self._resources["food"] += produced["food"]
+        self._resources["wood"] += produced["wood"]
 
-        self._resources["food"] += new_food
-        self._resources["wood"] += new_wood
+        return produced, used
 
     def move_population(self, number: int, demotion: bool = False):
         """

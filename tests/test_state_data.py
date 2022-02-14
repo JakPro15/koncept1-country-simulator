@@ -44,16 +44,22 @@ def test_default_constructor():
 
 def test_advance_month():
     state = State_Data("August")
+    assert state.year == 0
     assert state.month == "August"
     state._advance_month()
+    assert state.year == 0
     assert state.month == "September"
     state._advance_month()
+    assert state.year == 0
     assert state.month == "October"
     state._advance_month()
+    assert state.year == 0
     assert state.month == "November"
     state._advance_month()
+    assert state.year == 0
     assert state.month == "December"
     state._advance_month()
+    assert state.year == 1
     assert state.month == "January"
 
 
@@ -68,6 +74,7 @@ def test_create_market():
 def test_from_dict():
     state = State_Data()
     data = {
+        "year": 3,
         "month": "June",
         "classes": {
             "nobles": {
@@ -144,6 +151,7 @@ def test_from_dict():
         }
     }
     state.from_dict(data)
+    assert state.year == 3
     assert state.month == "June"
 
     assert isinstance(state.classes[0], Nobles)
@@ -212,8 +220,9 @@ def test_from_dict():
 
 
 def test_to_dict():
-    state = State_Data("June")
+    state = State_Data("June", 3)
     data = {
+        "year": 3,
         "month": "June",
         "classes": {
             "nobles": {
@@ -371,6 +380,7 @@ def test_to_dict():
 def test_get_available_employees():
     state = State_Data()
     data = {
+        "year": 0,
         "month": "June",
         "classes": {
             "nobles": {
@@ -516,62 +526,173 @@ def test_grow_populations():
     assert class3.population == approx(241, abs=0.1)
 
 
-class Fake_Class_3:
-    def __init__(self, population):
-        self.population = population
-        self.missing_resources = {
-            "food": 0,
-            "wood": 0
-        }
-        self.resources = {
-            "food": 20,
-            "wood": 20,
-            "stone": 20,
-            "iron": 20,
-            "tools": 20
-        }
-        self.optimal_resources = {
-            "food": 10,
-            "wood": 10,
-            "stone": 10,
-            "iron": 10,
-            "tools": 10
-        }
-
-    def grow_population(self, modifier: float):
-        grown = self.population * modifier
-        self.population += grown
-        return grown
-
-    def produce(self):
-        self.produced = True
-
-    def consume(self):
-        self.consumed = True
-
-
 def test_do_month():
-    state = State_Data()
-    class1 = Fake_Class_3(360)
-    class2 = Fake_Class_3(480)
-    class3 = Fake_Class_3(240)
-    class4 = Fake_Class_3(600)
-    classes = [class1, class2, class3, class4]
-    state._classes = classes
-    state._create_market()
-    state.do_month()
+    state = State_Data("March", starting_year=1)
+    population = 20
+    resources = {
+        "food": 200,
+        "wood": 150,
+        "stone": 150,
+        "iron": 0,
+        "tools": 400
+    }
+    land = {
+        "fields": 4000,
+        "woods": 2000,
+        "stone_mines": 1,
+        "iron_mines": 1
+    }
+    nobles = Nobles(state, population, resources, land)
 
-    assert class1.population == 363
-    assert class2.population == 484
-    assert class3.population == 242
-    assert class4.population == 605
-    for social_class in classes:
-        assert social_class.resources == {
-            "food": 20,
+    population = 30
+    resources = {
+        "food": 100,
+        "wood": 100,
+        "stone": 0,
+        "iron": 50,
+        "tools": 40
+    }
+    artisans = Artisans(state, population, resources)
+
+    population = 50
+    resources = {
+        "food": 180,
+        "wood": 200,
+        "stone": 0,
+        "iron": 0,
+        "tools": 100
+    }
+    land = {
+        "fields": 1200,
+        "woods": 300,
+        "stone_mines": 0,
+        "iron_mines": 0
+    }
+    peasants = Peasants(state, population, resources, land)
+
+    population = 100
+    resources = {
+        "food": 300,
+        "wood": 200,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0
+    }
+    others = Others(state, population, resources)
+
+    classes = [nobles, artisans, peasants, others]
+    state.classes = classes
+    month_data = state.do_month()
+    assert month_data["year"] == 1
+    assert month_data["month"] == "March"
+    assert month_data["produced"] == {
+        "nobles": {
+            "food": 40,
             "wood": 20,
             "stone": 20,
-            "iron": 20,
-            "tools": 20
+            "iron": 20
+        },
+        "artisans": {
+            "tools": 30
+        },
+        "peasants": {
+            "food": 40,
+            "wood": 10
+        },
+        "others": {}
+    }
+    assert month_data["used"] == {
+        "nobles": {
+            "tools": 22
+        },
+        "artisans": {
+            "wood": 6,
+            "iron": 15,
+            "tools": approx(4.5)
+        },
+        "peasants": {
+            "tools": 5
+        },
+        "others": {}
+    }
+    assert month_data["trade_prices"] == {
+        "food": approx(1.116, 0.01),
+        "wood": approx(0.981, 0.01),
+        "stone": approx(0.941, 0.01),
+        "iron": approx(1.091, 0.01),
+        "tools": approx(0.971, 0.01)
+    }
+    assert month_data["growth_modifiers"] == {
+        "nobles": {
+            "Base": approx(0.00833, abs=1e-5)
+        },
+        "artisans": {
+            "Base": approx(0.00833, abs=1e-5)
+        },
+        "peasants": {
+            "Base": approx(0.00833, abs=1e-5)
+        },
+        "others": {
+            "Base": approx(0.00833, abs=1e-5)
         }
-        assert social_class.produced
-        assert social_class.consumed
+    }
+    assert month_data["grown"] == {
+        "nobles": approx(0.17, abs=0.01),
+        "artisans": approx(0.25, abs=0.01),
+        "peasants": approx(0.42, abs=0.01),
+        "others": approx(0.83, abs=0.01)
+    }
+    assert month_data["consumed"] == {
+        "nobles": {
+            "food": 20,
+            "wood": 6
+        },
+        "artisans": {
+            "food": 30,
+            "wood": 9
+        },
+        "peasants": {
+            "food": 50,
+            "wood": 15
+        },
+        "others": {
+            "food": 100,
+            "wood": 30
+        }
+    }
+    assert month_data["resources_after"] == {
+        "nobles": {
+            "food": approx(206.17, abs=0.1),
+            "wood": approx(144.51, abs=0.1),
+            "stone": approx(162.19, abs=0.1),
+            "iron": approx(1.4, abs=0.1),
+            "tools": approx(384.99, abs=0.1)
+        },
+        "artisans": {
+            "food": approx(67.96, abs=0.1),
+            "wood": approx(91.62, abs=0.1),
+            "stone": 0,
+            "iron": approx(50.11, abs=0.1),
+            "tools": approx(42.98, abs=0.1)
+        },
+        "peasants": {
+            "food": approx(156.84, abs=0.1),
+            "wood": approx(184.09, abs=0.1),
+            "stone": approx(7.19, abs=0.1),
+            "iron": approx(3.49, abs=0.1),
+            "tools": approx(107.84, abs=0.1)
+        },
+        "others": {
+            "food": approx(229.03, abs=0.1),
+            "wood": approx(190.32, abs=0.1),
+            "stone": 0,
+            "iron": 0,
+            "tools": 0
+        },
+    }
+    assert month_data["population_after"] == {
+        "nobles": approx(20.17, abs=0.01),
+        "artisans": approx(30.25, abs=0.01),
+        "peasants": approx(50.42, abs=0.01),
+        "others": approx(100.83, abs=0.01)
+    }

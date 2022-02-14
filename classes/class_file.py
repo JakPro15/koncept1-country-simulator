@@ -62,7 +62,7 @@ class Class:
 
     @property
     def resources(self):
-        return self._resources.copy()
+        return self._resources
 
     @resources.setter
     def resources(self, new_resources: dict):
@@ -72,7 +72,7 @@ class Class:
 
     @property
     def land(self):
-        return self._land.copy()
+        return self._land
 
     @land.setter
     def land(self, new_land: dict):
@@ -134,11 +134,15 @@ class Class:
         Sets missing resources to signal shortages.
         """
         month = self._parent.month
-        food_consumed = FOOD_CONSUMPTION * self._population
-        wood_consumed = WOOD_CONSUMPTION[month] * self._population
 
-        self._resources["food"] -= food_consumed
-        self._resources["wood"] -= wood_consumed
+        consumed = {}
+        consumed["food"] = FOOD_CONSUMPTION * self._population
+        consumed["wood"] = WOOD_CONSUMPTION[month] * self._population
+
+        self._resources["food"] -= consumed["food"]
+        self._resources["wood"] -= consumed["wood"]
+
+        return consumed
 
     def move_population(self, number: int, demotion: bool = False):
         """

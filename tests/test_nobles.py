@@ -259,7 +259,7 @@ def test_grow_population_not_enough_resources():
     assert nobles.class_overpopulation == 20
 
 
-def test_optimal_resources_per_capita_february():
+def test_optimal_resources_per_capita_january():
     state = Fake_State_Data(100, "January")
     resources = {
         "food": 0,
@@ -280,11 +280,11 @@ def test_optimal_resources_per_capita_february():
     assert opt_res["wood"] == 7
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 8
-    assert opt_res["tools"] == 100
+    assert opt_res["tools"] == approx(7.75)
 
 
 def test_optimal_resources_per_capita_july():
-    state = Fake_State_Data(100, "July")
+    state = Fake_State_Data(500, "July")
     resources = {
         "food": 0,
         "wood": 0,
@@ -304,11 +304,11 @@ def test_optimal_resources_per_capita_july():
     assert opt_res["wood"] == 7
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 8
-    assert opt_res["tools"] == 196
+    assert opt_res["tools"] == approx(22.75)
 
 
 def test_calculate_optimal_resources():
-    state = Fake_State_Data(100, "July")
+    state = Fake_State_Data(600, "July")
     resources = {
         "food": 0,
         "wood": 0,
@@ -328,7 +328,7 @@ def test_calculate_optimal_resources():
     assert opt_res["wood"] == 1400
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 1600
-    assert opt_res["tools"] == 39200
+    assert opt_res["tools"] == 2300
 
 
 def test_get_total_land_for_produce():
@@ -567,16 +567,16 @@ def test_produce():
     nobles = Nobles(state, 80, resources, land)
     nobles.produce()
 
-    assert nobles.resources["food"] == 30
-    assert nobles.resources["wood"] == 3
-    assert nobles.resources["stone"] == 8
-    assert nobles.resources["iron"] == 4
+    assert nobles.resources["food"] == 75
+    assert nobles.resources["wood"] == approx(7.5)
+    assert nobles.resources["stone"] == 20
+    assert nobles.resources["iron"] == 10
     assert nobles.resources["tools"] == 1152
 
-    assert state.payments["food"] == 120
-    assert state.payments["wood"] == 12
-    assert state.payments["stone"] == 32
-    assert state.payments["iron"] == 16
+    assert state.payments["food"] == 75
+    assert state.payments["wood"] == approx(7.5)
+    assert state.payments["stone"] == 20
+    assert state.payments["iron"] == 10
 
     assert nobles.class_overpopulation == 0
 
