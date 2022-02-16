@@ -135,6 +135,7 @@ class State_Data:
                 starving_part = missing_food / social_class.population
                 modifiers[class_name]["Starving"] = \
                     -starving_part * STARVATION_MORTALITY
+                social_class.resources["food"] = 0
 
             missing_wood = social_class.missing_resources["wood"]
             if missing_wood > 0:
@@ -142,6 +143,7 @@ class State_Data:
                 freezing_part = freezing_number / social_class.population
                 modifiers[class_name]["Freezing"] = \
                     -freezing_part * FREEZING_MORTALITY
+                social_class.resources["wood"] = 0
 
             total_modifier = sum(modifiers[class_name].values())
             grown[class_name] = social_class.grow_population(total_modifier)

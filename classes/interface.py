@@ -1,6 +1,7 @@
 import json
 from .state_data import State_Data
 from .history import History
+from copy import deepcopy
 
 
 class Interface:
@@ -30,4 +31,4 @@ class Interface:
 
     def next_month(self):
         month_data = self.state.do_month()
-        self.history.append(month_data)
+        self.history.append(deepcopy(month_data))

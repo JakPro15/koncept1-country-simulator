@@ -1,6 +1,6 @@
-RESOURCES = {
-    "food", "wood", "iron", "stone", "tools"
-}
+RESOURCES = [
+    "food", "wood", "stone", "iron", "tools"
+]
 LAND_TYPES = {
     "fields", "woods", "stone_mines", "iron_mines"
 }

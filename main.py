@@ -1,4 +1,4 @@
-from classes.cli import Command_Line_Interface
+from classes.cli import command_line_interface
 
 
-Command_Line_Interface()
+command_line_interface()

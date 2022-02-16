@@ -36,7 +36,7 @@ class History(list):
 
     def growth_modifiers_stats(self):
         return [
-            History.round_dict_values(month["growth_modifiers"], 4)
+            History.round_dict_of_dicts_values(month["growth_modifiers"], 4)
             for month
             in self
         ]
@@ -50,21 +50,21 @@ class History(list):
 
     def production_stats(self):
         return [
-            History.round_dict_values(month["produced"], 2)
+            History.round_dict_of_dicts_values(month["produced"], 2)
             for month
             in self
         ]
 
     def usage_stats(self):
         return [
-            History.round_dict_values(month["used"], 2)
+            History.round_dict_of_dicts_values(month["used"], 2)
             for month
             in self
         ]
 
     def consumption_stats(self):
         return [
-            History.round_dict_values(month["consumed"], 2)
+            History.round_dict_of_dicts_values(month["consumed"], 2)
             for month
             in self
         ]
