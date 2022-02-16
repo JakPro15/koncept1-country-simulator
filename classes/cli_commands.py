@@ -5,7 +5,9 @@ from .constants import MONTHS, RESOURCES
 def help():
     print("List of available commands:")
     print("exit - shuts down the program")
-    print("end - ends the month and advances to the next")
+    print("save <FILE> - saves the game state into saves/<FILE>.json file")
+    print("next <AMOUNT> - ends the month and advances to the next <AMOUNT> "
+          "times - only once if <AMOUNT> not specified")
     print("history <STAT> <MONTHS> - shows the history of the "
           "country")
     print("    <STAT> decides which statistic to show")
@@ -84,3 +86,24 @@ def history(args, interface):
                 print(line)
     except Exception:
         print("Invalid syntax. See help for proper usage of history command")
+
+
+def save(args, interface):
+    try:
+        interface.save_data(f"saves/{args[1]}.json")
+        print(f"Saved the game state into saves/{args[1]}.json")
+    except Exception:
+        print("Invalid syntax. See help for proper usage of history command")
+
+
+def next(args, interface):
+    # try:
+        if len(args) == 1:
+            interface.next_month()
+        else:
+            for _ in range(int(args[1])):
+                interface.next_month()
+        print(f"\nNew month: {interface.state.month} "
+              f"{interface.state.year}\n")
+    # except Exception:
+    #     print("Invalid syntax. See help for proper usage of history command")

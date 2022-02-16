@@ -171,6 +171,6 @@ class Nobles(Class):
         if number > 0:
             self._add_population(number)
         elif demotion:
-            self._resources["wood"] += -10 * number
+            self._resources["wood"] += -7 * number
             self._resources["stone"] += -4 * number
-            self._resources["tools"] += -4 * number
+            self._resources["tools"] += -1 * number

@@ -121,7 +121,7 @@ def test_add_population_enough_resources():
     resources = {
         "food": 100,
         "wood": 200,
-        "iron": 0,
+        "iron": 200,
         "stone": 0,
         "tools": 100
     }
@@ -130,7 +130,7 @@ def test_add_population_enough_resources():
     artisans._add_population(20)
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == 160
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["iron"] == 160
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == 40
 
@@ -142,7 +142,7 @@ def test_add_population_not_enough_tools():
     resources = {
         "food": 100,
         "wood": 200,
-        "iron": 0,
+        "iron": 200,
         "stone": 0,
         "tools": 120
     }
@@ -151,7 +151,7 @@ def test_add_population_not_enough_tools():
     artisans._add_population(50)
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == 100
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["iron"] == 100
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == -30
 
@@ -163,7 +163,7 @@ def test_add_population_not_enough_wood():
     resources = {
         "food": 100,
         "wood": 70,
-        "iron": 0,
+        "iron": 100,
         "stone": 0,
         "tools": 200
     }
@@ -193,11 +193,11 @@ def test_add_population_not_enough_both():
     artisans._add_population(50)
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == -30
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["iron"] == -100
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == -70
 
-    assert artisans.class_overpopulation == 24
+    assert artisans.class_overpopulation == 50
 
 
 def test_grow_population():
@@ -205,7 +205,7 @@ def test_grow_population():
     resources = {
         "food": 100,
         "wood": 200,
-        "iron": 0,
+        "iron": 200,
         "stone": 0,
         "tools": 100
     }
@@ -214,7 +214,7 @@ def test_grow_population():
     artisans.grow_population(0.25)
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == 160
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["iron"] == 160
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == 40
 
@@ -226,7 +226,7 @@ def test_grow_population_not_enough_resources():
     resources = {
         "food": 100,
         "wood": 70,
-        "iron": 0,
+        "iron": 100,
         "stone": 0,
         "tools": 80
     }
@@ -248,7 +248,7 @@ def test_optimal_resources_per_capita_february():
     opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
     assert opt_res["wood"] == 3.7
-    assert opt_res["iron"] == 2
+    assert opt_res["iron"] == 2.5
     assert opt_res["stone"] == 0
     assert opt_res["tools"] == 1.6
 
@@ -259,7 +259,7 @@ def test_optimal_resources_per_capita_august():
     opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
     assert opt_res["wood"] == 3.7
-    assert opt_res["iron"] == 2
+    assert opt_res["iron"] == 2.5
     assert opt_res["stone"] == 0
     assert opt_res["tools"] == 1.6
 
@@ -270,7 +270,7 @@ def test_calculate_optimal_resources_february():
     opt_res = artisans.optimal_resources
     assert opt_res["food"] == 800
     assert opt_res["wood"] == 740
-    assert opt_res["iron"] == 400
+    assert opt_res["iron"] == 500
     assert opt_res["stone"] == 0
     assert opt_res["tools"] == 320
 
@@ -281,65 +281,9 @@ def test_calculate_optimal_resources_october():
     opt_res = artisans.optimal_resources
     assert opt_res["food"] == 400
     assert opt_res["wood"] == 370
-    assert opt_res["iron"] == 200
+    assert opt_res["iron"] == 250
     assert opt_res["stone"] == 0
     assert opt_res["tools"] == 160
-
-
-def test_get_working_artisans_enough_resources():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 200,
-        "stone": 0,
-        "tools": 100
-    }
-    artisans = Artisans(state, 60, resources)
-
-    assert artisans._get_working_artisans() == 60
-
-
-def test_get_working_artisans_not_enough_iron():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 5.2,
-        "stone": 0,
-        "tools": 100
-    }
-    artisans = Artisans(state, 80, resources)
-
-    assert artisans._get_working_artisans() == approx(10.4)
-
-
-def test_get_working_artisans_not_enough_wood():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 10,
-        "iron": 200,
-        "stone": 0,
-        "tools": 100
-    }
-    artisans = Artisans(state, 60, resources)
-
-    assert artisans._get_working_artisans() == 50
-
-
-def test_get_working_artisans_not_enough_both():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 10,
-        "iron": 12.5,
-        "stone": 0,
-        "tools": 100
-    }
-    artisans = Artisans(state, 60, resources)
-
-    assert artisans._get_working_artisans() == 25
 
 
 def test_produce_enough_resources():
@@ -375,11 +319,11 @@ def test_produce_not_enough_resources():
 
     artisans.produce()
     assert artisans.resources["food"] == 100
-    assert artisans.resources["wood"] == 190
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["wood"] == 188
+    assert artisans.resources["iron"] == -5
     assert artisans.resources["stone"] == 0
-    assert artisans.resources["tools"] == approx(142.5)
-    assert artisans.class_overpopulation == 0
+    assert artisans.resources["tools"] == 151
+    assert artisans.class_overpopulation == 3
 
 
 def test_consume_enough_resources():
@@ -471,7 +415,7 @@ def test_move_population_in_enough_resources():
     resources = {
         "food": 100,
         "wood": 200,
-        "iron": 0,
+        "iron": 200,
         "stone": 0,
         "tools": 100
     }
@@ -483,7 +427,7 @@ def test_move_population_in_enough_resources():
 
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == 160
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["iron"] == 160
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == 40
 
@@ -495,7 +439,7 @@ def test_move_population_in_not_enough_resources():
     resources = {
         "food": 100,
         "wood": 70,
-        "iron": 0,
+        "iron": 200,
         "stone": 0,
         "tools": 200
     }
@@ -507,7 +451,7 @@ def test_move_population_in_not_enough_resources():
 
     assert artisans.resources["food"] == 100
     assert artisans.resources["wood"] == -30
-    assert artisans.resources["iron"] == 0
+    assert artisans.resources["iron"] == 100
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == 50
 

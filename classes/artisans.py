@@ -38,6 +38,8 @@ class Artisans(Class):
         overpop = 0
         if self._resources["wood"] < 0:
             overpop = max(overpop, ceil(-self._resources["wood"] / 2))
+        if self._resources["iron"] < 0:
+            overpop = max(overpop, ceil(-self._resources["iron"] / 2))
         if self._resources["tools"] < 0:
             overpop = max(overpop, ceil(-self._resources["tools"] / 3))
         return overpop
@@ -48,6 +50,7 @@ class Artisans(Class):
         handles the initiation resources.
         """
         self._resources["wood"] -= 2 * number
+        self._resources["iron"] -= 2 * number
         self._resources["tools"] -= 3 * number
 
     def optimal_resources_per_capita(self):
@@ -60,28 +63,15 @@ class Artisans(Class):
         """
         optimal_resources = super().optimal_resources_per_capita()
         optimal_resources["wood"] += ARTISAN_WOOD_USAGE * 4 + 0.5
-        optimal_resources["iron"] += ARTISAN_IRON_USAGE * 4
+        optimal_resources["iron"] += ARTISAN_IRON_USAGE * 4 + 0.5
         optimal_resources["tools"] += ARTISAN_TOOL_USAGE * 4 + 1
         return optimal_resources
-
-    def _get_working_artisans(self):
-        """
-        Returns the number of fully working artisans.
-        """
-        wood_available = self._resources["wood"] / ARTISAN_WOOD_USAGE
-        iron_available = self._resources["iron"] / ARTISAN_IRON_USAGE
-        working_artisans = min(
-            wood_available,
-            iron_available,
-            self._population
-        )
-        return working_artisans
 
     def produce(self):
         """
         Adds resources the class produced in the current month.
         """
-        artisans = self._get_working_artisans()
+        artisans = self._population
 
         produced = {
             "tools": TOOLS_PRODUCTION * artisans

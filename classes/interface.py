@@ -27,7 +27,7 @@ class Interface:
                 "state": self.state.to_dict(),
                 "history": self.history.to_list()
             }
-            json.dump(data, save_file)
+            json.dump(data, save_file, indent=4)
 
     def next_month(self):
         month_data = self.state.do_month()

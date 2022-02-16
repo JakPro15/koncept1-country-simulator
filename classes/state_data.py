@@ -155,6 +155,22 @@ class State_Data:
             self.classes[3].resources[resource] += self.payments[resource]
             self.payments[resource] = 0
 
+    def _do_demotions(self):
+        nobles = self._classes[0]
+        artisans = self._classes[1]
+        peasants = self._classes[2]
+        others = self._classes[3]
+        peasants.resources["wood"] += 3 * nobles.class_overpopulation
+        peasants.resources["tools"] += 3 * nobles.class_overpopulation
+        peasants.move_population(nobles.class_overpopulation)
+        nobles.move_population(nobles.class_overpopulation, demotion=True)
+
+        others.move_population(nobles.class_overpopulation)
+        artisans.move_population(nobles.class_overpopulation, demotion=True)
+
+        others.move_population(nobles.class_overpopulation)
+        peasants.move_population(nobles.class_overpopulation, demotion=True)
+
     def do_month(self):
         month_data = {
             "year": self.year,

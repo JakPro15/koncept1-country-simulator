@@ -1,7 +1,9 @@
 from .interface import Interface
 from .cli_commands import (
     help,
-    history
+    save,
+    history,
+    next
 )
 import os.path
 
@@ -32,12 +34,12 @@ def command_line_interface():
         answer = input().strip().split(' ')
         if answer[0] == "help":
             help()
+        if answer[0] == "save":
+            save(answer, interface)
         if answer[0] == "exit":
             print("Shutting down")
             return
         if answer[0] == "history":
             history(answer, interface)
         if answer[0] == "next":
-            interface.next_month()
-            print(f"\nNew month: {interface.state.month} "
-                  f"{interface.state.year}\n")
+            next(answer, interface)
