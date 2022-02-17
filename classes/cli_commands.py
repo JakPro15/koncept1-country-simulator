@@ -14,6 +14,7 @@ def help():
     print("    Valid values:")
     print("        population")
     print("        resources")
+    print("        prices")
     print("    <MONTHS> decides how many months of history should"
           " be shown - left empty shows entire history")
 
@@ -39,7 +40,7 @@ def get_month_string(month_int):
 
 def round_resource(amount):
     if amount == 0:
-        string = '0'
+        string = '0.00'
     else:
         digits = floor(log10(abs(amount))) + 1
         if digits < 4:
@@ -51,7 +52,26 @@ def round_resource(amount):
             rounded = round(float(amount), 1)
             string = str(rounded)
         else:
-            rounded = round(amount, 1)
+            rounded = round(amount)
+            string = str(int(amount))
+    return string
+
+
+def round_price(amount):
+    if amount == 0:
+        string = '0.0000'
+    else:
+        digits = floor(log10(abs(amount))) + 1
+        if digits < 1:
+            digits = 1
+        if digits < 6:
+            precision = 6 - digits
+            rounded = round(float(amount), precision)
+            string = str(rounded)
+            while len(string.split('.')[1]) < precision:
+                string += '0'
+        else:
+            rounded = round(amount)
             string = str(int(amount))
     return string
 
@@ -84,6 +104,18 @@ def history(args, interface):
                         res = month_data[social_class][resource]
                         line += f"{round_resource(res): >7}"
                 print(line)
+        elif args[1] == "prices":
+            data = interface.history.prices_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Prices stats:")
+            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools")
+            for index, month_data in enumerate(data):
+                print(f"{get_month_string(index + begin_month)}"
+                      f" {round_price(month_data['food']): >7}"
+                      f" {round_price(month_data['wood']): >7}"
+                      f" {round_price(month_data['stone']): >7}"
+                      f" {round_price(month_data['iron']): >7}"
+                      f" {round_price(month_data['tools']): >7}")
     except Exception:
         print("Invalid syntax. See help for proper usage of history command")
 
@@ -97,13 +129,13 @@ def save(args, interface):
 
 
 def next(args, interface):
-    # try:
-    if len(args) == 1:
-        interface.next_month()
-    else:
-        for _ in range(int(args[1])):
+    try:
+        if len(args) == 1:
             interface.next_month()
-    print(f"\nNew month: {interface.state.month} "
-          f"{interface.state.year}\n")
-    # except Exception:
-    #     print("Invalid syntax. See help for proper usage of next command")
+        else:
+            for _ in range(int(args[1])):
+                interface.next_month()
+        print(f"\nNew month: {interface.state.month} "
+              f"{interface.state.year}\n")
+    except Exception:
+        print("Invalid syntax. See help for proper usage of next command")

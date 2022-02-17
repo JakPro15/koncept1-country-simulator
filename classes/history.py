@@ -71,7 +71,7 @@ class History(list):
 
     def prices_stats(self):
         return [
-            History.round_dict_values(month["prices"], 4)
+            History.round_dict_values(month["trade_prices"], 4)
             for month
             in self
         ]
