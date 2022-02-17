@@ -6,7 +6,6 @@ from .constants import (
     ARTISAN_WOOD_USAGE,
     TOOLS_PRODUCTION
 )
-from math import ceil
 
 
 class Artisans(Class):
@@ -37,11 +36,11 @@ class Artisans(Class):
     def class_overpopulation(self):
         overpop = 0
         if self._resources["wood"] < 0:
-            overpop = max(overpop, ceil(-self._resources["wood"] / 2))
+            overpop = max(overpop, -self._resources["wood"] / 2)
         if self._resources["iron"] < 0:
-            overpop = max(overpop, ceil(-self._resources["iron"] / 2))
+            overpop = max(overpop, -self._resources["iron"] / 2)
         if self._resources["tools"] < 0:
-            overpop = max(overpop, ceil(-self._resources["tools"] / 3))
+            overpop = max(overpop, -self._resources["tools"] / 3)
         return overpop
 
     def _add_population(self, number: int):

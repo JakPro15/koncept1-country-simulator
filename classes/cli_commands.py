@@ -93,17 +93,17 @@ def save(args, interface):
         interface.save_data(f"saves/{args[1]}.json")
         print(f"Saved the game state into saves/{args[1]}.json")
     except Exception:
-        print("Invalid syntax. See help for proper usage of history command")
+        print("Invalid syntax. See help for proper usage of save command")
 
 
 def next(args, interface):
     # try:
-        if len(args) == 1:
+    if len(args) == 1:
+        interface.next_month()
+    else:
+        for _ in range(int(args[1])):
             interface.next_month()
-        else:
-            for _ in range(int(args[1])):
-                interface.next_month()
-        print(f"\nNew month: {interface.state.month} "
-              f"{interface.state.year}\n")
+    print(f"\nNew month: {interface.state.month} "
+          f"{interface.state.year}\n")
     # except Exception:
-    #     print("Invalid syntax. See help for proper usage of history command")
+    #     print("Invalid syntax. See help for proper usage of next command")

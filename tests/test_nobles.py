@@ -1,6 +1,7 @@
 from ..classes.state_data import State_Data
 from ..classes.nobles import Nobles
 from pytest import approx
+from math import ceil
 
 
 def test_constructor():
@@ -15,7 +16,7 @@ def test_constructor():
     land = {
         "fields": 1500,
         "woods": 900,
-        "stone_mines": 1,
+        "stone_mines": 5,
         "iron_mines": 2
     }
     nobles = Nobles(state, 80, resources, land)
@@ -34,13 +35,11 @@ def test_constructor():
 
     assert nobles.land["fields"] == 1500
     assert nobles.land["woods"] == 900
-    assert nobles.land["stone_mines"] == 1
+    assert nobles.land["stone_mines"] == 5
     assert nobles.land["iron_mines"] == 2
 
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
-
-    assert nobles.class_overpopulation == 0
 
 
 def test_default_constructor():
@@ -735,8 +734,8 @@ def test_move_population_in_not_enough_land():
         "tools": 100
     }
     land = {
-        "fields": 1931,
-        "woods": 500,
+        "fields": 2575,
+        "woods": 667,
         "stone_mines": 0,
         "iron_mines": 0
     }
@@ -752,7 +751,7 @@ def test_move_population_in_not_enough_land():
     assert nobles.resources["stone"] == 120
     assert nobles.resources["tools"] == 20
 
-    assert nobles.class_overpopulation == 19
+    assert ceil(nobles.class_overpopulation) == 19
 
 
 def test_move_population_out_no_demotion():
@@ -807,9 +806,9 @@ def test_move_population_out_demotion():
     assert nobles.population == 60
 
     assert nobles.resources["food"] == 100
-    assert nobles.resources["wood"] == 320
+    assert nobles.resources["wood"] == 260
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 80
-    assert nobles.resources["tools"] == 280
+    assert nobles.resources["tools"] == 220
 
     assert nobles.class_overpopulation == 0

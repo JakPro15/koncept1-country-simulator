@@ -527,6 +527,65 @@ def test_grow_populations():
     assert class3.population == approx(241, abs=0.1)
 
 
+class Fake_Class_3:
+    def __init__(self, overpop):
+        self.class_overpopulation = overpop
+        self.resources = {
+            "food": 0,
+            "wood": 0,
+            "stone": 0,
+            "iron": 0,
+            "tools": 0
+        }
+        self.population_change = 0
+
+    def move_population(self, pop, demotion=False):
+        self.population_change += pop
+
+
+def test_do_demotions():
+    state = State_Data()
+    nobles = Fake_Class_3(1)
+    artisans = Fake_Class_3(10)
+    peasants = Fake_Class_3(100)
+    others = Fake_Class_3(0)
+    classes = [nobles, artisans, peasants, others]
+    state._classes = classes
+    state._do_demotions()
+    assert nobles.population_change == -1
+    assert nobles.resources == {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0
+    }
+    assert artisans.population_change == -10
+    assert artisans.resources == {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0
+    }
+    assert peasants.population_change == -99
+    assert peasants.resources == {
+        "food": 0,
+        "wood": 3,
+        "stone": 0,
+        "iron": 0,
+        "tools": 3
+    }
+    assert others.population_change == 110
+    assert others.resources == {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0
+    }
+
+
 # def test_do_month():
 #     state = State_Data("March", starting_year=1)
 #     population = 20

@@ -7,7 +7,6 @@ from .constants import (
     IRON_PRODUCTION,
     MINER_TOOL_USAGE
 )
-from math import ceil
 
 
 class Nobles(Class):
@@ -27,16 +26,16 @@ class Nobles(Class):
     def class_overpopulation(self):
         overpop = 0
         if self._resources["wood"] < 0:
-            overpop = max(overpop, ceil(-self._resources["wood"] / 10))
+            overpop = max(overpop, -self._resources["wood"] / 7)
         if self._resources["stone"] < 0:
-            overpop = max(overpop, ceil(-self._resources["stone"] / 4))
+            overpop = max(overpop, -self._resources["stone"] / 4)
         if self._resources["tools"] < 0:
-            overpop = max(overpop, ceil(-self._resources["tools"] / 4))
+            overpop = max(overpop, -self._resources["tools"])
         total_land = self._land["fields"] + self._land["woods"] + \
             self._land["stone_mines"] * 30 + self._land["iron_mines"] * 30
-        minimum_land = 30 * self._population
+        minimum_land = 40 * self._population
         if total_land < minimum_land:
-            overpop = max(overpop, ceil((minimum_land - total_land) / 30))
+            overpop = max(overpop, (minimum_land - total_land) / 40)
         return overpop
 
     def _add_population(self, number: int):

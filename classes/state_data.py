@@ -163,13 +163,13 @@ class State_Data:
         peasants.resources["wood"] += 3 * nobles.class_overpopulation
         peasants.resources["tools"] += 3 * nobles.class_overpopulation
         peasants.move_population(nobles.class_overpopulation)
-        nobles.move_population(nobles.class_overpopulation, demotion=True)
+        nobles.move_population(-nobles.class_overpopulation, demotion=True)
 
-        others.move_population(nobles.class_overpopulation)
-        artisans.move_population(nobles.class_overpopulation, demotion=True)
+        others.move_population(artisans.class_overpopulation)
+        artisans.move_population(-artisans.class_overpopulation, demotion=True)
 
-        others.move_population(nobles.class_overpopulation)
-        peasants.move_population(nobles.class_overpopulation, demotion=True)
+        others.move_population(peasants.class_overpopulation)
+        peasants.move_population(-peasants.class_overpopulation, demotion=True)
 
     def do_month(self):
         month_data = {
@@ -188,6 +188,7 @@ class State_Data:
             month_data["used"][class_name] = used
 
         self._do_payments()
+        self._do_demotions()
 
         self._market.do_trade()
         self.prices = self._market.prices
@@ -201,6 +202,8 @@ class State_Data:
         modifiers, grown = self._grow_populations()
         month_data["growth_modifiers"] = modifiers
         month_data["grown"] = grown
+        self._do_demotions()
+
         self._advance_month()
 
         month_data["resources_after"] = {

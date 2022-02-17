@@ -1,6 +1,7 @@
 from ..classes.state_data import State_Data
 from ..classes.artisans import Artisans
-from pytest import approx, raises
+from pytest import raises
+from math import ceil
 
 
 def test_constructor():
@@ -239,7 +240,7 @@ def test_grow_population_not_enough_resources():
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == -70
 
-    assert artisans.class_overpopulation == 24
+    assert ceil(artisans.class_overpopulation) == 24
 
 
 def test_optimal_resources_per_capita_february():
@@ -323,7 +324,7 @@ def test_produce_not_enough_resources():
     assert artisans.resources["iron"] == -5
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == 151
-    assert artisans.class_overpopulation == 3
+    assert ceil(artisans.class_overpopulation) == 3
 
 
 def test_consume_enough_resources():

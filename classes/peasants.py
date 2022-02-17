@@ -41,11 +41,11 @@ class Peasants(Class):
         overpop = 0
         for resource in resources:
             if self._resources[resource] < 0:
-                overpop = max(overpop, ceil(-self._resources[resource] / 3))
+                overpop = max(overpop, -self._resources[resource] / 3)
         total_land = self._land["fields"] + self._land["woods"]
         minimum_land = 15 * self._population
         if total_land < minimum_land:
-            overpop = max(overpop, ceil((minimum_land - total_land) / 15))
+            overpop = max(overpop, (minimum_land - total_land) / 15)
         return overpop
 
     def _add_population(self, number: int):

@@ -1,6 +1,7 @@
 from ..classes.state_data import State_Data
 from ..classes.peasants import Peasants
 from pytest import approx, raises
+from math import ceil
 
 
 def test_constructor():
@@ -203,7 +204,7 @@ def test_add_population_not_enough_both():
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == -70
 
-    assert peasants.class_overpopulation == 24
+    assert ceil(peasants.class_overpopulation) == 24
 
 
 def test_grow_population():
@@ -257,7 +258,7 @@ def test_grow_population_not_enough_resources():
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == -70
 
-    assert peasants.class_overpopulation == 24
+    assert ceil(peasants.class_overpopulation) == 24
 
 
 def test_optimal_resources_per_capita_february():
@@ -419,7 +420,7 @@ def test_produce_not_enough_tools():
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == -4
-    assert peasants.class_overpopulation == 2
+    assert ceil(peasants.class_overpopulation) == 2
 
 
 def test_consume_enough_resources():
