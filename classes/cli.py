@@ -18,16 +18,15 @@ def command_line_interface():
         answer = input("Your choice: ").strip()
 
     if answer == '0':
-        filename = "saves/starting.json"
+        dirname = "starting"
     else:
-        filename = "saves/" + input("Enter a filename: ").strip() + ".json"
-        while not os.path.isfile(filename):
-            print("Invalid filename")
-            filename = \
-                "saves/" + input("Enter a filename: ").strip() + ".json"
-    print("Loading " + filename)
+        dirname = input("Enter the name of the save: ").strip()
+        while not os.path.isfile("saves/" + dirname + "/state.json"):
+            print("Invalid save name")
+            dirname = input("Enter a filename: ").strip()
+    print("Loading " + "saves/" + dirname)
     interface = Interface()
-    interface.load_data(filename)
+    interface.load_data(dirname)
 
     while True:
         print("Enter a command. Enter help for a list of commands.")
