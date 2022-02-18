@@ -1,11 +1,11 @@
 from math import floor, log10
-from .constants import MONTHS, RESOURCES
+from .constants import MODIFIERS, MONTHS, RESOURCES
 
 
 def help():
     print("List of available commands:")
     print("exit - shuts down the program")
-    print("save <FILE> - saves the game state into saves/<FILE>.json file")
+    print("save <DIR> - saves the game state into saves/<DIR> directory")
     print("next <AMOUNT> - ends the month and advances to the next <AMOUNT> "
           "times - only once if <AMOUNT> not specified")
     print("history <STAT> <MONTHS> - shows the history of the "
@@ -15,6 +15,11 @@ def help():
     print("        population")
     print("        resources")
     print("        prices")
+    print("        growth_modifiers")
+    print("        grown")
+    print("        produced")
+    print("        used")
+    print("        consumed")
     print("    <MONTHS> decides how many months of history should"
           " be shown - left empty shows entire history")
 
@@ -64,8 +69,8 @@ def round_price(amount):
         digits = floor(log10(abs(amount))) + 1
         if digits < 1:
             digits = 1
-        if digits < 6:
-            precision = 6 - digits
+        if digits < 5:
+            precision = 5 - digits
             rounded = round(float(amount), precision)
             string = str(rounded)
             while len(string.split('.')[1]) < precision:
@@ -78,6 +83,16 @@ def round_price(amount):
 
 def history(args, interface):
     try:
+        assert len(args) in {2, 3}
+        assert args[1] in {
+            "population", "resources", "prices",
+            "growth_modifiers", "grown", "produced",
+            "used", "consumed"
+        }
+        if len(args) == 3:
+            assert args[2].isdigit()
+            assert int(args[2]) > 0
+
         if args[1] == "population":
             data = interface.history.population_stats()
             begin_month, data = set_months_of_history(args, interface, data)
@@ -101,7 +116,7 @@ def history(args, interface):
                 line = f"{get_month_string(index + begin_month)}"
                 for social_class in month_data:
                     for resource in RESOURCES:
-                        res = month_data[social_class][resource]
+                        res = month_data[social_class].get(resource, 0)
                         line += f"{round_resource(res): >7}"
                 print(line)
         elif args[1] == "prices":
@@ -116,20 +131,96 @@ def history(args, interface):
                       f" {round_price(month_data['stone']): >7}"
                       f" {round_price(month_data['iron']): >7}"
                       f" {round_price(month_data['tools']): >7}")
-    except Exception:
+        elif args[1] == "growth_modifiers":
+            data = interface.history.growth_modifiers_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Growth modifiers stats:")
+
+            print(" " * 14 + f"{'Nobles': ^27}{'Artisans': ^27}"
+                  f"{'Peasants': ^27}{'Others': ^27}")
+            print(" " * 13 + "    Base  Starving Freezing" * 4)
+            for index, month_data in enumerate(data):
+                line = f"{get_month_string(index + begin_month)}"
+                for social_class in month_data:
+                    for modifier in MODIFIERS:
+                        mod = month_data[social_class].get(modifier, 0)
+                        line += f" {round_price(mod): >8}"
+                print(line)
+        elif args[1] == "grown":
+            data = interface.history.growth_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Grown population stats:")
+            print(" " * 14 + "  Nobles Artisans Peasants   Others")
+            for index, month_data in enumerate(data):
+                print(f"{get_month_string(index + begin_month)}"
+                      f"{month_data['nobles']: >9}"
+                      f"{month_data['artisans']: >9}"
+                      f"{month_data['peasants']: >9}"
+                      f"{month_data['others']: >9}")
+        elif args[1] == "produced":
+            data = interface.history.production_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Produced resources stats:")
+            print(" " * 14 + f"{'Nobles': ^35}{'Artisans': ^35}"
+                  f"{'Peasants': ^35}{'Others': ^35}")
+            print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
+                  f"{'iron': ^6} {'tools': ^6}" * 4)
+            for index, month_data in enumerate(data):
+                line = f"{get_month_string(index + begin_month)}"
+                for social_class in month_data:
+                    for resource in RESOURCES:
+                        res = month_data[social_class].get(resource, 0)
+                        line += f"{round_resource(res): >7}"
+                print(line)
+        elif args[1] == "used":
+            data = interface.history.usage_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Resources used for production stats:")
+            print(" " * 14 + f"{'Nobles': ^35}{'Artisans': ^35}"
+                  f"{'Peasants': ^35}{'Others': ^35}")
+            print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
+                  f"{'iron': ^6} {'tools': ^6}" * 4)
+            for index, month_data in enumerate(data):
+                line = f"{get_month_string(index + begin_month)}"
+                for social_class in month_data:
+                    for resource in RESOURCES:
+                        res = month_data[social_class].get(resource, 0)
+                        line += f"{round_resource(res): >7}"
+                print(line)
+        elif args[1] == "consumed":
+            data = interface.history.consumption_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Consumed resources stats:")
+            print(" " * 14 + f"{'Nobles': ^14}{'Artisans': ^14}"
+                  f"{'Peasants': ^14}{'Others': ^14}")
+            print(" " * 13 + f" {'food': >6} {'wood': >6}" * 4)
+            for index, month_data in enumerate(data):
+                line = f"{get_month_string(index + begin_month)}"
+                for social_class in month_data:
+                    for resource in ['food', 'wood']:
+                        res = month_data[social_class].get(resource, 0)
+                        line += f"{round_resource(res): >7}"
+                print(line)
+    except AssertionError:
         print("Invalid syntax. See help for proper usage of history command")
 
 
 def save(args, interface):
     try:
+        assert len(args) == 2
+        assert args[1].isalpha()
         interface.save_data(f"saves/{args[1]}.json")
         print(f"Saved the game state into saves/{args[1]}.json")
-    except Exception:
+    except AssertionError:
         print("Invalid syntax. See help for proper usage of save command")
 
 
 def next(args, interface):
     try:
+        assert len(args) in {1, 2}
+        if len(args) > 1:
+            assert args[1].isdigit()
+            assert int(args[1]) > 0
         if len(args) == 1:
             interface.next_month()
         else:

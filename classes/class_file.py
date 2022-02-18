@@ -140,7 +140,11 @@ class Class:
         consumed["wood"] = WOOD_CONSUMPTION[month] * self._population
 
         self._resources["food"] -= consumed["food"]
+        if self._resources["food"] < 0:
+            consumed["food"] += self._resources["food"]
         self._resources["wood"] -= consumed["wood"]
+        if self._resources["wood"] < 0:
+            consumed["wood"] += self._resources["wood"]
 
         return consumed
 

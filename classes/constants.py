@@ -8,6 +8,9 @@ MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
 ]
+MODIFIERS = [
+    'Base', 'Starving', 'Freezing'
+]
 
 FOOD_CONSUMPTION = 1
 WOOD_CONSUMPTION = {

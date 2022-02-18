@@ -34,12 +34,14 @@ def command_line_interface():
         answer = input().strip().split(' ')
         if answer[0] == "help":
             help()
-        if answer[0] == "save":
+        elif answer[0] == "save":
             save(answer, interface)
-        if answer[0] == "exit":
+        elif answer[0] == "exit":
             print("Shutting down")
             return
-        if answer[0] == "history":
+        elif answer[0] == "history":
             history(answer, interface)
-        if answer[0] == "next":
+        elif answer[0] == "next":
             next(answer, interface)
+        else:
+            print("Invalid command. Enter help for a list of commands.")

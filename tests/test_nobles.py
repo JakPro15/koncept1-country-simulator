@@ -120,7 +120,7 @@ def test_add_population_not_enough_tools():
     assert nobles.resources["stone"] == 800
     assert nobles.resources["tools"] == -80
 
-    assert nobles.class_overpopulation == 20
+    assert nobles.class_overpopulation == 80
 
 
 def test_add_population_not_enough_stone():
@@ -174,7 +174,7 @@ def test_add_population_not_enough_wood():
     assert nobles.resources["stone"] == 9800
     assert nobles.resources["tools"] == 19800
 
-    assert nobles.class_overpopulation == 38
+    assert ceil(nobles.class_overpopulation) == 55
 
 
 def test_add_population_not_enough_all():
@@ -184,7 +184,7 @@ def test_add_population_not_enough_all():
         "wood": 120,
         "iron": 0,
         "stone": 8,
-        "tools": 80
+        "tools": 180
     }
     land = {
         "fields": 1000,
@@ -199,9 +199,9 @@ def test_add_population_not_enough_all():
     assert nobles.resources["wood"] == -380
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == -192
-    assert nobles.resources["tools"] == -120
+    assert nobles.resources["tools"] == -20
 
-    assert nobles.class_overpopulation == 48
+    assert ceil(nobles.class_overpopulation) == 55
 
 
 def test_grow_population():
@@ -721,7 +721,7 @@ def test_move_population_in_not_enough_resources():
     assert nobles.resources["stone"] == 800
     assert nobles.resources["tools"] == -80
 
-    assert nobles.class_overpopulation == 20
+    assert nobles.class_overpopulation == 80
 
 
 def test_move_population_in_not_enough_land():
