@@ -20,7 +20,7 @@ class History:
         for line in self.history_lines:
             command = line.split(' ')
             if command[0] == "next":
-                amount = command[1]
+                amount = int(command[1])
                 for _ in range(amount):
                     month_data = state.do_month()[key]
                     if double_dict:
@@ -32,6 +32,7 @@ class History:
                             month_data, ndigits
                         )
                     result.append(month_data)
+        return result
 
     @staticmethod
     def round_dict_values(dictionary, ndigits=None):
@@ -49,7 +50,7 @@ class History:
         return result
 
     def population_stats(self):
-        return self.obtain_data("population", False)
+        return self.obtain_data("population_after", False)
 
     def resources_stats(self):
         return self.obtain_data("resources_after", True, 2)

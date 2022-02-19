@@ -10,19 +10,13 @@ class Interface:
     state - the State_Data object the interface handles
     history - history of the State_Data object
     """
-    def __init__(self):
-        self.history = History()
-
     def load_data(self, dirname):
-        state_file_name = "saves/" + dirname + "/state.json"
-        with open(state_file_name, 'r') as load_file:
-            data = json.load(load_file)
-            self.state = State_Data()
-            self.state.from_dict(data)
-
         starting_state_file_name = "saves/" + dirname + "/starting_state.json"
         with open(starting_state_file_name, 'r') as load_file:
             starting_state = json.load(load_file)
+
+        self.state = State_Data()
+        self.state.from_dict(starting_state)
 
         history_file_name = "saves/" + dirname + "/history.txt"
         with open(history_file_name, 'r') as load_file:
@@ -31,15 +25,12 @@ class Interface:
                 history_lines.append(line)
 
         self.history = History(starting_state, history_lines)
+        self.state.execute_commands(history_lines)
 
     def save_data(self, dirname):
-        state_file_name = "saves/" + dirname + "/state.json"
-        with open(state_file_name, 'w') as save_file:
-            json.dump(save_file, self.state.to_dict(), indent=4)
-
         starting_state_file_name = "saves/" + dirname + "/starting_state.json"
         with open(starting_state_file_name, 'w') as save_file:
-            json.dump(save_file, self.history.starting_state_dict, indent=4)
+            json.dump(self.history.starting_state_dict, save_file, indent=4)
 
         history_file_name = "saves/" + dirname + "/history.txt"
         with open(history_file_name, 'w') as save_file:

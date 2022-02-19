@@ -21,9 +21,9 @@ def command_line_interface():
         dirname = "starting"
     else:
         dirname = input("Enter the name of the save: ").strip()
-        while not os.path.isfile("saves/" + dirname + "/state.json"):
+        while not os.path.isfile("saves/" + dirname + "/history.txt"):
             print("Invalid save name")
-            dirname = input("Enter a filename: ").strip()
+            dirname = input("Enter the name of the save: ").strip()
     print("Loading " + "saves/" + dirname)
     interface = Interface()
     interface.load_data(dirname)

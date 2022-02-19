@@ -219,3 +219,11 @@ class State_Data:
             "others": self.classes[3].population
         }
         return month_data
+
+    def execute_commands(self, commands):
+        for line in commands:
+            command = line.split(' ')
+            if command[0] == "next":
+                amount = int(command[1])
+                for _ in range(amount):
+                    self.do_month()

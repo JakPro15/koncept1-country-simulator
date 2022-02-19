@@ -1,4 +1,5 @@
 from math import floor, log10
+from os import mkdir
 from .constants import MODIFIERS, MONTHS, RESOURCES
 
 
@@ -209,7 +210,11 @@ def save(args, interface):
     try:
         assert len(args) == 2
         assert args[1].isalpha()
-        interface.save_data(f"saves/{args[1]}.json")
+        try:
+            mkdir(f"saves/{args[1]}")
+        except FileExistsError:
+            pass
+        interface.save_data(f"{args[1]}")
         print(f"Saved the game state into saves/{args[1]}.json")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of save command")
