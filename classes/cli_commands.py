@@ -1,6 +1,7 @@
 from math import floor, log10
 from os import mkdir
-from .constants import MODIFIERS, MONTHS, RESOURCES
+from .constants import MODIFIERS, MONTHS, RESOURCES, CLASSES
+from .history import History
 
 
 def help():
@@ -22,7 +23,13 @@ def help():
     print("        used")
     print("        consumed")
     print("    <MONTHS> decides how many months of history should"
-          " be shown - left empty shows entire history")
+          "    be shown - left empty shows entire history")
+    print("state <STAT> - shows the current state of the country")
+    print("    <STAT> decides which statistic to show")
+    print("    Valid values:")
+    print("        population")
+    print("        resources")
+    print("        prices")
 
 
 def set_months_of_history(args, interface, data):
@@ -213,9 +220,15 @@ def save(args, interface):
         try:
             mkdir(f"saves/{args[1]}")
         except FileExistsError:
-            pass
+            ans = input("This save already exists. Enter 1 to overwrite, "
+                        "0 to abort: ").strip()
+            while ans not in {'0', '1'}:
+                print("Invalid choice")
+                ans = input("Enter 1 to overwrite, 0 to abort: ").strip()
+            if ans == '0':
+                return
         interface.save_data(f"{args[1]}")
-        print(f"Saved the game state into saves/{args[1]}.json")
+        print(f"Saved the game state into saves/{args[1]}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of save command")
 
@@ -233,5 +246,56 @@ def next(args, interface):
                 interface.next_month()
         print(f"\nNew month: {interface.state.month} "
               f"{interface.state.year}\n")
-    except Exception:
+    except AssertionError:
         print("Invalid syntax. See help for proper usage of next command")
+
+
+def state(args, interface):
+    try:
+        assert len(args) in {2, 3}
+        assert args[1] in {
+            "population", "resources", "prices"
+        }
+        if len(args) == 3:
+            assert args[2].isdigit()
+            assert int(args[2]) > 0
+
+        if args[1] == "population":
+            data = [
+                round(social_class.population)
+                for social_class
+                in interface.state.classes
+            ]
+            print("Current population:")
+            for index, social_class in enumerate(CLASSES):
+                print(f"{social_class: >8}: {data[index]}")
+        elif args[1] == "resources":
+            data = [
+                History.round_dict_values(social_class.resources, 2)
+                for social_class
+                in interface.state.classes
+            ]
+            print("Current resources:")
+            line = " " * 8
+            for resource in RESOURCES:
+                line += f"{resource: >7}"
+            print(line)
+            for index, social_class in enumerate(CLASSES):
+                line = f"{social_class: >8}"
+                for resource in RESOURCES:
+                    line += f"{round_resource(data[index][resource]): >7}"
+                print(line)
+        elif args[1] == "prices":
+            data = interface.history.prices_stats()
+            begin_month, data = set_months_of_history(args, interface, data)
+            print("Prices stats:")
+            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools")
+            for index, month_data in enumerate(data):
+                print(f"{get_month_string(index + begin_month)}"
+                      f" {round_price(month_data['food']): >7}"
+                      f" {round_price(month_data['wood']): >7}"
+                      f" {round_price(month_data['stone']): >7}"
+                      f" {round_price(month_data['iron']): >7}"
+                      f" {round_price(month_data['tools']): >7}")
+    except AssertionError:
+        print("Invalid syntax. See help for proper usage of state command")

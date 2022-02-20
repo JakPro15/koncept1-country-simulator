@@ -1,3 +1,4 @@
+from math import inf, isnan
 from .class_file import Class
 
 
@@ -24,7 +25,12 @@ class Market:
         """
         result = {}
         for key in dict1:
-            result[key] = operation(dict1[key], dict2[key])
+            try:
+                result[key] = operation(dict1[key], dict2[key])
+            except ZeroDivisionError:
+                result[key] = inf
+            if isnan(result[key]):
+                result[key] = 0
         return result
 
     def _get_available_and_needed_resources(self):
@@ -72,42 +78,43 @@ class Market:
         Executes the classes purchasing resources they need.
         """
         for social_class in self.classes:
-            corrected_optimal_resources = Market.operation_on_dict(
-                social_class.optimal_resources,
-                {
-                    resource: amount / (self.prices[resource]
-                                        if self.prices[resource] > 0
-                                        else 0.1)
+            if social_class.population > 0:
+                corrected_optimal_resources = Market.operation_on_dict(
+                    social_class.optimal_resources,
+                    {
+                        resource: amount / (self.prices[resource]
+                                            if self.prices[resource] > 0
+                                            else 0.1)
+                        for resource, amount
+                        in social_class.optimal_resources.items()
+                    },
+                    lambda a, b: min(a, b)
+                )
+
+                social_class.money = sum(Market.operation_on_dict(
+                    social_class.resources,
+                    self.prices,
+                    lambda a, b: a * b
+                ).values())
+                needed_money = sum(Market.operation_on_dict(
+                    corrected_optimal_resources,
+                    self.prices,
+                    lambda a, b: a * b
+                ).values())
+                part_bought = min(social_class.money / needed_money, 1)
+                money_spent = min(social_class.money, needed_money)
+                social_class.money -= money_spent
+
+                social_class.new_resources = {
+                    resource: amount * part_bought
                     for resource, amount
-                    in social_class.optimal_resources.items()
-                },
-                lambda a, b: min(a, b)
-            )
-
-            social_class.money = sum(Market.operation_on_dict(
-                social_class.resources,
-                self.prices,
-                lambda a, b: a * b
-            ).values())
-            needed_money = sum(Market.operation_on_dict(
-                corrected_optimal_resources,
-                self.prices,
-                lambda a, b: a * b
-            ).values())
-            part_bought = min(social_class.money / needed_money, 1)
-            money_spent = min(social_class.money, needed_money)
-            social_class.money -= money_spent
-
-            social_class.new_resources = {
-                resource: amount * part_bought
-                for resource, amount
-                in corrected_optimal_resources.items()
-            }
-            self.available_resources = Market.operation_on_dict(
-                self.available_resources,
-                social_class.new_resources,
-                lambda a, b: a - b
-            )
+                    in corrected_optimal_resources.items()
+                }
+                self.available_resources = Market.operation_on_dict(
+                    self.available_resources,
+                    social_class.new_resources,
+                    lambda a, b: a - b
+                )
 
     def _buy_other_resources(self):
         """
@@ -119,11 +126,12 @@ class Market:
             lambda a, b: a * b
         ).values())
         for social_class in self.classes:
-            part_bought = social_class.money / total_price
-            for resource in social_class.new_resources:
-                social_class.new_resources[resource] += \
-                    self.available_resources[resource] * part_bought
-            social_class.money = 0
+            if social_class.population > 0:
+                part_bought = social_class.money / total_price
+                for resource in social_class.new_resources:
+                    social_class.new_resources[resource] += \
+                        self.available_resources[resource] * part_bought
+                social_class.money = 0
         self.available_resources = {
             "food": 0,
             "wood": 0,
@@ -137,9 +145,10 @@ class Market:
         Finalizes trade and deletes attributes used during trade calculations.
         """
         for social_class in self.classes:
-            del social_class.money
-            social_class.resources = social_class.new_resources
-            del social_class.new_resources
+            if social_class.population > 0:
+                del social_class.money
+                social_class.resources = social_class.new_resources
+                del social_class.new_resources
 
         del self.available_resources
         del self.needed_resources

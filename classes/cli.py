@@ -3,7 +3,8 @@ from .cli_commands import (
     help,
     save,
     history,
-    next
+    next,
+    state
 )
 import os.path
 
@@ -42,5 +43,7 @@ def command_line_interface():
             history(answer, interface)
         elif answer[0] == "next":
             next(answer, interface)
+        elif answer[0] == "state":
+            state(answer, interface)
         else:
             print("Invalid command. Enter help for a list of commands.")

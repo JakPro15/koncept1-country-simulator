@@ -160,16 +160,51 @@ class State_Data:
         artisans = self._classes[1]
         peasants = self._classes[2]
         others = self._classes[3]
-        peasants.resources["wood"] += 3 * nobles.class_overpopulation
-        peasants.resources["tools"] += 3 * nobles.class_overpopulation
-        peasants.move_population(nobles.class_overpopulation)
-        nobles.move_population(-nobles.class_overpopulation, demotion=True)
 
-        others.move_population(artisans.class_overpopulation)
-        artisans.move_population(-artisans.class_overpopulation, demotion=True)
+        nobles_moved = min(nobles.class_overpopulation, nobles.population)
+        peasants.resources["wood"] += 3 * nobles_moved
+        peasants.resources["tools"] += 3 * nobles_moved
+        peasants.move_population(nobles_moved)
+        nobles.move_population(-nobles_moved, demotion=True)
 
-        others.move_population(peasants.class_overpopulation)
-        peasants.move_population(-peasants.class_overpopulation, demotion=True)
+        artisans_moved = \
+            min(artisans.class_overpopulation, artisans.population)
+        others.move_population(artisans_moved)
+        artisans.move_population(-artisans_moved, demotion=True)
+
+        peasants_moved = \
+            min(peasants.class_overpopulation, peasants.population)
+        others.move_population(peasants_moved)
+        peasants.move_population(-peasants_moved, demotion=True)
+
+    @staticmethod
+    def _handle_empty_class(social_class, lower_class):
+        if social_class.population < 0.5:
+            social_class.population = 0
+            for resource in social_class.resources:
+                if social_class.resources[resource] > 0:
+                    lower_class.resources[resource] += \
+                        social_class.resources[resource]
+                social_class.resources[resource] = 0
+
+    @staticmethod
+    def _handle_negative_resources(social_class):
+        for resource in social_class.resources:
+            if social_class.resources[resource] < 0 and \
+                 abs(social_class.resources[resource]) < 0.001:
+                social_class.resources[resource] = 0
+
+    def _secure_classes(self):
+        nobles = self.classes[0]
+        artisans = self.classes[1]
+        peasants = self.classes[2]
+        others = self.classes[3]
+        self._handle_empty_class(nobles, peasants)
+        self._handle_empty_class(artisans, others)
+        self._handle_empty_class(peasants, others)
+        self._handle_empty_class(others, others)
+        for social_class in self.classes:
+            self._handle_negative_resources(social_class)
 
     def do_month(self):
         month_data = {
@@ -189,6 +224,7 @@ class State_Data:
 
         self._do_payments()
         self._do_demotions()
+        self._secure_classes()
 
         self._market.do_trade()
         self.prices = self._market.prices
@@ -203,6 +239,7 @@ class State_Data:
         month_data["growth_modifiers"] = modifiers
         month_data["grown"] = grown
         self._do_demotions()
+        self._secure_classes()
 
         self._advance_month()
 

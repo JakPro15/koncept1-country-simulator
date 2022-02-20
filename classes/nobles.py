@@ -59,8 +59,11 @@ class Nobles(Class):
         optimal_resources["food"] += 8
         optimal_resources["wood"] += 4.6
         optimal_resources["stone"] += 8
-        optimal_resources["tools"] += \
-            4 + (self._get_employees(assesment=True) * 3) / self.population
+        if self.population > 0:
+            optimal_resources["tools"] += \
+                4 + (self._get_employees(assesment=True) * 3) / self.population
+        else:
+            optimal_resources["tools"] = 4
         return optimal_resources
 
     def _get_total_land_for_produce(self):

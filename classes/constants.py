@@ -11,6 +11,9 @@ MONTHS = [
 MODIFIERS = [
     'Base', 'Starving', 'Freezing'
 ]
+CLASSES = [
+    "Nobles", "Artisans", "Peasants", "Others"
+]
 
 FOOD_CONSUMPTION = 1
 WOOD_CONSUMPTION = {
