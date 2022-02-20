@@ -4,7 +4,8 @@ from .cli_commands import (
     save,
     history,
     next,
-    state
+    state,
+    delete_save
 )
 import os.path
 
@@ -45,5 +46,7 @@ def command_line_interface():
             next(answer, interface)
         elif answer[0] == "state":
             state(answer, interface)
+        elif answer[0] == "del":
+            delete_save(answer)
         else:
             print("Invalid command. Enter help for a list of commands.")

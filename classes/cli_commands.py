@@ -1,5 +1,7 @@
 from math import floor, log10
 from os import mkdir
+from os.path import isdir
+from shutil import rmtree
 from .constants import MODIFIERS, MONTHS, RESOURCES, CLASSES
 from .history import History
 
@@ -8,6 +10,7 @@ def help():
     print("List of available commands:")
     print("exit - shuts down the program")
     print("save <DIR> - saves the game state into saves/<DIR> directory")
+    print("del <DIR> - deletes the game state from saves/<DIR> directory")
     print("next <AMOUNT> - ends the month and advances to the next <AMOUNT> "
           "times - only once if <AMOUNT> not specified")
     print("history <STAT> <MONTHS> - shows the history of the "
@@ -23,7 +26,7 @@ def help():
     print("        used")
     print("        consumed")
     print("    <MONTHS> decides how many months of history should"
-          "    be shown - left empty shows entire history")
+          "be shown - left empty shows entire history")
     print("state <STAT> - shows the current state of the country")
     print("    <STAT> decides which statistic to show")
     print("    Valid values:")
@@ -217,6 +220,9 @@ def save(args, interface):
     try:
         assert len(args) == 2
         assert args[1].isalpha()
+        if args[1] == "starting":
+            print("This save name is prohibited. Please choose another one")
+            return
         try:
             mkdir(f"saves/{args[1]}")
         except FileExistsError:
@@ -299,3 +305,28 @@ def state(args, interface):
                       f" {round_price(month_data['tools']): >7}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
+
+
+def delete_save(args):
+    try:
+        assert len(args) == 2
+        assert args[1].isalpha()
+        if args[1] == "starting":
+            print("Deleting this save is prohibited.")
+            return
+        if not isdir(f"saves/{args[1]}"):
+            print("This save does not exist.")
+            return
+
+        ans = input("Are you sure you want to delete this save? Enter 1 to "
+                    "delete, 0 to abort: ").strip()
+        while ans not in {'0', '1'}:
+            print("Invalid choice")
+            ans = input("Enter 1 to delete, 0 to abort: ").strip()
+        if ans == '0':
+            return
+
+        rmtree(f"saves/{args[1]}")
+        print(f"Removed the save saves/{args[1]}")
+    except AssertionError:
+        print("Invalid syntax. See help for proper usage of save command")
