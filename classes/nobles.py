@@ -1,5 +1,6 @@
 from .class_file import Class
 from .constants import (
+    OTHERS_WAGE,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
     WOOD_PRODUCTION,
@@ -7,6 +8,7 @@ from .constants import (
     IRON_PRODUCTION,
     MINER_TOOL_USAGE
 )
+from .arithmetic_dict import Arithmetic_Dict
 
 
 class Nobles(Class):
@@ -93,12 +95,12 @@ class Nobles(Class):
         Returns a dict of ratios: resource producers to total employees.
         """
         total_land = self._get_total_land_for_produce()
-        ratios = {
+        ratios = Arithmetic_Dict({
             "food": self._land["fields"] / total_land,
             "wood": self._land["woods"] / total_land,
             "stone": 2000 * self._land["stone_mines"] / total_land,
             "iron": 2000 * self._land["iron_mines"] / total_land
-        }
+        })
         return ratios
 
     def _get_ratioed_employees(self):
@@ -107,30 +109,21 @@ class Nobles(Class):
         """
         employees = self._get_employees()
         ratios = self._get_ratios()
-        ratioed = {
-            resource: value * employees
-            for resource, value
-            in ratios.items()
-        }
-        return ratioed
+        return ratios * employees
 
     def _get_produced_resources(self):
         """
         Returns a dict of resources produced this month.
         """
         month = self._parent.month
-        per_capita = {
+        per_capita = Arithmetic_Dict({
             "food": FOOD_PRODUCTION[month],
             "wood": WOOD_PRODUCTION,
             "stone": STONE_PRODUCTION,
             "iron": IRON_PRODUCTION
-        }
+        })
         employees = self._get_ratioed_employees()
-        produced = {
-            resource: per_capita[resource] * employees[resource]
-            for resource
-            in per_capita
-        }
+        produced = per_capita * employees
         return produced
 
     def _get_tools_used(self):
@@ -151,14 +144,13 @@ class Nobles(Class):
         Adds resources the class' employees produced in the current month.
         """
         produced = self._get_produced_resources()
-        used = {
+        used = Arithmetic_Dict({
             "tools": self._get_tools_used()
-        }
+        })
 
-        self._resources["tools"] -= used["tools"]
-        for resource in produced:
-            self._resources[resource] += 0.5 * produced[resource]
-            self._parent.payments[resource] += 0.5 * produced[resource]
+        self._resources -= used
+        self._resources += produced * (1 - OTHERS_WAGE)
+        self._parent.payments += produced * OTHERS_WAGE
 
         return produced, used
 

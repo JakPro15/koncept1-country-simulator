@@ -1,5 +1,6 @@
 from .class_file import Class
 from .constants import LAND_TYPES
+from .arithmetic_dict import Arithmetic_Dict
 
 
 class Others(Class):
@@ -28,7 +29,7 @@ class Others(Class):
         for land_type in LAND_TYPES:
             assert land_type in new_land
             assert new_land[land_type] == 0
-        self._land = new_land.copy()
+        self._land = Arithmetic_Dict(new_land)
 
     @property
     def class_overpopulation(self):
@@ -45,7 +46,7 @@ class Others(Class):
         """
         Adds resources the class produced in the current month.
         """
-        produced = {}
-        used = {}
+        produced = Arithmetic_Dict({})
+        used = Arithmetic_Dict({})
 
         return produced, used

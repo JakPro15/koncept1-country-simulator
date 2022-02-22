@@ -6,6 +6,7 @@ from .constants import (
     LAND_TYPES
 )
 from math import ceil
+from .arithmetic_dict import Arithmetic_Dict
 
 
 class Peasants(Class):
@@ -33,7 +34,7 @@ class Peasants(Class):
                 assert new_land[land_type] == 0
             else:
                 assert new_land[land_type] >= 0
-        self._land = new_land.copy()
+        self._land = Arithmetic_Dict(new_land)
 
     @property
     def class_overpopulation(self):
@@ -93,17 +94,16 @@ class Peasants(Class):
         food_peasants = ceil(food_ratio * peasants)
         wood_peasants = peasants - food_peasants
 
-        produced = {
+        produced = Arithmetic_Dict({
             "food": food_per_capita * food_peasants,
             "wood": wood_per_capita * wood_peasants
-        }
-        used = {
+        })
+        used = Arithmetic_Dict({
             "tools": PEASANT_TOOL_USAGE[month] * peasants
-        }
+        })
 
-        self._resources["tools"] -= used["tools"]
-        self._resources["food"] += produced["food"]
-        self._resources["wood"] += produced["wood"]
+        self._resources -= used
+        self._resources += produced
 
         return produced, used
 

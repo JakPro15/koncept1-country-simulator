@@ -1,4 +1,4 @@
-from math import floor, log10
+from math import floor, inf, log10
 from os import mkdir
 from os.path import isdir
 from shutil import rmtree
@@ -74,7 +74,9 @@ def round_resource(amount):
 
 
 def round_price(amount):
-    if amount == 0:
+    if amount == inf:
+        string = '∞'
+    elif amount == 0:
         string = '0.0000'
     else:
         digits = floor(log10(abs(amount))) + 1

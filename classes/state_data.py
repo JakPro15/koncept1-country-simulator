@@ -12,6 +12,7 @@ from .artisans import Artisans
 from .peasants import Peasants
 from .others import Others
 from .market import Market
+from .arithmetic_dict import Arithmetic_Dict
 
 
 class State_Data:
@@ -29,20 +30,20 @@ class State_Data:
                  starting_year: int = 0):
         self.year = starting_year
         self.month = starting_month
-        self.payments = {
+        self.payments = Arithmetic_Dict({
             "food": 0,
             "wood": 0,
             "iron": 0,
             "stone": 0,
             "tools": 0
-        }
-        self.prices = {
+        })
+        self.prices = Arithmetic_Dict({
             "food": 0,
             "wood": 0,
             "iron": 0,
             "stone": 0,
             "tools": 0
-        }
+        })
 
     @property
     def month(self):
@@ -151,8 +152,8 @@ class State_Data:
         return modifiers, grown
 
     def _do_payments(self):
+        self.classes[3].resources += self.payments
         for resource in self.payments:
-            self.classes[3].resources[resource] += self.payments[resource]
             self.payments[resource] = 0
 
     def _do_demotions(self):
@@ -182,10 +183,10 @@ class State_Data:
         if social_class.population < 0.5:
             social_class.population = 0
             for resource in social_class.resources:
-                if social_class.resources[resource] > 0:
-                    lower_class.resources[resource] += \
-                        social_class.resources[resource]
+                amount = social_class.resources[resource]
                 social_class.resources[resource] = 0
+                if amount > 0:
+                    lower_class.resources[resource] += amount
 
     @staticmethod
     def _handle_negative_resources(social_class):
@@ -205,6 +206,31 @@ class State_Data:
         self._handle_empty_class(others, others)
         for social_class in self.classes:
             self._handle_negative_resources(social_class)
+
+    # @staticmethod
+    # def _get_increase(price_ratio):
+    #     return 0.1 / (price_ratio ** (1 / 3)) + 0.1
+
+    # def _do_promotions(self):
+    #     nobles = self.classes[0]
+    #     artisans = self.classes[1]
+    #     peasants = self.classes[2]
+    #     others = self.classes[3]
+
+    #     # Peasants:
+    #     food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
+    #     wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
+    #     price_ratio = max(food_price_ratio, wood_price_ratio)
+    #     peasant_increase = self._get_increase(price_ratio)
+    #     increase_price = 3 * self.prices["wood"] + 3 * self.prices["tools"]
+    #     others_wealth = others.resources["food"] * self.prices["food"] + \
+    #         others.resources["wood"] * self.prices["wood"]
+    #     paid = min(
+    #         peasant_increase * increase_price,
+    #         others.population * increase_price,
+    #         others_wealth)
+    #     transferred = paid / increase_price
+    #     part_paid = paid / others_wealth
 
     def do_month(self):
         month_data = {

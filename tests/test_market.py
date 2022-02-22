@@ -4,6 +4,8 @@ from ..classes.nobles import Nobles
 from ..classes.artisans import Artisans
 from ..classes.peasants import Peasants
 from ..classes.others import Others
+from ..classes.arithmetic_dict import Arithmetic_Dict
+from ..classes.constants import DEFAULT_PRICES
 from pytest import approx
 
 
@@ -22,73 +24,17 @@ def test_constructor():
     assert market.classes[3] == others
 
 
-def test_operation_on_dict_addition():
-    resources = {
-        "food": 400,
-        "wood": 300,
-        "stone": 200,
-        "iron": 100,
-        "tools": 50
-    }
-    resources1 = {
-        "food": 40,
-        "wood": 30,
-        "stone": 20,
-        "iron": 100,
-        "tools": 50
-    }
-    assert Market.operation_on_dict(
-        resources,
-        resources1,
-        lambda a, b: a + b
-    ) == {
-        "food": 440,
-        "wood": 330,
-        "stone": 220,
-        "iron": 200,
-        "tools": 100
-    }
-
-
-def test_operation_on_dict_division():
-    resources = {
-        "food": 400,
-        "wood": 300,
-        "stone": 200,
-        "iron": 100,
-        "tools": 5
-    }
-    resources1 = {
-        "food": 40,
-        "wood": 30,
-        "stone": 20,
-        "iron": 100,
-        "tools": 50
-    }
-    assert Market.operation_on_dict(
-        resources,
-        resources1,
-        lambda a, b: a / b
-    ) == {
-        "food": 10,
-        "wood": 10,
-        "stone": 10,
-        "iron": 1,
-        "tools": approx(0.1)
-    }
-
-
 class Fake_State_Data(State_Data):
     def __init__(self, available_employees, month="January"):
         self._month = month
         self.available_employees = available_employees
-        self.payments = {
+        self.payments = Arithmetic_Dict({
             "food": 0,
             "wood": 0,
             "iron": 0,
             "stone": 0,
             "tools": 0
-        }
+        })
 
     def get_available_employees(self):
         return self.available_employees
@@ -96,8 +42,9 @@ class Fake_State_Data(State_Data):
 
 class Fake_Social_Class:
     def __init__(self, resources, optimal_resources):
-        self.resources = resources
-        self.optimal_resources = optimal_resources
+        self.resources = Arithmetic_Dict(resources)
+        self.optimal_resources = Arithmetic_Dict(optimal_resources)
+        self.population = 1
 
 
 def test_get_available_and_needed_resources():
@@ -222,11 +169,11 @@ def test_set_prices():
     market._get_available_and_needed_resources()
     market._set_prices()
     assert market.prices == {
-        "food": approx(0.483, abs=1e-3),
-        "wood": approx(0.469, abs=1e-3),
-        "stone": approx(0.455, abs=1e-3),
+        "food": approx(0.483 * DEFAULT_PRICES["food"], abs=1e-2),
+        "wood": approx(0.469 * DEFAULT_PRICES["wood"], abs=1e-2),
+        "stone": approx(0.455 * DEFAULT_PRICES["stone"], abs=1e-2),
         "iron": 0,
-        "tools": approx(0.429, abs=1e-3)
+        "tools": approx(0.429 * DEFAULT_PRICES["tools"], abs=1e-2)
     }
 
 
@@ -282,7 +229,13 @@ def test_buy_needed_resources():
     social_classes = [class1, class2, class3]
     market = Market(social_classes)
     market._get_available_and_needed_resources()
-    market._set_prices()
+    market.prices = Arithmetic_Dict({
+        "food": 0.483,
+        "wood": 0.469,
+        "stone": 0.455,
+        "iron": 0,
+        "tools": 0.429
+    })
     market._buy_needed_resources()
 
     assert class1.money == approx(91.8, abs=0.1)
@@ -327,6 +280,13 @@ def test_buy_other_resources():
         "iron": 100,
         "tools": 100
     }
+    new_resources = {
+        "food": 50,
+        "wood": 50,
+        "stone": 50,
+        "iron": 0,
+        "tools": 50
+    }
     optimal_resources = {
         "food": 50,
         "wood": 50,
@@ -335,6 +295,8 @@ def test_buy_other_resources():
         "tools": 50
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
+    class1.money = 91.8
+    class1.new_resources = Arithmetic_Dict(new_resources)
 
     resources = {
         "food": 200,
@@ -342,6 +304,13 @@ def test_buy_other_resources():
         "stone": 200,
         "iron": 200,
         "tools": 200
+    }
+    new_resources = {
+        "food": 50,
+        "wood": 50,
+        "stone": 50,
+        "iron": 0,
+        "tools": 50
     }
     optimal_resources = {
         "food": 50,
@@ -351,6 +320,8 @@ def test_buy_other_resources():
         "tools": 50
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
+    class2.money = 275.4
+    class2.new_resources = Arithmetic_Dict(new_resources)
 
     resources = {
         "food": 10,
@@ -358,6 +329,13 @@ def test_buy_other_resources():
         "stone": 30,
         "iron": 40,
         "tools": 50
+    }
+    new_resources = {
+        "food": 26.9,
+        "wood": 26.9,
+        "stone": 26.9,
+        "iron": 0,
+        "tools": 26.9
     }
     optimal_resources = {
         "food": 50,
@@ -367,12 +345,32 @@ def test_buy_other_resources():
         "tools": 50
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
+    class3.money = 0
+    class3.new_resources = Arithmetic_Dict(new_resources)
 
     social_classes = [class1, class2, class3]
     market = Market(social_classes)
-    market._get_available_and_needed_resources()
-    market._set_prices()
-    market._buy_needed_resources()
+    market.available_resources = Arithmetic_Dict({
+        "food": 183.1,
+        "wood": 193.1,
+        "stone": 203.1,
+        "iron": 340,
+        "tools": 223.1
+    })
+    market.needed_resources = Arithmetic_Dict({
+        "food": 150,
+        "wood": 150,
+        "stone": 150,
+        "iron": 0,
+        "tools": 150
+    })
+    market.prices = Arithmetic_Dict({
+        "food": 0.483,
+        "wood": 0.469,
+        "stone": 0.455,
+        "iron": 0,
+        "tools": 0.429
+    })
     market._buy_other_resources()
 
     assert class1.money == 0

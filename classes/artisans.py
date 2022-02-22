@@ -6,6 +6,7 @@ from .constants import (
     ARTISAN_WOOD_USAGE,
     TOOLS_PRODUCTION
 )
+from .arithmetic_dict import Arithmetic_Dict
 
 
 class Artisans(Class):
@@ -26,11 +27,11 @@ class Artisans(Class):
         return self._land.copy()
 
     @land.setter
-    def land(self, new_land: dict):
+    def land(self, new_land: Arithmetic_Dict):
         for land_type in LAND_TYPES:
             assert land_type in new_land
             assert new_land[land_type] == 0
-        self._land = new_land.copy()
+        self._land = Arithmetic_Dict(new_land)
 
     @property
     def class_overpopulation(self):
@@ -72,18 +73,17 @@ class Artisans(Class):
         """
         artisans = self._population
 
-        produced = {
+        produced = Arithmetic_Dict({
             "tools": TOOLS_PRODUCTION * artisans
-        }
-        used = {
+        })
+        used = Arithmetic_Dict({
             "wood": TOOLS_PRODUCTION * artisans * ARTISAN_WOOD_USAGE,
             "iron": TOOLS_PRODUCTION * artisans * ARTISAN_IRON_USAGE,
             "tools": ARTISAN_TOOL_USAGE * artisans
-        }
+        })
 
-        self._resources["wood"] -= used["wood"]
-        self._resources["iron"] -= used["iron"]
-        self._resources["tools"] += produced["tools"] - used["tools"]
+        self._resources -= used
+        self._resources += produced
 
         return produced, used
 

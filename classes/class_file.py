@@ -4,6 +4,7 @@ from .constants import (
     RESOURCES,
     WOOD_CONSUMPTION
 )
+from .arithmetic_dict import Arithmetic_Dict
 
 
 class Class:
@@ -68,7 +69,7 @@ class Class:
     def resources(self, new_resources: dict):
         for resource in RESOURCES:
             assert resource in new_resources
-        self._resources = new_resources.copy()
+        self._resources = Arithmetic_Dict(new_resources)
 
     @property
     def land(self):
@@ -79,7 +80,7 @@ class Class:
         for land_type in LAND_TYPES:
             assert land_type in new_land
             assert new_land[land_type] >= 0
-        self._land = new_land.copy()
+        self._land = Arithmetic_Dict(new_land)
 
     @property
     def optimal_resources(self):
@@ -88,7 +89,7 @@ class Class:
             for resource, resource_per_capita
             in self.optimal_resources_per_capita().items()
         }
-        return opt_res
+        return Arithmetic_Dict(opt_res)
 
     @property
     def missing_resources(self):
@@ -97,7 +98,7 @@ class Class:
             for resource, amount
             in self.resources.items()
         }
-        return miss_res
+        return Arithmetic_Dict(miss_res)
 
     def grow_population(self, modifier: float):
         """
@@ -126,7 +127,7 @@ class Class:
             "stone": 0,
             "tools": 0
         }
-        return optimal_resources
+        return Arithmetic_Dict(optimal_resources)
 
     def consume(self):
         """
@@ -135,14 +136,14 @@ class Class:
         """
         month = self._parent.month
 
-        consumed = {}
-        consumed["food"] = FOOD_CONSUMPTION * self._population
-        consumed["wood"] = WOOD_CONSUMPTION[month] * self._population
+        consumed = {
+            "food": FOOD_CONSUMPTION * self._population,
+            "wood": WOOD_CONSUMPTION[month] * self._population
+        }
 
-        self._resources["food"] -= consumed["food"]
+        self._resources -= consumed
         if self._resources["food"] < 0:
             consumed["food"] += self._resources["food"]
-        self._resources["wood"] -= consumed["wood"]
         if self._resources["wood"] < 0:
             consumed["wood"] += self._resources["wood"]
 
@@ -159,8 +160,8 @@ class Class:
 
     def to_dict(self):
         data = {
-            "population": self.population,
-            "resources": self.resources,
-            "land": self.land
+            "population": dict(self.population),
+            "resources": dict(self.resources),
+            "land": dict(self.land)
         }
         return data
