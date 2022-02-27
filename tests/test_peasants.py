@@ -1,5 +1,11 @@
 from ..classes.state_data import State_Data
 from ..classes.peasants import Peasants
+from ..classes.constants import (
+    WOOD_CONSUMPTION,
+    PEASANT_TOOL_USAGE,
+    FOOD_PRODUCTION,
+    WOOD_PRODUCTION
+)
 from pytest import approx, raises
 from math import ceil
 
@@ -266,10 +272,10 @@ def test_optimal_resources_per_capita_february():
     peasants = Peasants(state, 200)
     opt_res = peasants.optimal_resources_per_capita()
     assert opt_res["food"] == 4
-    assert opt_res["wood"] == 3.4
+    assert opt_res["wood"] == sum(WOOD_CONSUMPTION.values()) + 1
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.9
+    assert opt_res["tools"] == sum(PEASANT_TOOL_USAGE.values()) / 2 + 1
 
 
 def test_optimal_resources_per_capita_august():
@@ -277,10 +283,10 @@ def test_optimal_resources_per_capita_august():
     peasants = Peasants(state, 200)
     opt_res = peasants.optimal_resources_per_capita()
     assert opt_res["food"] == 4
-    assert opt_res["wood"] == 3.4
+    assert opt_res["wood"] == sum(WOOD_CONSUMPTION.values()) + 1
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.9
+    assert opt_res["tools"] == sum(PEASANT_TOOL_USAGE.values()) / 2 + 1
 
 
 def test_calculate_optimal_resources_february():
@@ -288,10 +294,10 @@ def test_calculate_optimal_resources_february():
     peasants = Peasants(state, 200)
     opt_res = peasants.optimal_resources
     assert opt_res["food"] == 800
-    assert opt_res["wood"] == 680
+    assert opt_res["wood"] == (sum(WOOD_CONSUMPTION.values()) + 1) * 200
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 380
+    assert opt_res["tools"] == (sum(PEASANT_TOOL_USAGE.values()) / 2 + 1) * 200
 
 
 def test_calculate_optimal_resources_october():
@@ -299,10 +305,10 @@ def test_calculate_optimal_resources_october():
     peasants = Peasants(state, 100)
     opt_res = peasants.optimal_resources
     assert opt_res["food"] == 400
-    assert opt_res["wood"] == 340
+    assert opt_res["wood"] == (sum(WOOD_CONSUMPTION.values()) + 1) * 100
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 190
+    assert opt_res["tools"] == (sum(PEASANT_TOOL_USAGE.values()) / 2 + 1) * 100
 
 
 def test_get_working_peasants_not_enough_land():
@@ -363,11 +369,12 @@ def test_produce_enough_land_and_tools():
     peasants = Peasants(state, 60, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == 140
-    assert peasants.resources["wood"] == 220
+    assert peasants.resources["food"] == 100 + FOOD_PRODUCTION["March"] * 40
+    assert peasants.resources["wood"] == 200 + WOOD_PRODUCTION * 20
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
-    assert peasants.resources["tools"] == 94
+    assert peasants.resources["tools"] == \
+        100 - PEASANT_TOOL_USAGE["March"] * 60
     assert peasants.class_overpopulation == 0
 
 
@@ -389,11 +396,13 @@ def test_produce_not_enough_land():
     peasants = Peasants(state, 80, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == 250
-    assert peasants.resources["wood"] == 225
+    assert peasants.resources["food"] == \
+        100 + FOOD_PRODUCTION["September"] * 50
+    assert peasants.resources["wood"] == 200 + WOOD_PRODUCTION * 25
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
-    assert peasants.resources["tools"] == approx(77.5)
+    assert peasants.resources["tools"] == \
+        100 - PEASANT_TOOL_USAGE["September"] * 75
     assert peasants.class_overpopulation == 0
 
 
@@ -404,7 +413,7 @@ def test_produce_not_enough_tools():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 32
+        "tools": 10
     }
     land = {
         "fields": 1000,
@@ -415,12 +424,15 @@ def test_produce_not_enough_tools():
     peasants = Peasants(state, 60, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == 340
-    assert peasants.resources["wood"] == 220
+    assert peasants.resources["food"] == \
+        100 + FOOD_PRODUCTION["August"] * 40
+    assert peasants.resources["wood"] == 200 + WOOD_PRODUCTION * 20
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
-    assert peasants.resources["tools"] == -4
-    assert ceil(peasants.class_overpopulation) == 2
+    assert peasants.resources["tools"] == \
+        10 - PEASANT_TOOL_USAGE["August"] * 60
+    assert peasants.class_overpopulation == \
+        (10 - PEASANT_TOOL_USAGE["August"] * 60) / -3
 
 
 def test_consume_enough_resources():

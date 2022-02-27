@@ -1,6 +1,13 @@
 from ..classes.state_data import State_Data
 from ..classes.artisans import Artisans
-from pytest import raises
+from ..classes.constants import (
+    WOOD_CONSUMPTION,
+    ARTISAN_WOOD_USAGE,
+    ARTISAN_IRON_USAGE,
+    ARTISAN_TOOL_USAGE,
+    TOOLS_PRODUCTION
+)
+from pytest import approx, raises
 from math import ceil
 
 
@@ -248,10 +255,11 @@ def test_optimal_resources_per_capita_february():
     artisans = Artisans(state, 200)
     opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
-    assert opt_res["wood"] == 3.7
-    assert opt_res["iron"] == 2.5
+    assert opt_res["wood"] == \
+        sum(WOOD_CONSUMPTION.values()) + ARTISAN_WOOD_USAGE * 4 + 0.5
+    assert opt_res["iron"] == ARTISAN_IRON_USAGE * 4 + 0.5
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.6
+    assert opt_res["tools"] == ARTISAN_TOOL_USAGE * 4 + 1
 
 
 def test_optimal_resources_per_capita_august():
@@ -259,10 +267,11 @@ def test_optimal_resources_per_capita_august():
     artisans = Artisans(state, 200)
     opt_res = artisans.optimal_resources_per_capita()
     assert opt_res["food"] == 4
-    assert opt_res["wood"] == 3.7
-    assert opt_res["iron"] == 2.5
+    assert opt_res["wood"] == \
+        sum(WOOD_CONSUMPTION.values()) + ARTISAN_WOOD_USAGE * 4 + 0.5
+    assert opt_res["iron"] == ARTISAN_IRON_USAGE * 4 + 0.5
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 1.6
+    assert opt_res["tools"] == ARTISAN_TOOL_USAGE * 4 + 1
 
 
 def test_calculate_optimal_resources_february():
@@ -270,10 +279,11 @@ def test_calculate_optimal_resources_february():
     artisans = Artisans(state, 200)
     opt_res = artisans.optimal_resources
     assert opt_res["food"] == 800
-    assert opt_res["wood"] == 740
-    assert opt_res["iron"] == 500
+    assert opt_res["wood"] == \
+        (sum(WOOD_CONSUMPTION.values()) + ARTISAN_WOOD_USAGE * 4 + 0.5) * 200
+    assert opt_res["iron"] == (ARTISAN_IRON_USAGE * 4 + 0.5) * 200
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 320
+    assert opt_res["tools"] == (ARTISAN_TOOL_USAGE * 4 + 1) * 200
 
 
 def test_calculate_optimal_resources_october():
@@ -281,10 +291,11 @@ def test_calculate_optimal_resources_october():
     artisans = Artisans(state, 100)
     opt_res = artisans.optimal_resources
     assert opt_res["food"] == 400
-    assert opt_res["wood"] == 370
-    assert opt_res["iron"] == 250
+    assert opt_res["wood"] == \
+        (sum(WOOD_CONSUMPTION.values()) + ARTISAN_WOOD_USAGE * 4 + 0.5) * 100
+    assert opt_res["iron"] == (ARTISAN_IRON_USAGE * 4 + 0.5) * 100
     assert opt_res["stone"] == 0
-    assert opt_res["tools"] == 160
+    assert opt_res["tools"] == (ARTISAN_TOOL_USAGE * 4 + 1) * 100
 
 
 def test_produce_enough_resources():
@@ -300,10 +311,11 @@ def test_produce_enough_resources():
 
     artisans.produce()
     assert artisans.resources["food"] == 100
-    assert artisans.resources["wood"] == 188
-    assert artisans.resources["iron"] == 70
+    assert artisans.resources["wood"] == 200 - ARTISAN_WOOD_USAGE * 60
+    assert artisans.resources["iron"] == 100 - ARTISAN_IRON_USAGE * 60
     assert artisans.resources["stone"] == 0
-    assert artisans.resources["tools"] == 151
+    assert artisans.resources["tools"] == \
+        100 + (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 60
     assert artisans.class_overpopulation == 0
 
 
@@ -320,11 +332,13 @@ def test_produce_not_enough_resources():
 
     artisans.produce()
     assert artisans.resources["food"] == 100
-    assert artisans.resources["wood"] == 188
-    assert artisans.resources["iron"] == -5
+    assert artisans.resources["wood"] == 200 - ARTISAN_WOOD_USAGE * 60
+    assert artisans.resources["iron"] == 25 - ARTISAN_IRON_USAGE * 60
     assert artisans.resources["stone"] == 0
-    assert artisans.resources["tools"] == 151
-    assert ceil(artisans.class_overpopulation) == 3
+    assert artisans.resources["tools"] == \
+        100 + (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 60
+    assert artisans.class_overpopulation == \
+        approx((25 - ARTISAN_IRON_USAGE * 60) / -2)
 
 
 def test_consume_enough_resources():

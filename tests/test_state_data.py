@@ -537,6 +537,7 @@ class Fake_Class_3:
             "iron": 0,
             "tools": 0
         }
+        self.population = 1000
         self.population_change = 0
 
     def move_population(self, pop, demotion=False):

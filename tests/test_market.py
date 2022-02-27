@@ -515,23 +515,23 @@ def test_do_trade():
     market.do_trade()
 
     assert class1.resources == {
-        "food": approx(95.8, abs=0.1),
-        "wood": approx(98.3, abs=0.1),
-        "stone": approx(100.8, abs=0.1),
-        "iron": approx(85.0, abs=0.1),
-        "tools": approx(105.8, abs=0.1)
+        "food": approx(95.0, abs=0.1),
+        "wood": approx(97.5, abs=0.1),
+        "stone": approx(100.1, abs=0.1),
+        "iron": approx(87.3, abs=0.1),
+        "tools": approx(103.0, abs=0.1)
     }
     assert class2.resources == {
-        "food": approx(187.3, abs=0.1),
-        "wood": approx(194.8, abs=0.1),
-        "stone": approx(202.3, abs=0.1),
-        "iron": approx(255.0, abs=0.1),
-        "tools": approx(217.3, abs=0.1)
+        "food": approx(180.2, abs=0.1),
+        "wood": approx(187.6, abs=0.1),
+        "stone": approx(195.1, abs=0.1),
+        "iron": approx(252.7, abs=0.1),
+        "tools": approx(217.1, abs=0.1)
     }
     assert class3.resources == {
-        "food": approx(26.9, abs=0.1),
-        "wood": approx(26.9, abs=0.1),
-        "stone": approx(26.9, abs=0.1),
+        "food": approx(34.8, abs=0.1),
+        "wood": approx(34.8, abs=0.1),
+        "stone": approx(34.8, abs=0.1),
         "iron": 0,
-        "tools": approx(26.9, abs=0.1)
+        "tools": approx(29.9, abs=0.1)
     }

@@ -1,5 +1,16 @@
+from classes.constants import (
+    FOOD_PRODUCTION,
+    IRON_PRODUCTION,
+    MINER_TOOL_USAGE,
+    OTHERS_WAGE,
+    PEASANT_TOOL_USAGE,
+    STONE_PRODUCTION,
+    WOOD_CONSUMPTION,
+    WOOD_PRODUCTION
+)
 from ..classes.state_data import State_Data
 from ..classes.nobles import Nobles
+from ..classes.arithmetic_dict import Arithmetic_Dict
 from pytest import approx
 from math import ceil
 
@@ -276,7 +287,7 @@ def test_optimal_resources_per_capita_january():
     nobles = Nobles(state, 80, resources, land)
     opt_res = nobles.optimal_resources_per_capita()
     assert opt_res["food"] == 12
-    assert opt_res["wood"] == 7
+    assert opt_res["wood"] == 4.6 + sum(WOOD_CONSUMPTION.values())
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 8
     assert opt_res["tools"] == approx(7.75)
@@ -300,7 +311,7 @@ def test_optimal_resources_per_capita_july():
     nobles = Nobles(state, 80, resources, land)
     opt_res = nobles.optimal_resources_per_capita()
     assert opt_res["food"] == 12
-    assert opt_res["wood"] == 7
+    assert opt_res["wood"] == 4.6 + sum(WOOD_CONSUMPTION.values())
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 8
     assert opt_res["tools"] == approx(22.75)
@@ -324,7 +335,7 @@ def test_calculate_optimal_resources():
     nobles = Nobles(state, 200, resources, land)
     opt_res = nobles.optimal_resources
     assert opt_res["food"] == 2400
-    assert opt_res["wood"] == 1400
+    assert opt_res["wood"] == (4.6 + sum(WOOD_CONSUMPTION.values())) * 200
     assert opt_res["iron"] == 0
     assert opt_res["stone"] == 1600
     assert opt_res["tools"] == 2300
@@ -347,13 +358,13 @@ class Fake_State_Data(State_Data):
     def __init__(self, available_employees, month="January"):
         self._month = month
         self.available_employees = available_employees
-        self.payments = {
+        self.payments = Arithmetic_Dict({
             "food": 0,
             "wood": 0,
             "iron": 0,
             "stone": 0,
             "tools": 0
-        }
+        })
 
     def get_available_employees(self):
         return self.available_employees
@@ -479,9 +490,9 @@ def test_get_produced_resources_february():
 
     produced = nobles._get_produced_resources()
     assert produced["food"] == 0
-    assert produced["wood"] == 15
-    assert produced["stone"] == 40
-    assert produced["iron"] == 20
+    assert produced["wood"] == WOOD_PRODUCTION * 15
+    assert produced["stone"] == STONE_PRODUCTION * 40
+    assert produced["iron"] == IRON_PRODUCTION * 20
 
 
 def test_get_produced_resources_august():
@@ -502,10 +513,10 @@ def test_get_produced_resources_august():
     nobles = Nobles(state, 80, resources, land)
 
     produced = nobles._get_produced_resources()
-    assert produced["food"] == 150
-    assert produced["wood"] == 15
-    assert produced["stone"] == 40
-    assert produced["iron"] == 20
+    assert produced["food"] == FOOD_PRODUCTION["August"] * 25
+    assert produced["wood"] == WOOD_PRODUCTION * 15
+    assert produced["stone"] == STONE_PRODUCTION * 40
+    assert produced["iron"] == IRON_PRODUCTION * 20
 
 
 def test_get_tools_used_february():
@@ -525,7 +536,8 @@ def test_get_tools_used_february():
     }
     nobles = Nobles(state, 80, resources, land)
 
-    assert nobles._get_tools_used() == 24
+    assert nobles._get_tools_used() == \
+        MINER_TOOL_USAGE * 60 + PEASANT_TOOL_USAGE["February"] * 40
 
 
 def test_get_tools_used_august():
@@ -545,7 +557,8 @@ def test_get_tools_used_august():
     }
     nobles = Nobles(state, 80, resources, land)
 
-    assert nobles._get_tools_used() == 48
+    assert nobles._get_tools_used() == \
+        MINER_TOOL_USAGE * 60 + PEASANT_TOOL_USAGE["August"] * 40
 
 
 def test_produce():
@@ -566,16 +579,22 @@ def test_produce():
     nobles = Nobles(state, 80, resources, land)
     nobles.produce()
 
-    assert nobles.resources["food"] == 75
-    assert nobles.resources["wood"] == approx(7.5)
-    assert nobles.resources["stone"] == 20
-    assert nobles.resources["iron"] == 10
-    assert nobles.resources["tools"] == 1152
+    assert nobles.resources["food"] == \
+        (1 - OTHERS_WAGE) * FOOD_PRODUCTION["August"] * 25
+    assert nobles.resources["wood"] == \
+        (1 - OTHERS_WAGE) * WOOD_PRODUCTION * 15
+    assert nobles.resources["stone"] == \
+        (1 - OTHERS_WAGE) * STONE_PRODUCTION * 40
+    assert nobles.resources["iron"] == \
+        (1 - OTHERS_WAGE) * IRON_PRODUCTION * 20
+    assert nobles.resources["tools"] == \
+        1200 - MINER_TOOL_USAGE * 60 - PEASANT_TOOL_USAGE["August"] * 40
 
-    assert state.payments["food"] == 75
-    assert state.payments["wood"] == approx(7.5)
-    assert state.payments["stone"] == 20
-    assert state.payments["iron"] == 10
+    assert state.payments["food"] == \
+        OTHERS_WAGE * FOOD_PRODUCTION["August"] * 25
+    assert state.payments["wood"] == OTHERS_WAGE * WOOD_PRODUCTION * 15
+    assert state.payments["stone"] == OTHERS_WAGE * STONE_PRODUCTION * 40
+    assert state.payments["iron"] == OTHERS_WAGE * IRON_PRODUCTION * 20
 
     assert nobles.class_overpopulation == 0
 

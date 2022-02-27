@@ -160,7 +160,7 @@ class Class:
 
     def to_dict(self):
         data = {
-            "population": dict(self.population),
+            "population": self.population,
             "resources": dict(self.resources),
             "land": dict(self.land)
         }

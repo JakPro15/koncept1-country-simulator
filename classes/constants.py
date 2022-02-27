@@ -37,7 +37,6 @@ WOOD_CONSUMPTION = {
 
 FOOD_PRODUCTION = {
     # Per fully working peasant or employee (20 ha of land), per month.
-    # IF MODIFYING, MODIFY ALSO PEASANT_FOOD_NEEDED
     'January': 0,
     'February': 0,
     'March': 1,
