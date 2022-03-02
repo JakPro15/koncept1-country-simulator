@@ -90,16 +90,17 @@ class Nobles(Class):
             wanted_employees = total_land // 20
         return min(wanted_employees, available_employees)
 
-    def _get_ratios(self):
+    def _get_ratios(self, prices):
         """
         Returns a dict of ratios: resource producers to total employees.
         """
-        total_land = self._get_total_land_for_produce()
+        prices = self.parent.prices
+        total_prices = sum(prices.values()) - prices["tools"]
         ratios = Arithmetic_Dict({
-            "food": self._land["fields"] / total_land,
-            "wood": self._land["woods"] / total_land,
-            "stone": 2000 * self._land["stone_mines"] / total_land,
-            "iron": 2000 * self._land["iron_mines"] / total_land
+            "food": prices["food"] / total_prices,
+            "wood": prices["wood"] / total_prices,
+            "stone": prices["stone"] / total_prices,
+            "iron": prices["iron"] / total_prices
         })
         return ratios
 
@@ -108,8 +109,47 @@ class Nobles(Class):
         Returns a dict of particular resource producing employees.
         """
         employees = self._get_employees()
-        ratios = self._get_ratios()
-        return ratios * employees
+        prices = self.parent.prices
+        ratios = self._get_ratios(prices)
+        ratioed = ratios * employees
+
+        checked = 0
+        while checked < 4:
+            checked = 0
+            if ratioed["food"] * 20 > self._land["fields"]:
+                employees = ratioed["food"] - self._land["fields"] / 20
+                ratioed["food"] = self._land["fields"] / 20
+                prices["food"] = 0
+                ratios = self._get_ratios(prices)
+                ratioed += ratios * employees
+            else:
+                checked += 1
+            if ratioed["wood"] * 20 > self._land["woods"]:
+                employees = ratioed["wood"] - self._land["woods"] / 20
+                ratioed["wood"] = self._land["woods"] / 20
+                prices["wood"] = 0
+                ratios = self._get_ratios(prices)
+                ratioed += ratios * employees
+            else:
+                checked += 1
+            if ratioed["stone"] > self._land["stone_mines"] * 100:
+                employees = ratioed["stone"] - self._land["stone_mines"] * 100
+                ratioed["stone"] = self._land["stone_mines"] * 100
+                prices["stone"] = 0
+                ratios = self._get_ratios(prices)
+                ratioed += ratios * employees
+            else:
+                checked += 1
+            if ratioed["iron"] > self._land["iron_mines"] * 100:
+                employees = ratioed["iron"] - self._land["iron_mines"] * 100
+                ratioed["iron"] = self._land["iron_mines"] * 100
+                prices["iron"] = 0
+                ratios = self._get_ratios(prices)
+                ratioed += ratios * employees
+            else:
+                checked += 1
+
+        return ratioed
 
     def _get_produced_resources(self):
         """

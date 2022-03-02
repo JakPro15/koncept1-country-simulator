@@ -1,5 +1,6 @@
 from ..auxiliaries.constants import (
     DEFAULT_GROWTH_FACTOR,
+    DEFAULT_PRICES,
     FREEZING_MORTALITY,
     MONTHS,
     STARVATION_MORTALITY,
@@ -37,13 +38,7 @@ class State_Data:
             "stone": 0,
             "tools": 0
         })
-        self.prices = Arithmetic_Dict({
-            "food": 0,
-            "wood": 0,
-            "iron": 0,
-            "stone": 0,
-            "tools": 0
-        })
+        self.prices = DEFAULT_PRICES
 
     @property
     def month(self):

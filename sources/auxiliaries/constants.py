@@ -41,19 +41,19 @@ FOOD_PRODUCTION = {
     'February': 0,
     'March': 1,
     'April': 2,
-    'May': 1.5,
-    'June': 1,
-    'July': 2.5,
-    'August': 6,
-    'September': 3,
-    'October': 1,
+    'May': 2,
+    'June': 1.5,
+    'July': 3,
+    'August': 7.1,
+    'September': 3.5,
+    'October': 1.5,
     'November': 0,
     'December': 0
 }
-WOOD_PRODUCTION = 1.2
+WOOD_PRODUCTION = 1.5
 IRON_PRODUCTION = 1
 STONE_PRODUCTION = 1
-TOOLS_PRODUCTION = 1
+TOOLS_PRODUCTION = 1.2
 
 PEASANT_TOOL_USAGE = {
     # Per fully working peasant or serf-peasant (20 ha of land), per month.
@@ -88,10 +88,10 @@ INDEX_TO_CLASS_NAME = {
 
 DEFAULT_PRICES = Arithmetic_Dict({
     "food": 1,
-    "wood": 1,
-    "stone": 2.044444,
-    "iron": 2.044444,
-    "tools": 2.722222
+    "wood": 1.2,
+    "stone": 2.334545,
+    "iron": 2.334545,
+    "tools": 2.672727
 })
 
 OTHERS_WAGE = 0.5

@@ -1,4 +1,6 @@
+from numpy import average
 from ...auxiliaries.constants import (
+    DEFAULT_PRICES,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
     WOOD_PRODUCTION,
@@ -6,7 +8,6 @@ from ...auxiliaries.constants import (
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .class_file import Class
-from math import ceil
 
 
 class Peasants(Class):
@@ -88,11 +89,21 @@ class Peasants(Class):
         food_per_capita = FOOD_PRODUCTION[month]
         wood_per_capita = WOOD_PRODUCTION
 
-        total_land = self.land["fields"] + self.land["woods"]
-        food_ratio = self.land["fields"] / total_land
+        wood_needed_ratio = self.parent.prices["wood"] / DEFAULT_PRICES["wood"]
+        needed_wood_peasants_relative = wood_needed_ratio / WOOD_PRODUCTION
+        needed_food_peasants_relative = 1 / average(FOOD_PRODUCTION.values())
+        ideal_wood_ratio = needed_wood_peasants_relative / \
+            (needed_food_peasants_relative + needed_wood_peasants_relative)
 
-        food_peasants = ceil(food_ratio * peasants)
-        wood_peasants = peasants - food_peasants
+        if ideal_wood_ratio * peasants * 20 > self._land["woods"]:
+            wood_peasants = self._land["woods"] / 20
+        else:
+            wood_peasants = ideal_wood_ratio * peasants * 20
+
+        food_peasants = peasants - wood_peasants
+        if food_peasants * 20 > self._land["fields"]:
+            wood_peasants += food_peasants - self._land["fields"] / 20
+            food_peasants = self._land["fields"] / 20
 
         produced = Arithmetic_Dict({
             "food": food_per_capita * food_peasants,
