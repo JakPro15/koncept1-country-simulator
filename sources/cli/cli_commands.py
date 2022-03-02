@@ -1,9 +1,9 @@
+from ..auxiliaries.constants import MODIFIERS, MONTHS, RESOURCES, CLASSES
+from ..abstract_interface.history import History
 from math import floor, inf, log10
 from os import mkdir
 from os.path import isdir
 from shutil import rmtree
-from .constants import MODIFIERS, MONTHS, RESOURCES, CLASSES
-from .history import History
 
 
 def help():

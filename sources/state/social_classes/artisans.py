@@ -1,12 +1,12 @@
-from .constants import LAND_TYPES
-from .class_file import Class
-from .constants import (
+from ...auxiliaries.constants import (
+    LAND_TYPES,
     ARTISAN_IRON_USAGE,
     ARTISAN_TOOL_USAGE,
     ARTISAN_WOOD_USAGE,
     TOOLS_PRODUCTION
 )
-from .arithmetic_dict import Arithmetic_Dict
+from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
+from .class_file import Class
 
 
 class Artisans(Class):

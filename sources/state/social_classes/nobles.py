@@ -1,5 +1,4 @@
-from .class_file import Class
-from .constants import (
+from ...auxiliaries.constants import (
     OTHERS_WAGE,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
@@ -8,7 +7,8 @@ from .constants import (
     IRON_PRODUCTION,
     MINER_TOOL_USAGE
 )
-from .arithmetic_dict import Arithmetic_Dict
+from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
+from .class_file import Class
 
 
 class Nobles(Class):

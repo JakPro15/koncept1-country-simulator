@@ -1,10 +1,10 @@
-from .constants import (
+from ...auxiliaries.constants import (
     FOOD_CONSUMPTION,
     LAND_TYPES,
     RESOURCES,
     WOOD_CONSUMPTION
 )
-from .arithmetic_dict import Arithmetic_Dict
+from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 
 
 class Class:

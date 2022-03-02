@@ -1,6 +1,6 @@
-from .arithmetic_dict import Arithmetic_Dict
-from .constants import DEFAULT_PRICES
-from .class_file import Class
+from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
+from ..auxiliaries.constants import DEFAULT_PRICES
+from .social_classes.class_file import Class
 
 
 class Market:

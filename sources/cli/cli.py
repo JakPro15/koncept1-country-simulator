@@ -1,4 +1,4 @@
-from .interface import Interface
+from ..abstract_interface.interface import Interface
 from .cli_commands import (
     help,
     save,

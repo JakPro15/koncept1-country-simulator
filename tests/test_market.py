@@ -1,11 +1,11 @@
-from ..classes.market import Market
-from ..classes.state_data import State_Data
-from ..classes.nobles import Nobles
-from ..classes.artisans import Artisans
-from ..classes.peasants import Peasants
-from ..classes.others import Others
-from ..classes.arithmetic_dict import Arithmetic_Dict
-from ..classes.constants import DEFAULT_PRICES
+from ..sources.state.market import Market
+from ..sources.state.state_data import State_Data
+from ..sources.state.social_classes.nobles import Nobles
+from ..sources.state.social_classes.artisans import Artisans
+from ..sources.state.social_classes.peasants import Peasants
+from ..sources.state.social_classes.others import Others
+from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
+from ..sources.auxiliaries.constants import DEFAULT_PRICES
 from pytest import approx
 
 

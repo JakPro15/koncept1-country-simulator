@@ -1,4 +1,4 @@
-from ..classes.arithmetic_dict import Arithmetic_Dict
+from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from math import inf
 from pytest import approx
 

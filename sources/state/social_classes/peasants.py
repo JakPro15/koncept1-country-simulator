@@ -1,12 +1,12 @@
-from .class_file import Class
-from .constants import (
+from ...auxiliaries.constants import (
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
     WOOD_PRODUCTION,
     LAND_TYPES
 )
+from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
+from .class_file import Class
 from math import ceil
-from .arithmetic_dict import Arithmetic_Dict
 
 
 class Peasants(Class):

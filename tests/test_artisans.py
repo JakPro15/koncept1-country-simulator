@@ -1,6 +1,6 @@
-from ..classes.state_data import State_Data
-from ..classes.artisans import Artisans
-from ..classes.constants import (
+from ..sources.state.state_data import State_Data
+from ..sources.state.social_classes.artisans import Artisans
+from ..sources.auxiliaries.constants import (
     WOOD_CONSUMPTION,
     ARTISAN_WOOD_USAGE,
     ARTISAN_IRON_USAGE,

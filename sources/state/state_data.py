@@ -1,4 +1,4 @@
-from .constants import (
+from ..auxiliaries.constants import (
     DEFAULT_GROWTH_FACTOR,
     FREEZING_MORTALITY,
     MONTHS,
@@ -6,13 +6,13 @@ from .constants import (
     WOOD_CONSUMPTION,
     INDEX_TO_CLASS_NAME
 )
-from .class_file import Class
-from .nobles import Nobles
-from .artisans import Artisans
-from .peasants import Peasants
-from .others import Others
+from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
+from .social_classes.class_file import Class
+from .social_classes.nobles import Nobles
+from .social_classes.artisans import Artisans
+from .social_classes.peasants import Peasants
+from .social_classes.others import Others
 from .market import Market
-from .arithmetic_dict import Arithmetic_Dict
 
 
 class State_Data:

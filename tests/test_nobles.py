@@ -1,4 +1,4 @@
-from classes.constants import (
+from ..sources.auxiliaries.constants import (
     FOOD_PRODUCTION,
     IRON_PRODUCTION,
     MINER_TOOL_USAGE,
@@ -8,9 +8,9 @@ from classes.constants import (
     WOOD_CONSUMPTION,
     WOOD_PRODUCTION
 )
-from ..classes.state_data import State_Data
-from ..classes.nobles import Nobles
-from ..classes.arithmetic_dict import Arithmetic_Dict
+from ..sources.state.state_data import State_Data
+from ..sources.state.social_classes.nobles import Nobles
+from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from pytest import approx
 from math import ceil
 

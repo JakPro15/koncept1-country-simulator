@@ -1,5 +1,5 @@
-from ..classes.state_data import State_Data
-from ..classes.others import Others
+from ..sources.state.state_data import State_Data
+from ..sources.state.social_classes.others import Others
 from pytest import raises
 
 

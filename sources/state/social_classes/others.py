@@ -1,6 +1,6 @@
+from ...auxiliaries.constants import LAND_TYPES
+from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .class_file import Class
-from .constants import LAND_TYPES
-from .arithmetic_dict import Arithmetic_Dict
 
 
 class Others(Class):

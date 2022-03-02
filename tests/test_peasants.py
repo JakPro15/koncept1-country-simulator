@@ -1,6 +1,6 @@
-from ..classes.state_data import State_Data
-from ..classes.peasants import Peasants
-from ..classes.constants import (
+from ..sources.state.state_data import State_Data
+from ..sources.state.social_classes.peasants import Peasants
+from ..sources.auxiliaries.constants import (
     WOOD_CONSUMPTION,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
