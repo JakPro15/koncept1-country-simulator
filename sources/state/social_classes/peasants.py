@@ -99,7 +99,7 @@ class Peasants(Class):
         if ideal_wood_ratio * peasants * 20 > self._land["woods"]:
             wood_peasants = self._land["woods"] / 20
         else:
-            wood_peasants = ideal_wood_ratio * peasants * 20
+            wood_peasants = ideal_wood_ratio * peasants
 
         food_peasants = peasants - wood_peasants
         if food_peasants * 20 > self._land["fields"]:

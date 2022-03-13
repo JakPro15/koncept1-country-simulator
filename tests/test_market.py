@@ -461,7 +461,7 @@ def test_delete_trade_attributes():
         }
 
 
-def test_do_trade():
+def test_do_trade():  # EXCEL CALCULATIONS USED
     resources = {
         "food": 100,
         "wood": 100,
@@ -515,23 +515,23 @@ def test_do_trade():
     market.do_trade()
 
     assert class1.resources == {
-        "food": approx(95.0, abs=0.1),
-        "wood": approx(97.5, abs=0.1),
-        "stone": approx(100.1, abs=0.1),
-        "iron": approx(87.3, abs=0.1),
-        "tools": approx(103.0, abs=0.1)
+        "food": approx(95.2, abs=0.1),
+        "wood": approx(97.8, abs=0.1),
+        "stone": approx(99.5, abs=0.1),
+        "iron": approx(87.6, abs=0.1),
+        "tools": approx(103.6, abs=0.1)
     }
     assert class2.resources == {
         "food": approx(180.2, abs=0.1),
-        "wood": approx(187.6, abs=0.1),
-        "stone": approx(195.1, abs=0.1),
-        "iron": approx(252.7, abs=0.1),
-        "tools": approx(217.1, abs=0.1)
+        "wood": approx(187.7, abs=0.1),
+        "stone": approx(198.0, abs=0.1),
+        "iron": approx(252.4, abs=0.1),
+        "tools": approx(216.3, abs=0.1)
     }
     assert class3.resources == {
-        "food": approx(34.8, abs=0.1),
-        "wood": approx(34.8, abs=0.1),
-        "stone": approx(34.8, abs=0.1),
+        "food": approx(34.5, abs=0.1),
+        "wood": approx(34.5, abs=0.1),
+        "stone": approx(32.5, abs=0.1),
         "iron": 0,
-        "tools": approx(29.9, abs=0.1)
+        "tools": approx(30.1, abs=0.1)
     }

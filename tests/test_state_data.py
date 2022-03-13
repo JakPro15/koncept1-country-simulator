@@ -1,6 +1,7 @@
 from ..sources.state.state_data import (
     State_Data, Nobles, Artisans, Peasants, Others
 )
+from ..sources.auxiliaries.constants import DEFAULT_PRICES
 from pytest import approx
 
 
@@ -14,13 +15,7 @@ def test_constructor():
         "iron": 0,
         "tools": 0
     }
-    assert state.prices == {
-        "food": 0,
-        "wood": 0,
-        "iron": 0,
-        "stone": 0,
-        "tools": 0
-    }
+    assert state.prices == DEFAULT_PRICES
 
 
 def test_default_constructor():
@@ -33,13 +28,7 @@ def test_default_constructor():
         "iron": 0,
         "tools": 0
     }
-    assert state.prices == {
-        "food": 0,
-        "wood": 0,
-        "iron": 0,
-        "stone": 0,
-        "tools": 0
-    }
+    assert state.prices == DEFAULT_PRICES
 
 
 def test_advance_month():

@@ -351,7 +351,7 @@ def test_get_working_peasants_enough_land():
     assert peasants._get_working_peasants() == 60
 
 
-def test_produce_enough_land_and_tools():
+def test_produce_enough_land_and_tools():  # EXCEL CALCULATIONS USED
     state = State_Data("March")
     resources = {
         "food": 100,
@@ -362,19 +362,18 @@ def test_produce_enough_land_and_tools():
     }
     land = {
         "fields": 1000,
-        "woods": 500,
+        "woods": 1000,
         "stone_mines": 0,
         "iron_mines": 0
     }
     peasants = Peasants(state, 60, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == 100 + FOOD_PRODUCTION["March"] * 40
-    assert peasants.resources["wood"] == 200 + WOOD_PRODUCTION * 20
+    assert peasants.resources["food"] == approx(100 + 27.3, abs=0.1)
+    assert peasants.resources["wood"] == approx(200 + 49.1, abs=0.1)
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
-    assert peasants.resources["tools"] == \
-        100 - PEASANT_TOOL_USAGE["March"] * 60
+    assert peasants.resources["tools"] == 100 - 6
     assert peasants.class_overpopulation == 0
 
 
@@ -406,7 +405,7 @@ def test_produce_not_enough_land():
     assert peasants.class_overpopulation == 0
 
 
-def test_produce_not_enough_tools():
+def test_produce_not_enough_tools():  # EXCEL CALCULATIONS USED
     state = State_Data("August")
     resources = {
         "food": 100,
@@ -417,22 +416,19 @@ def test_produce_not_enough_tools():
     }
     land = {
         "fields": 1000,
-        "woods": 500,
+        "woods": 1000,
         "stone_mines": 0,
         "iron_mines": 0
     }
     peasants = Peasants(state, 60, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == \
-        100 + FOOD_PRODUCTION["August"] * 40
-    assert peasants.resources["wood"] == 200 + WOOD_PRODUCTION * 20
+    assert peasants.resources["food"] == approx(100 + 193.6, abs=0.1)
+    assert peasants.resources["wood"] == approx(200 + 49.1, abs=0.1)
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
-    assert peasants.resources["tools"] == \
-        10 - PEASANT_TOOL_USAGE["August"] * 60
-    assert peasants.class_overpopulation == \
-        (10 - PEASANT_TOOL_USAGE["August"] * 60) / -3
+    assert peasants.resources["tools"] == 10 - 24
+    assert peasants.class_overpopulation == approx((10 - 24) / -3)
 
 
 def test_consume_enough_resources():
