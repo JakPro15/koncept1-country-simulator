@@ -1,4 +1,3 @@
-from numpy import average
 from ...auxiliaries.constants import (
     DEFAULT_PRICES,
     PEASANT_TOOL_USAGE,
@@ -90,10 +89,12 @@ class Peasants(Class):
         wood_per_capita = WOOD_PRODUCTION
 
         wood_needed_ratio = self.parent.prices["wood"] / DEFAULT_PRICES["wood"]
-        needed_wood_peasants_relative = wood_needed_ratio / WOOD_PRODUCTION
-        needed_food_peasants_relative = 1 / average(FOOD_PRODUCTION.values())
-        ideal_wood_ratio = needed_wood_peasants_relative / \
-            (needed_food_peasants_relative + needed_wood_peasants_relative)
+        food_needed_ratio = self.parent.prices["food"] / DEFAULT_PRICES["food"]
+        needed_wood_peasants_rel = wood_needed_ratio / WOOD_PRODUCTION
+        needed_food_peasants_rel = \
+            food_needed_ratio / (sum(FOOD_PRODUCTION.values()) / 12)
+        ideal_wood_ratio = needed_wood_peasants_rel / \
+            (needed_food_peasants_rel + needed_wood_peasants_rel)
 
         if ideal_wood_ratio * peasants * 20 > self._land["woods"]:
             wood_peasants = self._land["woods"] / 20

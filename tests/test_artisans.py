@@ -311,8 +311,10 @@ def test_produce_enough_resources():
 
     artisans.produce()
     assert artisans.resources["food"] == 100
-    assert artisans.resources["wood"] == 200 - ARTISAN_WOOD_USAGE * 60
-    assert artisans.resources["iron"] == 100 - ARTISAN_IRON_USAGE * 60
+    assert artisans.resources["wood"] == \
+        200 - ARTISAN_WOOD_USAGE * 60 * TOOLS_PRODUCTION
+    assert artisans.resources["iron"] == \
+        100 - ARTISAN_IRON_USAGE * 60 * TOOLS_PRODUCTION
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == \
         100 + (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 60
@@ -332,13 +334,15 @@ def test_produce_not_enough_resources():
 
     artisans.produce()
     assert artisans.resources["food"] == 100
-    assert artisans.resources["wood"] == 200 - ARTISAN_WOOD_USAGE * 60
-    assert artisans.resources["iron"] == 25 - ARTISAN_IRON_USAGE * 60
+    assert artisans.resources["wood"] == \
+        200 - ARTISAN_WOOD_USAGE * 60 * TOOLS_PRODUCTION
+    assert artisans.resources["iron"] == \
+        25 - ARTISAN_IRON_USAGE * 60 * TOOLS_PRODUCTION
     assert artisans.resources["stone"] == 0
     assert artisans.resources["tools"] == \
         100 + (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 60
     assert artisans.class_overpopulation == \
-        approx((25 - ARTISAN_IRON_USAGE * 60) / -2)
+        approx((25 - ARTISAN_IRON_USAGE * 60 * TOOLS_PRODUCTION) / -2)
 
 
 def test_consume_enough_resources():

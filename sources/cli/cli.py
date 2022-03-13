@@ -1,5 +1,6 @@
 from ..abstract_interface.interface import Interface
 from .cli_commands import (
+    ShutDownCommand,
     help,
     save,
     history,
@@ -31,22 +32,25 @@ def command_line_interface():
     interface.load_data(dirname)
 
     while True:
-        print("Enter a command. Enter help for a list of commands.")
-        answer = input().strip().split(' ')
-        if answer[0] == "help":
-            help()
-        elif answer[0] == "save":
-            save(answer, interface)
-        elif answer[0] == "exit":
+        try:
+            print("Enter a command. Enter help for a list of commands.")
+            answer = input().strip().split(' ')
+            if answer[0] == "help":
+                help()
+            elif answer[0] == "save":
+                save(answer, interface)
+            elif answer[0] == "exit":
+                raise ShutDownCommand
+            elif answer[0] == "history":
+                history(answer, interface)
+            elif answer[0] == "next":
+                next(answer, interface)
+            elif answer[0] == "state":
+                state(answer, interface)
+            elif answer[0] == "del":
+                delete_save(answer)
+            else:
+                print("Invalid command. Enter help for a list of commands.")
+        except ShutDownCommand:
             print("Shutting down")
             return
-        elif answer[0] == "history":
-            history(answer, interface)
-        elif answer[0] == "next":
-            next(answer, interface)
-        elif answer[0] == "state":
-            state(answer, interface)
-        elif answer[0] == "del":
-            delete_save(answer)
-        else:
-            print("Invalid command. Enter help for a list of commands.")

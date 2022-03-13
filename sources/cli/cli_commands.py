@@ -1,9 +1,14 @@
+from sources.state.state_data import EveryoneDeadError
 from ..auxiliaries.constants import MODIFIERS, MONTHS, RESOURCES, CLASSES
 from ..abstract_interface.history import History
 from math import floor, inf, log10
 from os import mkdir
 from os.path import isdir
 from shutil import rmtree
+
+
+class ShutDownCommand(Exception):
+    pass
 
 
 def help():
@@ -256,6 +261,10 @@ def next(args, interface):
               f"{interface.state.year}\n")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of next command")
+    except EveryoneDeadError:
+        print("GAME OVER")
+        print("There is not a living person left in your country.")
+        raise ShutDownCommand
 
 
 def state(args, interface):

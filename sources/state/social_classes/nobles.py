@@ -96,12 +96,20 @@ class Nobles(Class):
         """
         prices = self.parent.prices
         total_prices = sum(prices.values()) - prices["tools"]
-        ratios = Arithmetic_Dict({
-            "food": prices["food"] / total_prices,
-            "wood": prices["wood"] / total_prices,
-            "stone": prices["stone"] / total_prices,
-            "iron": prices["iron"] / total_prices
-        })
+        if total_prices != 0:
+            ratios = Arithmetic_Dict({
+                "food": prices["food"] / total_prices,
+                "wood": prices["wood"] / total_prices,
+                "stone": prices["stone"] / total_prices,
+                "iron": prices["iron"] / total_prices
+            })
+        else:
+            ratios = Arithmetic_Dict({
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0
+            })
         return ratios
 
     def _get_ratioed_employees(self):

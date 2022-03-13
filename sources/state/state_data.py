@@ -16,6 +16,10 @@ from .social_classes.others import Others
 from .market import Market
 
 
+class EveryoneDeadError(Exception):
+    pass
+
+
 class State_Data:
     """
     Represents the data of an entire state, including all its classes.
@@ -228,6 +232,13 @@ class State_Data:
     #     part_paid = paid / others_wealth
 
     def do_month(self):
+        someone_alive = False
+        for social_class in self.classes:
+            if social_class.population > 0:
+                someone_alive = True
+        if not someone_alive:
+            raise EveryoneDeadError
+
         month_data = {
             "year": self.year,
             "month": self.month,
