@@ -2,6 +2,7 @@ from ..sources.state.state_data import (
     State_Data, Nobles, Artisans, Peasants, Others
 )
 from ..sources.auxiliaries.constants import DEFAULT_PRICES
+from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from pytest import approx
 
 
@@ -589,4 +590,166 @@ def test_do_demotions():
         "stone": 0,
         "iron": 0,
         "tools": 0
+    }
+
+
+def test_get_max_increase_percent():
+    assert State_Data._get_max_increase_percent(0.1) == 0
+    assert State_Data._get_max_increase_percent(1) == 0
+    assert State_Data._get_max_increase_percent(2) == \
+        approx(0.0413, abs=0.0001)
+    assert State_Data._get_max_increase_percent(8) == \
+        approx(0.1)
+    assert State_Data._get_max_increase_percent(2000) == \
+        approx(0.1841, abs=0.0001)
+
+
+class Fake_Class_4:
+    def __init__(self, resources):
+        self.population = 100
+        self.resources = Arithmetic_Dict(resources.copy())
+
+    def move_population(self, pop):
+        self.population += pop
+
+
+def test_do_one_promotion_max_increase():
+    resources = {
+        "food": 1000,
+        "wood": 1000,
+        "stone": 1000,
+        "iron": 1000,
+        "tools": 1000
+    }
+    class_from = Fake_Class_4(resources)
+    class_to = Fake_Class_4(resources)
+    state = State_Data()
+    state._classes = [class_from, class_to]
+    state.prices = {
+        "food": 1,
+        "wood": 2,
+        "stone": 3,
+        "iron": 4,
+        "tools": 5
+    }
+    state._do_one_promotion(class_from, class_to, 10, 15)
+
+    assert class_from.population == 90
+    assert class_from.resources == {
+        "food": 990,
+        "wood": 990,
+        "stone": 990,
+        "iron": 990,
+        "tools": 990
+    }
+    assert class_to.population == 110
+    assert class_to.resources == {
+        "food": 1010,
+        "wood": 1010,
+        "stone": 1010,
+        "iron": 1010,
+        "tools": 1010
+    }
+
+
+def test_do_one_promotion_smaller_increase():
+    resources = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 70
+    }
+    class_from = Fake_Class_4(resources)
+    class_to = Fake_Class_4(resources)
+    state = State_Data()
+    state._classes = [class_from, class_to]
+    state.prices = {
+        "food": 1,
+        "wood": 2,
+        "stone": 3,
+        "iron": 4,
+        "tools": 5
+    }
+    state._do_one_promotion(class_from, class_to, 100, 15)
+
+    assert class_from.population == 10
+    assert class_from.resources == {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0
+    }
+    assert class_to.population == 190
+    assert class_to.resources == {
+        "food": 200,
+        "wood": 200,
+        "stone": 200,
+        "iron": 200,
+        "tools": 140
+    }
+
+
+def test_do_promotions():
+    a = DEFAULT_PRICES
+    a["food"] = 1
+    a["wood"] = 1
+    a["stone"] = 1
+    a["iron"] = 1
+    a["tools"] = 1
+    resources = {
+        "food": 1000,
+        "wood": 1000,
+        "stone": 1000,
+        "iron": 1000,
+        "tools": 1000
+    }
+    nobles = Fake_Class_4(resources)
+    artisans = Fake_Class_4(resources)
+    peasants = Fake_Class_4(resources)
+    others = Fake_Class_4(resources)
+    state = State_Data()
+    state.prices *= 8  # max_increase for peasants and artisans: 0.1
+    state._classes = [nobles, artisans, peasants, others]
+    promoted = state._do_promotions()
+
+    assert nobles.population == 110
+    assert nobles.resources == {
+        "food": 1024,
+        "wood": 1024,
+        "stone": 1024,
+        "iron": 1024,
+        "tools": 1024
+    }
+    assert artisans.population == 105
+    assert artisans.resources == {
+        "food": 998,
+        "wood": 998,
+        "stone": 998,
+        "iron": 998,
+        "tools": 998
+    }
+    assert peasants.population == 105
+    assert peasants.resources == {
+        "food": 1000,
+        "wood": 1000,
+        "stone": 1000,
+        "iron": 1000,
+        "tools": 1000
+    }
+    assert others.population == 80
+    assert others.resources == {
+        "food": 978,
+        "wood": 978,
+        "stone": 978,
+        "iron": 978,
+        "tools": 978
+    }
+
+    assert promoted == {
+        "nobles": 0.1,
+        "artisans": 0.05,
+        "peasants": 0.05,
+        "others": -0.2
     }

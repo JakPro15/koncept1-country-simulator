@@ -255,12 +255,12 @@ class State_Data:
     @staticmethod
     def _get_max_increase_percent(price_ratio):
         if price_ratio > 1:
-            return -0.1 / (price_ratio ** (1 / 3)) + 0.1
+            return -0.2 / (price_ratio ** (1 / 3)) + 0.2
         else:
             return 0
 
-    def _do_one_promotion(self, class_from, class_to, max_increase):
-        increase_price = 3 * self.prices["wood"] + 3 * self.prices["tools"]
+    def _do_one_promotion(self, class_from, class_to,
+                          max_increase, increase_price):
         others_wealth = sum((class_from.resources * self.prices).values())
         paid = min(
             max_increase * increase_price,
@@ -289,43 +289,51 @@ class State_Data:
             "peasants": peasants.population,
             "others": others.population
         }
-        promoted = {
+        promoted = Arithmetic_Dict({
             "nobles": 0,
             "artisans": 0,
             "peasants": 0,
             "others": 0
-        }
+        })
 
         # Peasants:
+        increase_price = 3 * self.prices["wood"] + 3 * self.prices["tools"]
         food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
         wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
         price_ratio = max(food_price_ratio, wood_price_ratio)
         peasant_increase = \
             self._get_max_increase_percent(price_ratio) * peasants.population
-        transferred = \
-            self._do_one_promotion(others, peasants, peasant_increase)
+        transferred = self._do_one_promotion(
+            others, peasants, peasant_increase, increase_price
+        )
         promoted["peasants"] += transferred
         promoted["others"] -= transferred
 
         # Artisans:
+        increase_price = 2 * self.prices["wood"] + 3 * self.prices["tools"]
         price_ratio = self.prices["tools"] / DEFAULT_PRICES["tools"]
         artisan_increase = \
             self._get_max_increase_percent(price_ratio) * artisans.population
-        transferred = \
-            self._do_one_promotion(others, artisans, artisan_increase)
+        transferred = self._do_one_promotion(
+            others, artisans, artisan_increase, increase_price
+        )
         promoted["others"] -= transferred
         promoted["artisans"] += transferred
 
         # Nobles (from peasants):
+        increase_price = 7 * self.prices["wood"] + \
+            4 * self.prices["stone"] + 1 * self.prices["tools"]
         noble_increase = 0.05 * nobles.population
-        transferred = \
-            self._do_one_promotion(peasants, nobles, noble_increase)
+        transferred = self._do_one_promotion(
+            peasants, nobles, noble_increase, increase_price
+        )
         promoted["peasants"] -= transferred
         promoted["nobles"] += transferred
 
         # Nobles (from artisans):
-        transferred = \
-            self._do_one_promotion(artisans, nobles, noble_increase)
+        transferred = self._do_one_promotion(
+            artisans, nobles, noble_increase, increase_price
+        )
         promoted["artisans"] -= transferred
         promoted["nobles"] += transferred
 
