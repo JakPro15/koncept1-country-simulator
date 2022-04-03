@@ -252,30 +252,84 @@ class State_Data:
         for social_class in self.classes:
             self._handle_negative_resources(social_class)
 
-    # @staticmethod
-    # def _get_increase(price_ratio):
-    #     return 0.1 / (price_ratio ** (1 / 3)) + 0.1
+    @staticmethod
+    def _get_max_increase_percent(price_ratio):
+        if price_ratio > 1:
+            return -0.1 / (price_ratio ** (1 / 3)) + 0.1
+        else:
+            return 0
 
-    # def _do_promotions(self):
-    #     nobles = self.classes[0]
-    #     artisans = self.classes[1]
-    #     peasants = self.classes[2]
-    #     others = self.classes[3]
+    def _do_one_promotion(self, class_from, class_to, max_increase):
+        increase_price = 3 * self.prices["wood"] + 3 * self.prices["tools"]
+        others_wealth = sum((class_from.resources * self.prices).values())
+        paid = min(
+            max_increase * increase_price,
+            class_from.population * increase_price,
+            others_wealth
+        )
+        part_paid = paid / others_wealth
+        class_to.resources += class_from.resources * part_paid
+        class_from.resources -= class_from.resources * part_paid
 
-    #     # Peasants:
-    #     food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
-    #     wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
-    #     price_ratio = max(food_price_ratio, wood_price_ratio)
-    #     peasant_increase = self._get_increase(price_ratio)
-    #     increase_price = 3 * self.prices["wood"] + 3 * self.prices["tools"]
-    #     others_wealth = others.resources["food"] * self.prices["food"] + \
-    #         others.resources["wood"] * self.prices["wood"]
-    #     paid = min(
-    #         peasant_increase * increase_price,
-    #         others.population * increase_price,
-    #         others_wealth)
-    #     transferred = paid / increase_price
-    #     part_paid = paid / others_wealth
+        transferred = paid / increase_price
+        class_to.move_population(transferred)
+        class_from.move_population(-transferred)
+
+        return transferred
+
+    def _do_promotions(self):
+        nobles = self.classes[0]
+        artisans = self.classes[1]
+        peasants = self.classes[2]
+        others = self.classes[3]
+
+        initial_pops = {
+            "nobles": nobles.population,
+            "artisans": artisans.population,
+            "peasants": peasants.population,
+            "others": others.population
+        }
+        promoted = {
+            "nobles": 0,
+            "artisans": 0,
+            "peasants": 0,
+            "others": 0
+        }
+
+        # Peasants:
+        food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
+        wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
+        price_ratio = max(food_price_ratio, wood_price_ratio)
+        peasant_increase = \
+            self._get_max_increase_percent(price_ratio) * peasants.population
+        transferred = \
+            self._do_one_promotion(others, peasants, peasant_increase)
+        promoted["peasants"] += transferred
+        promoted["others"] -= transferred
+
+        # Artisans:
+        price_ratio = self.prices["tools"] / DEFAULT_PRICES["tools"]
+        artisan_increase = \
+            self._get_max_increase_percent(price_ratio) * artisans.population
+        transferred = \
+            self._do_one_promotion(others, artisans, artisan_increase)
+        promoted["others"] -= transferred
+        promoted["artisans"] += transferred
+
+        # Nobles (from peasants):
+        noble_increase = 0.05 * nobles.population
+        transferred = \
+            self._do_one_promotion(peasants, nobles, noble_increase)
+        promoted["peasants"] -= transferred
+        promoted["nobles"] += transferred
+
+        # Nobles (from artisans):
+        transferred = \
+            self._do_one_promotion(artisans, nobles, noble_increase)
+        promoted["artisans"] -= transferred
+        promoted["nobles"] += transferred
+
+        return promoted / initial_pops
 
     def do_month(self):
         someone_alive = False
