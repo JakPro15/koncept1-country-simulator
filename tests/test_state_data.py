@@ -533,6 +533,18 @@ class Fake_Class_3:
         self.population_change += pop
 
 
+def test_safe_division():
+    assert State_Data.safe_division(0, 0) == 0
+    assert State_Data.safe_division(10, 0) == 9999
+    assert State_Data.safe_division(-10, 0) == -9999
+    assert State_Data.safe_division(100, 20) == 5
+    assert State_Data.safe_division(10, 20) == 0.5
+    assert State_Data.safe_division(1, 5) == 0.2
+    assert State_Data.safe_division(-1, 5) == -0.2
+    assert State_Data.safe_division(1000, 0.01) == 9999
+    assert State_Data.safe_division(-1000, 0.01) == -9999
+
+
 def test_do_demotions():
     state = State_Data()
     nobles = Fake_Class_3(1)
@@ -541,7 +553,8 @@ def test_do_demotions():
     others = Fake_Class_3(0)
     classes = [nobles, artisans, peasants, others]
     state._classes = classes
-    state._do_demotions()
+    demoted = state._do_demotions()
+    assert demoted["nobles"] == approx(-0.001)
     assert nobles.population_change == -1
     assert nobles.resources == {
         "food": 0,
@@ -550,6 +563,7 @@ def test_do_demotions():
         "iron": 0,
         "tools": 0
     }
+    assert demoted["artisans"] == approx(-0.01)
     assert artisans.population_change == -10
     assert artisans.resources == {
         "food": 0,
@@ -558,6 +572,7 @@ def test_do_demotions():
         "iron": 0,
         "tools": 0
     }
+    assert demoted["peasants"] == approx(-0.099)
     assert peasants.population_change == -99
     assert peasants.resources == {
         "food": 0,
@@ -566,6 +581,7 @@ def test_do_demotions():
         "iron": 0,
         "tools": 3
     }
+    assert demoted["others"] == approx(0.11)
     assert others.population_change == 110
     assert others.resources == {
         "food": 0,

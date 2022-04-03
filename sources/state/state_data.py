@@ -122,7 +122,14 @@ class State_Data:
         }
         return data
 
-    def _grow_populations(self):
+    def _grow_populations(self, demotions=None):
+        if demotions is None:
+            demotions = {
+                "nobles": 0,
+                "artisans": 0,
+                "peasants": 0,
+                "others": 0
+            }
         modifiers = {}
         grown = {}
         for index, social_class in enumerate(self.classes):
@@ -145,6 +152,8 @@ class State_Data:
                     -freezing_part * FREEZING_MORTALITY
                 social_class.resources["wood"] = 0
 
+            modifiers[class_name]["Demotions"] = demotions[class_name]
+
             total_modifier = sum(modifiers[class_name].values())
             grown[class_name] = social_class.grow_population(total_modifier)
 
@@ -155,6 +164,23 @@ class State_Data:
         for resource in self.payments:
             self.payments[resource] = 0
 
+    @staticmethod
+    def safe_division(arg1, arg2):
+        if arg2 != 0:
+            result = arg1 / arg2
+        elif arg1 < 0:
+            result = -9999
+        elif arg1 > 0:
+            result = 9999
+        else:
+            result = 0
+
+        if result > 9999:
+            result = 9999
+        elif result < -9999:
+            result = -9999
+        return result
+
     def _do_demotions(self):
         nobles = self._classes[0]
         artisans = self._classes[1]
@@ -162,6 +188,9 @@ class State_Data:
         others = self._classes[3]
 
         nobles_moved = min(nobles.class_overpopulation, nobles.population)
+        nobles_moved_percent = \
+            State_Data.safe_division(nobles_moved, nobles.population)
+        peasants_pop = peasants.population
         peasants.resources["wood"] += 3 * nobles_moved
         peasants.resources["tools"] += 3 * nobles_moved
         peasants.move_population(nobles_moved)
@@ -169,13 +198,30 @@ class State_Data:
 
         artisans_moved = \
             min(artisans.class_overpopulation, artisans.population)
+        artisans_moved_percent = \
+            State_Data.safe_division(artisans_moved, artisans.population)
         others.move_population(artisans_moved)
         artisans.move_population(-artisans_moved, demotion=True)
 
         peasants_moved = \
             min(peasants.class_overpopulation, peasants.population)
+        peasants_moved_percent = State_Data.safe_division(
+            (-nobles_moved + peasants_moved), peasants_pop
+        )
+        others_moved_percent = State_Data.safe_division(
+            -(peasants_moved + artisans_moved), others.population
+        )
+
         others.move_population(peasants_moved)
         peasants.move_population(-peasants_moved, demotion=True)
+
+        demoted = {
+            "nobles": -nobles_moved_percent,
+            "artisans": -artisans_moved_percent,
+            "peasants": -peasants_moved_percent,
+            "others": -others_moved_percent
+        }
+        return demoted
 
     @staticmethod
     def _handle_empty_class(social_class, lower_class):
@@ -255,7 +301,7 @@ class State_Data:
             month_data["used"][class_name] = used
 
         self._do_payments()
-        self._do_demotions()
+        demoted = self._do_demotions()
         self._secure_classes()
 
         self._market.do_trade()
@@ -267,7 +313,7 @@ class State_Data:
             class_name = INDEX_TO_CLASS_NAME[index]
             month_data["consumed"][class_name] = consumed
 
-        modifiers, grown = self._grow_populations()
+        modifiers, grown = self._grow_populations(demoted)
         month_data["growth_modifiers"] = modifiers
         month_data["grown"] = grown
         self._do_demotions()

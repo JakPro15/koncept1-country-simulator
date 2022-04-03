@@ -12,7 +12,7 @@ MONTHS = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ]
 MODIFIERS = [
-    'Base', 'Starving', 'Freezing'
+    'Base', 'Starving', 'Freezing', 'Demotions'
 ]
 CLASSES = [
     "Nobles", "Artisans", "Peasants", "Others"
