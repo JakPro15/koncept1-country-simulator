@@ -156,7 +156,7 @@ def history(args, interface):
 
             print(" " * 14 + f"{'Nobles': ^36}{'Artisans': ^36}"
                   f"{'Peasants': ^36}{'Others': ^36}")
-            print(" " * 13 + "    Base  Starving Freezing Demotion" * 4)
+            print(" " * 13 + "    Base  Starving Freezing Mobility" * 4)
             for index, month_data in enumerate(data):
                 line = f"{get_month_string(index + begin_month)}"
                 for social_class in month_data:

@@ -122,9 +122,9 @@ class State_Data:
         }
         return data
 
-    def _grow_populations(self, demotions=None):
-        if demotions is None:
-            demotions = {
+    def _grow_populations(self, mobility=None):
+        if mobility is None:
+            mobility = {
                 "nobles": 0,
                 "artisans": 0,
                 "peasants": 0,
@@ -152,10 +152,10 @@ class State_Data:
                     -freezing_part * FREEZING_MORTALITY
                 social_class.resources["wood"] = 0
 
-            modifiers[class_name]["Demotions"] = demotions[class_name]
-
             total_modifier = sum(modifiers[class_name].values())
             grown[class_name] = social_class.grow_population(total_modifier)
+
+            modifiers[class_name]["Mobility"] = mobility[class_name]
 
         return modifiers, grown
 
@@ -267,7 +267,7 @@ class State_Data:
             class_from.population * increase_price,
             others_wealth
         )
-        part_paid = paid / others_wealth
+        part_paid = State_Data.safe_division(paid, others_wealth)
         class_to.resources += class_from.resources * part_paid
         class_from.resources -= class_from.resources * part_paid
 
@@ -363,7 +363,9 @@ class State_Data:
             month_data["used"][class_name] = used
 
         self._do_payments()
+        promoted = self._do_promotions()
         demoted = self._do_demotions()
+        mobility = promoted + demoted
         self._secure_classes()
 
         self._market.do_trade()
@@ -375,7 +377,7 @@ class State_Data:
             class_name = INDEX_TO_CLASS_NAME[index]
             month_data["consumed"][class_name] = consumed
 
-        modifiers, grown = self._grow_populations(demoted)
+        modifiers, grown = self._grow_populations(mobility)
         month_data["growth_modifiers"] = modifiers
         month_data["grown"] = grown
         self._do_demotions()
