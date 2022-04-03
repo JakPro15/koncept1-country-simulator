@@ -1,4 +1,5 @@
 from ...auxiliaries.constants import (
+    DEFAULT_PRICES,
     OTHERS_WAGE,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
@@ -94,14 +95,14 @@ class Nobles(Class):
         """
         Returns a dict of ratios: resource producers to total employees.
         """
-        prices = self.parent.prices
-        total_prices = sum(prices.values()) - prices["tools"]
+        new_prices = prices / DEFAULT_PRICES
+        total_prices = sum(new_prices.values()) - new_prices["tools"]
         if total_prices != 0:
             ratios = Arithmetic_Dict({
-                "food": prices["food"] / total_prices,
-                "wood": prices["wood"] / total_prices,
-                "stone": prices["stone"] / total_prices,
-                "iron": prices["iron"] / total_prices
+                "food": new_prices["food"] / total_prices,
+                "wood": new_prices["wood"] / total_prices,
+                "stone": new_prices["stone"] / total_prices,
+                "iron": new_prices["iron"] / total_prices
             })
         else:
             ratios = Arithmetic_Dict({
@@ -117,7 +118,7 @@ class Nobles(Class):
         Returns a dict of particular resource producing employees.
         """
         employees = self._get_employees()
-        prices = self.parent.prices
+        prices = self._parent.prices
         ratios = self._get_ratios(prices)
         ratioed = ratios * employees
 

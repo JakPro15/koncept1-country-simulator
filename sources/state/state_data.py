@@ -42,7 +42,7 @@ class State_Data:
             "stone": 0,
             "tools": 0
         })
-        self.prices = DEFAULT_PRICES
+        self.prices = DEFAULT_PRICES.copy()
 
     @property
     def month(self):

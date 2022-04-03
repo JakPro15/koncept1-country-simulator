@@ -110,3 +110,6 @@ class Arithmetic_Dict(dict):
                 except ZeroDivisionError:
                     self[key] = inf
         return self
+
+    def copy(self):
+        return Arithmetic_Dict(super().copy())

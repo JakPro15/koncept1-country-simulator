@@ -1,6 +1,7 @@
 from ..sources.state.state_data import State_Data
 from ..sources.state.social_classes.peasants import Peasants
 from ..sources.auxiliaries.constants import (
+    DEFAULT_PRICES,
     WOOD_CONSUMPTION,
     PEASANT_TOOL_USAGE,
     FOOD_PRODUCTION,
@@ -353,6 +354,7 @@ def test_get_working_peasants_enough_land():
 
 def test_produce_enough_land_and_tools():  # EXCEL CALCULATIONS USED
     state = State_Data("March")
+    state.prices["food"] = 1.5
     resources = {
         "food": 100,
         "wood": 200,
@@ -369,8 +371,8 @@ def test_produce_enough_land_and_tools():  # EXCEL CALCULATIONS USED
     peasants = Peasants(state, 60, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == approx(100 + 27.3, abs=0.1)
-    assert peasants.resources["wood"] == approx(200 + 49.1, abs=0.1)
+    assert peasants.resources["food"] == approx(100 + 33.3, abs=0.1)
+    assert peasants.resources["wood"] == approx(200 + 40, abs=0.1)
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == 100 - 6
@@ -407,6 +409,8 @@ def test_produce_not_enough_land():
 
 def test_produce_not_enough_tools():  # EXCEL CALCULATIONS USED
     state = State_Data("August")
+    state.prices["food"] = 1.5
+    state.prices["wood"] = 1.7 * DEFAULT_PRICES["wood"]
     resources = {
         "food": 100,
         "wood": 200,
@@ -423,8 +427,8 @@ def test_produce_not_enough_tools():  # EXCEL CALCULATIONS USED
     peasants = Peasants(state, 60, resources, land)
 
     peasants.produce()
-    assert peasants.resources["food"] == approx(100 + 193.6, abs=0.1)
-    assert peasants.resources["wood"] == approx(200 + 49.1, abs=0.1)
+    assert peasants.resources["food"] == approx(100 + 180.5, abs=0.1)
+    assert peasants.resources["wood"] == approx(200 + 51.9, abs=0.1)
     assert peasants.resources["iron"] == 0
     assert peasants.resources["stone"] == 0
     assert peasants.resources["tools"] == 10 - 24

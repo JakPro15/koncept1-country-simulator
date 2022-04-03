@@ -445,3 +445,22 @@ def test_assignment_floor_division_by_zero():
         "iron": inf,
         "tools": inf
     }
+
+
+def test_copy():
+    resources1 = Arithmetic_Dict({
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 3,
+        "tools": 4
+    })
+    resources2 = resources1.copy()
+    assert isinstance(resources2, Arithmetic_Dict)
+    assert resources2 == {
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 3,
+        "tools": 4
+    }

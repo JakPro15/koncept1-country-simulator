@@ -88,11 +88,11 @@ class Peasants(Class):
         food_per_capita = FOOD_PRODUCTION[month]
         wood_per_capita = WOOD_PRODUCTION
 
-        wood_needed_ratio = self.parent.prices["wood"] / DEFAULT_PRICES["wood"]
-        food_needed_ratio = self.parent.prices["food"] / DEFAULT_PRICES["food"]
-        needed_wood_peasants_rel = wood_needed_ratio / WOOD_PRODUCTION
+        wood_need_ratio = self._parent.prices["wood"] / DEFAULT_PRICES["wood"]
+        food_need_ratio = self._parent.prices["food"] / DEFAULT_PRICES["food"]
+        needed_wood_peasants_rel = wood_need_ratio / WOOD_PRODUCTION
         needed_food_peasants_rel = \
-            food_needed_ratio / (sum(FOOD_PRODUCTION.values()) / 12)
+            food_need_ratio / (sum(FOOD_PRODUCTION.values()) / 12)
         ideal_wood_ratio = needed_wood_peasants_rel / \
             (needed_food_peasants_rel + needed_wood_peasants_rel)
 
