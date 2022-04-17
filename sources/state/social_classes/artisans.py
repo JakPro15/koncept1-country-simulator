@@ -15,6 +15,10 @@ class Artisans(Class):
     Artisans use wood and iron to make tools.
     They do not own land and they cannot work as employees.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_name = "artisans"
+
     @staticmethod
     def create_from_dict(parent, data):
         population = data["population"]
@@ -53,20 +57,6 @@ class Artisans(Class):
         self._resources["iron"] -= 2 * number
         self._resources["tools"] -= 3 * number
 
-    def optimal_resources_per_capita(self):
-        """
-        Food needed: four months' consumption
-        Wood needed: yearly consumption + 1 (3 needed for new artisan)
-        Iron needed: none
-        Stone needed: none
-        Tools needed: enough to work half a year + 1 (3 needed for new artisan)
-        """
-        optimal_resources = super().optimal_resources_per_capita()
-        optimal_resources["wood"] += ARTISAN_WOOD_USAGE * 4 + 0.5
-        optimal_resources["iron"] += ARTISAN_IRON_USAGE * 4 + 0.5
-        optimal_resources["tools"] += ARTISAN_TOOL_USAGE * 4 + 1
-        return optimal_resources
-
     def produce(self):
         """
         Adds resources the class produced in the current month.
@@ -99,5 +89,5 @@ class Artisans(Class):
             self._add_population(number)
         elif demotion:
             self._resources["wood"] += -2 * number
-            self._resources["iron"] += -2 * number
+            self._resources["iron"] += -1 * number
             self._resources["tools"] += -3 * number

@@ -1,6 +1,8 @@
 from ...auxiliaries.constants import (
     FOOD_CONSUMPTION,
-    LAND_TYPES,
+    INBUILT_RESOURCES,
+    MINER_TOOL_USAGE,
+    OPTIMAL_RESOURCES,
     RESOURCES,
     WOOD_CONSUMPTION
 )
@@ -22,22 +24,15 @@ class Class:
                            no resources
     """
     def __init__(self, parent, population: int,
-                 resources: dict = None, land: dict = None):
+                 resources: dict = None):
         self.parent = parent
-        self.population = population
+        self._population = population
         if resources is None:
             self.resources = {
                 resource: 0 for resource in RESOURCES
             }
         else:
             self.resources = resources
-
-        if land is None:
-            self.land = {
-                land_type: 0 for land_type in LAND_TYPES
-            }
-        else:
-            self.land = land
 
     @property
     def parent(self):
@@ -47,6 +42,10 @@ class Class:
     def parent(self, new_parent):
         assert new_parent.month in WOOD_CONSUMPTION
         self._parent = new_parent
+
+    @property
+    def class_name(self):
+        return "base class"
 
     @property
     def employable(self):
@@ -59,6 +58,8 @@ class Class:
     @population.setter
     def population(self, number):
         assert number >= 0
+        difference = number - self._population
+        self._resources -= INBUILT_RESOURCES[self.class_name] * difference
         self._population = number
 
     @property
@@ -66,39 +67,29 @@ class Class:
         return self._resources
 
     @resources.setter
-    def resources(self, new_resources: dict):
+    def resources(self, new_resources: dict | Arithmetic_Dict):
         for resource in RESOURCES:
             assert resource in new_resources
         self._resources = Arithmetic_Dict(new_resources)
 
     @property
-    def land(self):
-        return self._land
-
-    @land.setter
-    def land(self, new_land: dict):
-        for land_type in LAND_TYPES:
-            assert land_type in new_land
-            assert new_land[land_type] >= 0
-        self._land = Arithmetic_Dict(new_land)
-
-    @property
     def optimal_resources(self):
-        opt_res = {
-            resource: resource_per_capita * self._population
-            for resource, resource_per_capita
-            in self.optimal_resources_per_capita().items()
-        }
+        opt_res = OPTIMAL_RESOURCES[self.class_name] * self.population
+
+        # Special case for nobles (optimal resources per capita not constant):
+        if self.class_name == "nobles":
+            opt_res["tools"] += \
+                4 * self.parent.get_available_employees() * MINER_TOOL_USAGE
+
         return Arithmetic_Dict(opt_res)
 
     @property
     def missing_resources(self):
-        miss_res = {
+        return Arithmetic_Dict({
             resource: -amount if amount < 0 else 0
             for resource, amount
             in self.resources.items()
-        }
-        return Arithmetic_Dict(miss_res)
+        })
 
     def grow_population(self, modifier: float):
         """
@@ -107,61 +98,20 @@ class Class:
         Modifier 0 means no change in population.
         Also consumes the class' resources, if they are needed for growth.
         """
-        grown = self._population * modifier
-        self._population += grown
-        self._add_population(grown)
-        return grown
-
-    def optimal_resources_per_capita(self):
-        """
-        Food needed: four months' consumption
-        Wood needed: yearly consumption + depending on class
-        Iron needed: depends on particular class
-        Stone needed: depends on particular class
-        Tools needed: depends on particular class
-        """
-        optimal_resources = {
-            "food": 4,
-            "wood": sum(WOOD_CONSUMPTION.values()),
-            "iron": 0,
-            "stone": 0,
-            "tools": 0
-        }
-        return Arithmetic_Dict(optimal_resources)
+        self.population *= (1 + modifier)
 
     def consume(self):
         """
         Removes resources the class consumed in the month.
-        Sets missing resources to signal shortages.
         """
-        month = self._parent.month
-
-        consumed = {
+        self._resources -= Arithmetic_Dict({
             "food": FOOD_CONSUMPTION * self._population,
-            "wood": WOOD_CONSUMPTION[month] * self._population
-        }
-
-        self._resources -= consumed
-        if self._resources["food"] < 0:
-            consumed["food"] += self._resources["food"]
-        if self._resources["wood"] < 0:
-            consumed["wood"] += self._resources["wood"]
-
-        return consumed
-
-    def move_population(self, number: int, demotion: bool = False):
-        """
-        Moves the given number of people into or out of the class.
-        Negative number signifies movement out.
-        Demotion flag signifies that people are moved out because of
-        no resources.
-        """
-        self._population += number
+            "wood": WOOD_CONSUMPTION[self._parent.month] * self._population
+        })
 
     def to_dict(self):
         data = {
             "population": self.population,
-            "resources": dict(self.resources),
-            "land": dict(self.land)
+            "resources": dict(self.resources)
         }
         return data

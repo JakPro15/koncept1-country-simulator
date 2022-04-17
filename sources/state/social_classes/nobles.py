@@ -18,6 +18,10 @@ class Nobles(Class):
     Nobles do not make anything.
     They own land and they cannot work as employees.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_name = "nobles"
+
     @staticmethod
     def create_from_dict(parent, data):
         population = data["population"]
@@ -52,25 +56,6 @@ class Nobles(Class):
         self._resources["wood"] -= 10 * number
         self._resources["stone"] -= 4 * number
         self._resources["tools"] -= 4 * number
-
-    def optimal_resources_per_capita(self):
-        """
-        Food needed: enough to survive till harvest, plus three months
-        Wood needed: yearly consumption + 1 (3 needed for new peasant)
-        Iron needed: none
-        Stone needed: none
-        Tools needed: enough to work half a year + 1 (3 needed for new peasant)
-        """
-        optimal_resources = super().optimal_resources_per_capita()
-        optimal_resources["food"] += 8
-        optimal_resources["wood"] += 4.6
-        optimal_resources["stone"] += 8
-        if self.population > 0:
-            optimal_resources["tools"] += \
-                4 + (self._get_employees(assesment=True) * 3) / self.population
-        else:
-            optimal_resources["tools"] = 4
-        return optimal_resources
 
     def _get_total_land_for_produce(self):
         """

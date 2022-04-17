@@ -4,8 +4,7 @@ from ..auxiliaries.constants import (
     FREEZING_MORTALITY,
     MONTHS,
     STARVATION_MORTALITY,
-    WOOD_CONSUMPTION,
-    INDEX_TO_CLASS_NAME
+    WOOD_CONSUMPTION
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -125,8 +124,8 @@ class State_Data:
     def _grow_populations(self):
         modifiers = {}
         grown = {}
-        for index, social_class in enumerate(self.classes):
-            class_name = INDEX_TO_CLASS_NAME[index]
+        for social_class in self.classes:
+            class_name = social_class.class_name
             modifiers[class_name] = {}
             modifiers[class_name]["Base"] = DEFAULT_GROWTH_FACTOR / 12
 
@@ -362,9 +361,9 @@ class State_Data:
             "resources_after": {}
         }
 
-        for index, social_class in enumerate(self.classes):
+        for social_class in self.classes:
             produced, used = social_class.produce()
-            class_name = INDEX_TO_CLASS_NAME[index]
+            class_name = social_class.class_name
             month_data["produced"][class_name] = produced
             month_data["used"][class_name] = used
 
@@ -376,9 +375,9 @@ class State_Data:
         self.prices = self._market.prices
         month_data["trade_prices"] = self.prices
 
-        for index, social_class in enumerate(self.classes):
+        for social_class in self.classes:
             consumed = social_class.consume()
-            class_name = INDEX_TO_CLASS_NAME[index]
+            class_name = social_class.class_name
             month_data["consumed"][class_name] = consumed
 
         modifiers, grown = self._grow_populations()
@@ -386,8 +385,8 @@ class State_Data:
         promoted = self._do_promotions(modifiers)
         mobility = promoted + demoted
 
-        for index, social_class in enumerate(self.classes):
-            class_name = INDEX_TO_CLASS_NAME[index]
+        for social_class in self.classes:
+            class_name = social_class.class_name
             modifiers[class_name]["Mobility"] = mobility[class_name]
 
         month_data["growth_modifiers"] = modifiers

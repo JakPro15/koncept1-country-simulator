@@ -9,6 +9,10 @@ class Others(Class):
     They can work as peasants or in mines, on noble or government land.
     They do not own land and they can work as employees.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_name = "others"
+
     @staticmethod
     def create_from_dict(parent, data):
         population = data["population"]

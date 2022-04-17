@@ -15,6 +15,10 @@ class Peasants(Class):
     Peasants make food and wood.
     They own land (but not mines) and they cannot work as employees.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_name = "peasants"
+
     @staticmethod
     def create_from_dict(parent, data):
         population = data["population"]
@@ -56,19 +60,6 @@ class Peasants(Class):
         """
         self._resources["wood"] -= 3 * number
         self._resources["tools"] -= 3 * number
-
-    def optimal_resources_per_capita(self):
-        """
-        Food needed: four months' consumption
-        Wood needed: yearly consumption + 1 (3 needed for new peasant)
-        Iron needed: none
-        Stone needed: none
-        Tools needed: enough to work half a year + 1 (3 needed for new peasant)
-        """
-        optimal_resources = super().optimal_resources_per_capita()
-        optimal_resources["wood"] += 1
-        optimal_resources["tools"] += sum(PEASANT_TOOL_USAGE.values()) / 2 + 1
-        return optimal_resources
 
     def _get_working_peasants(self):
         """
