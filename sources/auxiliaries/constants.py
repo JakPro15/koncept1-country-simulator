@@ -1,11 +1,9 @@
 from .arithmetic_dict import Arithmetic_Dict
 
 
+# NAME CONSTANTS
 RESOURCES = [
     "food", "wood", "stone", "iron", "tools"
-]
-LAND_TYPES = [
-    "fields", "woods", "stone_mines", "iron_mines"
 ]
 MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -18,6 +16,7 @@ CLASSES = [
     "nobles", "artisans", "peasants", "others"
 ]
 
+# CONSUMPTION CONSTANTS
 FOOD_CONSUMPTION = 1
 WOOD_CONSUMPTION = {
     # Per person, per month.
@@ -35,44 +34,31 @@ WOOD_CONSUMPTION = {
     'December': 0.6
 }
 
-FOOD_PRODUCTION = {
-    # Per fully working peasant or employee (20 ha of land), per month.
-    'January': 0,
-    'February': 0,
-    'March': 2,
-    'April': 3,
-    'May': 3,
-    'June': 2.5,
-    'July': 4,
-    'August': 8.5,
-    'September': 4.5,
-    'October': 2.5,
-    'November': 0,
-    'December': 0
-}
-WOOD_PRODUCTION = 1.5
+# PRODUCTION CONSTANTS
+MINER_TOOL_USAGE = 0.3
 IRON_PRODUCTION = 1
 STONE_PRODUCTION = 1
+OTHERS_WAGE = 0.5
+
+ARTISAN_WOOD_USAGE = 0.2
+ARTISAN_IRON_USAGE = 0.5
+ARTISAN_TOOL_USAGE = 0.1
 TOOLS_PRODUCTION = 1.2
 
 PEASANT_TOOL_USAGE = 0.1
-ARTISAN_TOOL_USAGE = 0.1
-MINER_TOOL_USAGE = 0.3
-ARTISAN_WOOD_USAGE = 0.2
-ARTISAN_IRON_USAGE = 0.5
+FOOD_PRODUCTION = {
+    'January': 0, 'February': 0, 'March': 2,
+    'April': 3, 'May': 3, 'June': 2.5, 'July': 4, 'August': 8.5,
+    'September': 4.5, 'October': 2.5, 'November': 0, 'December': 0
+}
+WOOD_PRODUCTION = 1.5
 
+# POPULATION CONSTANTS
 DEFAULT_GROWTH_FACTOR = 0.1  # monthly is 1/12 of that
 STARVATION_MORTALITY = 0.2
 FREEZING_MORTALITY = 0.2
 
-DEFAULT_PRICES = Arithmetic_Dict({
-    "food": 1,
-    "wood": 1.5,
-    "stone": 2.5,
-    "iron": 2.5,
-    "tools": 3.5
-})
-
+# RESOURCES CONSTANTS
 INBUILT_RESOURCES = {
     "nobles": Arithmetic_Dict({
         "food": 0,
@@ -104,6 +90,7 @@ INBUILT_RESOURCES = {
     }),
 }
 
+# TRADE CONSTANTS
 OPTIMAL_RESOURCES = {
     "nobles": Arithmetic_Dict({
         "food": 12 * FOOD_CONSUMPTION,
@@ -134,5 +121,10 @@ OPTIMAL_RESOURCES = {
         "tools": 0
     }),
 }
-
-OTHERS_WAGE = 0.5
+DEFAULT_PRICES = Arithmetic_Dict({
+    "food": 1,
+    "wood": 1.5,
+    "stone": 2.5,
+    "iron": 2.5,
+    "tools": 3.5
+})

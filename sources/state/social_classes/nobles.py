@@ -6,7 +6,8 @@ from ...auxiliaries.constants import (
     WOOD_PRODUCTION,
     STONE_PRODUCTION,
     IRON_PRODUCTION,
-    MINER_TOOL_USAGE
+    MINER_TOOL_USAGE,
+    CLASSES
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .class_file import Class
@@ -18,66 +19,17 @@ class Nobles(Class):
     Nobles do not make anything.
     They own land and they cannot work as employees.
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.class_name = "nobles"
-
-    @staticmethod
-    def create_from_dict(parent, data):
-        population = data["population"]
-        resources = data["resources"]
-        land = data["land"]
-        return Nobles(parent, population, resources, land)
-
     @property
-    def class_overpopulation(self):
-        overpop = 0
-        if self._resources["wood"] < 0:
-            overpop = max(overpop, -self._resources["wood"] / 7)
-        if self._resources["stone"] < 0:
-            overpop = max(overpop, -self._resources["stone"] / 4)
-        if self._resources["tools"] < 0:
-            overpop = max(overpop, -self._resources["tools"])
-        if self._resources["food"] < 4 * self._population:
-            overpop = \
-                max(overpop, self._population - (self._resources["food"] / 4))
-        total_land = self._land["fields"] + self._land["woods"] + \
-            self._land["stone_mines"] * 30 + self._land["iron_mines"] * 30
-        minimum_land = 40 * self._population
-        if total_land < minimum_land:
-            overpop = max(overpop, (minimum_land - total_land) / 40)
-        return overpop
+    def class_name(self):
+        return CLASSES[0]
 
-    def _add_population(self, number: int):
-        """
-        Adds new nobles to the class. Does not modify _population, only
-        handles the initiation resources.
-        """
-        self._resources["wood"] -= 10 * number
-        self._resources["stone"] -= 4 * number
-        self._resources["tools"] -= 4 * number
-
-    def _get_total_land_for_produce(self):
-        """
-        Returns the total amount of land the nobles own, with mines translated.
-        to 2000 ha
-        """
-        return self._land["fields"] + self._land["woods"] + \
-            self._land["stone_mines"] * 2000 + self._land["iron_mines"] * 2000
-
-    def _get_employees(self, assesment=False):
+    def _get_employees(self):
         """
         Returns the number of people the nobles will employ this month.
         """
-        total_land = self._get_total_land_for_produce()
-        available_employees = self._parent.get_available_employees()
-        if not assesment:
-            wanted_employees = min(total_land // 20,
-                                   self.resources["tools"] / 3)
-        else:
-            # For assesing the amount of tools nobles want
-            wanted_employees = total_land // 20
-        return min(wanted_employees, available_employees)
+        return min(
+            self.resources["tools"] / 3, self._parent.get_available_employees()
+        )
 
     def _get_ratios(self, prices):
         """
@@ -105,71 +57,14 @@ class Nobles(Class):
         """
         Returns a dict of particular resource producing employees.
         """
-        employees = self._get_employees()
-        prices = self._parent.prices
-        ratios = self._get_ratios(prices)
-        ratioed = ratios * employees
-
-        checked = 0
-        while checked < 4:
-            checked = 0
-            if ratioed["food"] * 20 > self._land["fields"]:
-                employees = ratioed["food"] - self._land["fields"] / 20
-                ratioed["food"] = self._land["fields"] / 20
-                prices["food"] = 0
-                ratios = self._get_ratios(prices)
-                ratioed += ratios * employees
-            else:
-                checked += 1
-            if ratioed["wood"] * 20 > self._land["woods"]:
-                employees = ratioed["wood"] - self._land["woods"] / 20
-                ratioed["wood"] = self._land["woods"] / 20
-                prices["wood"] = 0
-                ratios = self._get_ratios(prices)
-                ratioed += ratios * employees
-            else:
-                checked += 1
-            if ratioed["stone"] > self._land["stone_mines"] * 100:
-                employees = ratioed["stone"] - self._land["stone_mines"] * 100
-                ratioed["stone"] = self._land["stone_mines"] * 100
-                prices["stone"] = 0
-                ratios = self._get_ratios(prices)
-                ratioed += ratios * employees
-            else:
-                checked += 1
-            if ratioed["iron"] > self._land["iron_mines"] * 100:
-                employees = ratioed["iron"] - self._land["iron_mines"] * 100
-                ratioed["iron"] = self._land["iron_mines"] * 100
-                prices["iron"] = 0
-                ratios = self._get_ratios(prices)
-                ratioed += ratios * employees
-            else:
-                checked += 1
-
-        return ratioed
-
-    def _get_produced_resources(self):
-        """
-        Returns a dict of resources produced this month.
-        """
-        month = self._parent.month
-        per_capita = Arithmetic_Dict({
-            "food": FOOD_PRODUCTION[month],
-            "wood": WOOD_PRODUCTION,
-            "stone": STONE_PRODUCTION,
-            "iron": IRON_PRODUCTION
-        })
-        employees = self._get_ratioed_employees()
-        produced = per_capita * employees
-        return produced
+        return self._get_ratios(self._parent.prices) * self._get_employees()
 
     def _get_tools_used(self):
         """
         Returns the amount of tools that will be used in production this month.
         """
-        month = self._parent.month
         employees = self._get_ratioed_employees()
-        peasant_tools_used = PEASANT_TOOL_USAGE[month] * \
+        peasant_tools_used = PEASANT_TOOL_USAGE * \
             (employees["food"] + employees["wood"])
         miner_tools_used = MINER_TOOL_USAGE * \
             (employees["stone"] + employees["iron"])
@@ -180,28 +75,14 @@ class Nobles(Class):
         """
         Adds resources the class' employees produced in the current month.
         """
-        produced = self._get_produced_resources()
-        used = Arithmetic_Dict({
-            "tools": self._get_tools_used()
+        per_capita = Arithmetic_Dict({
+            "food": FOOD_PRODUCTION[self._parent.month],
+            "wood": WOOD_PRODUCTION,
+            "stone": STONE_PRODUCTION,
+            "iron": IRON_PRODUCTION
         })
+        produced = per_capita * self._get_ratioed_employees()
 
-        self._resources -= used
-        self._resources += produced * (1 - OTHERS_WAGE)
-        self._parent.payments += produced * OTHERS_WAGE
-
-        return produced, used
-
-    def move_population(self, number: int, demotion: bool = False):
-        """
-        Moves the given number of people into or out of the class.
-        Negative number signifies movement out.
-        Demotion flag signifies that people are moved out because of
-        a shortage of resources.
-        """
-        super().move_population(number, demotion)
-        if number > 0:
-            self._add_population(number)
-        elif demotion:
-            self._resources["wood"] += -7 * number
-            self._resources["stone"] += -4 * number
-            self._resources["tools"] += -1 * number
+        self.resources["tools"] -= self._get_tools_used()
+        self.resources += produced * (1 - OTHERS_WAGE)
+        self.parent.payments += produced * OTHERS_WAGE
