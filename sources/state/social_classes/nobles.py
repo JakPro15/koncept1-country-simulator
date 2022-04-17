@@ -34,6 +34,9 @@ class Nobles(Class):
             overpop = max(overpop, -self._resources["stone"] / 4)
         if self._resources["tools"] < 0:
             overpop = max(overpop, -self._resources["tools"])
+        if self._resources["food"] < 4 * self._population:
+            overpop = \
+                max(overpop, self._population - (self._resources["food"] / 4))
         total_land = self._land["fields"] + self._land["woods"] + \
             self._land["stone_mines"] * 30 + self._land["iron_mines"] * 30
         minimum_land = 40 * self._population

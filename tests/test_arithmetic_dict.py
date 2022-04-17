@@ -286,7 +286,7 @@ def test_division_by_zero():
     })
     resources3 = resources1 / 0
     assert resources3 == {
-        "food": inf,
+        "food": 0,
         "wood": inf,
         "stone": inf,
         "iron": inf,
@@ -439,7 +439,7 @@ def test_assignment_floor_division_by_zero():
     })
     resources1 //= 0
     assert resources1 == {
-        "food": inf,
+        "food": 0,
         "wood": inf,
         "stone": inf,
         "iron": inf,

@@ -45,6 +45,9 @@ class Market:
         """
         self.prices = self.needed_resources / self.available_resources
         self.prices *= DEFAULT_PRICES
+        for resource in self.prices:
+            if self.prices[resource] == 0.0:
+                self.prices[resource] = DEFAULT_PRICES[resource]
 
     def _buy_needed_resources(self):
         """
@@ -85,12 +88,22 @@ class Market:
         Executes the classes purchasing all remaining resources.
         """
         total_price = sum((self.available_resources * self.prices).values())
-        for social_class in self.classes:
-            if social_class.population > 0:
-                part_bought = social_class.money / total_price
-                social_class.new_resources += \
-                    self.available_resources * part_bought
-                social_class.money = 0
+        if total_price > 0:
+            for social_class in self.classes:
+                if social_class.population > 0:
+                    part_bought = social_class.money / total_price
+                    social_class.new_resources += \
+                        self.available_resources * part_bought
+                    social_class.money = 0
+        else:
+            classes_count = 0
+            for social_class in self.classes:
+                if social_class.population > 0:
+                    classes_count += 1
+            for social_class in self.classes:
+                if social_class.population > 0:
+                    social_class.new_resources += \
+                        self.available_resources / classes_count
         self.available_resources = Arithmetic_Dict({
             "food": 0,
             "wood": 0,

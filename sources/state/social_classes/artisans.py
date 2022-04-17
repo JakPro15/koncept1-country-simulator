@@ -99,4 +99,5 @@ class Artisans(Class):
             self._add_population(number)
         elif demotion:
             self._resources["wood"] += -2 * number
+            self._resources["iron"] += -2 * number
             self._resources["tools"] += -3 * number

@@ -1,4 +1,5 @@
 from ..state.state_data import State_Data
+from math import isnan
 
 
 class History:
@@ -38,7 +39,10 @@ class History:
     def round_dict_values(dictionary, ndigits=None):
         result = dictionary.copy()
         for key in result:
-            result[key] = round(result[key], ndigits)
+            if not isnan(result[key]):
+                result[key] = round(result[key], ndigits)
+            else:
+                result[key] = -1
         return result
 
     @staticmethod

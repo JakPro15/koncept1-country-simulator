@@ -84,7 +84,7 @@ def test_default_constructor():
 def test_add_population_enough_resources():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 200,
         "iron": 0,
         "stone": 100,
@@ -99,7 +99,7 @@ def test_add_population_enough_resources():
     nobles = Nobles(state, 80, resources, land)
 
     nobles._add_population(20)
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 0
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 20
@@ -138,7 +138,7 @@ def test_add_population_not_enough_tools():
 def test_add_population_not_enough_stone():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 20000,
         "iron": 0,
         "stone": 120,
@@ -153,7 +153,7 @@ def test_add_population_not_enough_stone():
     nobles = Nobles(state, 80, resources, land)
 
     nobles._add_population(50)
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 19500
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == -80
@@ -219,7 +219,7 @@ def test_add_population_not_enough_all():
 def test_grow_population():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 200,
         "iron": 0,
         "stone": 100,
@@ -234,7 +234,7 @@ def test_grow_population():
     nobles = Nobles(state, 80, resources, land)
 
     nobles.grow_population(0.25)
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 0
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 20
@@ -246,7 +246,7 @@ def test_grow_population():
 def test_grow_population_not_enough_resources():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 20000,
         "iron": 0,
         "stone": 120,
@@ -261,7 +261,7 @@ def test_grow_population_not_enough_resources():
     nobles = Nobles(state, 80, resources, land)
 
     nobles.grow_population(0.625)
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 19500
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == -80
@@ -758,7 +758,7 @@ def test_produce():
 
     state = Fake_State_Data(100, "August", prices)
     resources = {
-        "food": 0,
+        "food": 1000,
         "wood": 50,
         "stone": 5,
         "iron": 30,
@@ -773,8 +773,9 @@ def test_produce():
     nobles = Nobles(state, 80, resources, land)
     nobles.produce()
 
-    assert nobles.resources["food"] == \
-        approx((1 - OTHERS_WAGE) * FOOD_PRODUCTION["August"] * 28.6, abs=0.6)
+    assert nobles.resources["food"] == approx(
+        (1 - OTHERS_WAGE) * FOOD_PRODUCTION["August"] * 28.6 + 1000, abs=0.6
+    )
     assert nobles.resources["wood"] == \
         approx((1 - OTHERS_WAGE) * WOOD_PRODUCTION * 35.7 + 50, abs=0.1)
     assert nobles.resources["stone"] == \
@@ -885,7 +886,7 @@ def test_consume_not_enough_both():
 def test_move_population_in_enough_resources():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 200,
         "iron": 0,
         "stone": 100,
@@ -903,7 +904,7 @@ def test_move_population_in_enough_resources():
 
     assert nobles.population == 100
 
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 0
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 20
@@ -915,7 +916,7 @@ def test_move_population_in_enough_resources():
 def test_move_population_in_not_enough_resources():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 20000,
         "iron": 0,
         "stone": 1000,
@@ -933,7 +934,7 @@ def test_move_population_in_not_enough_resources():
 
     assert nobles.population == 130
 
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 19500
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 800
@@ -945,7 +946,7 @@ def test_move_population_in_not_enough_resources():
 def test_move_population_in_not_enough_land():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 200,
         "iron": 0,
         "stone": 200,
@@ -963,7 +964,7 @@ def test_move_population_in_not_enough_land():
 
     assert nobles.population == 100
 
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 0
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 120
@@ -975,7 +976,7 @@ def test_move_population_in_not_enough_land():
 def test_move_population_out_no_demotion():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 120,
         "iron": 0,
         "stone": 0,
@@ -993,7 +994,7 @@ def test_move_population_out_no_demotion():
 
     assert nobles.population == 60
 
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 120
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 0
@@ -1005,7 +1006,7 @@ def test_move_population_out_no_demotion():
 def test_move_population_out_demotion():
     state = State_Data()
     resources = {
-        "food": 100,
+        "food": 1000,
         "wood": 120,
         "iron": 0,
         "stone": 0,
@@ -1023,7 +1024,7 @@ def test_move_population_out_demotion():
 
     assert nobles.population == 60
 
-    assert nobles.resources["food"] == 100
+    assert nobles.resources["food"] == 1000
     assert nobles.resources["wood"] == 260
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 80

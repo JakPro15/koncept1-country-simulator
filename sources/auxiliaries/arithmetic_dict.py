@@ -56,13 +56,19 @@ class Arithmetic_Dict(dict):
                 try:
                     result[key] = self.get(key, 0) / factor.get(key, 0)
                 except ZeroDivisionError:
-                    result[key] = inf
+                    if self.get(key, 0) == 0:
+                        result[key] = 0
+                    else:
+                        result[key] = inf
         else:
             for key in result:
                 try:
                     result[key] = self.get(key, 0) / factor
                 except ZeroDivisionError:
-                    result[key] = inf
+                    if self.get(key, 0) == 0:
+                        result[key] = 0
+                    else:
+                        result[key] = inf
         return result
 
     def __IDIV__(self, factor):
@@ -71,13 +77,15 @@ class Arithmetic_Dict(dict):
                 try:
                     self[key] = self.get(key, 0) / factor.get(key, 0)
                 except ZeroDivisionError:
-                    self[key] = inf
+                    if self.get(key, 0) != 0:
+                        self[key] = inf
         else:
             for key in self:
                 try:
                     self[key] = self.get(key, 0) / factor
                 except ZeroDivisionError:
-                    self[key] = inf
+                    if self.get(key, 0) != 0:
+                        self[key] = inf
         return self
 
     def __floordiv__(self, factor):
@@ -87,13 +95,19 @@ class Arithmetic_Dict(dict):
                 try:
                     result[key] = self.get(key, 0) // factor.get(key, 0)
                 except ZeroDivisionError:
-                    result[key] = inf
+                    if self.get(key, 0) == 0:
+                        result[key] = 0
+                    else:
+                        result[key] = inf
         else:
             for key in result:
                 try:
                     result[key] = self.get(key, 0) // factor
                 except ZeroDivisionError:
-                    result[key] = inf
+                    if self.get(key, 0) == 0:
+                        result[key] = 0
+                    else:
+                        result[key] = inf
         return result
 
     def __IFLOORDIV__(self, factor):
@@ -102,13 +116,15 @@ class Arithmetic_Dict(dict):
                 try:
                     self[key] = self.get(key, 0) // factor.get(key, 0)
                 except ZeroDivisionError:
-                    self[key] = inf
+                    if self.get(key, 0) != 0:
+                        self[key] = inf
         else:
             for key in self:
                 try:
                     self[key] = self.get(key, 0) // factor
                 except ZeroDivisionError:
-                    self[key] = inf
+                    if self.get(key, 0) != 0:
+                        self[key] = inf
         return self
 
     def copy(self):

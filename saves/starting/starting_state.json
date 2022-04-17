@@ -3,7 +3,7 @@
     "month": "January",
     "classes": {
         "nobles": {
-            "population": 20,
+            "population": 10,
             "resources": {
                 "food": 200,
                 "wood": 150,
@@ -19,7 +19,7 @@
             }
         },
         "artisans": {
-            "population": 30,
+            "population": 20,
             "resources": {
                 "food": 100,
                 "wood": 100,

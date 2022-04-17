@@ -15,7 +15,7 @@ MODIFIERS = [
     'Base', 'Starving', 'Freezing', 'Mobility'
 ]
 CLASSES = [
-    "Nobles", "Artisans", "Peasants", "Others"
+    "nobles", "artisans", "peasants", "others"
 ]
 
 FOOD_CONSUMPTION = 1
@@ -39,14 +39,14 @@ FOOD_PRODUCTION = {
     # Per fully working peasant or employee (20 ha of land), per month.
     'January': 0,
     'February': 0,
-    'March': 1,
-    'April': 2,
-    'May': 2,
-    'June': 1.5,
-    'July': 3,
-    'August': 7.1,
-    'September': 3.5,
-    'October': 1.5,
+    'March': 2,
+    'April': 3,
+    'May': 3,
+    'June': 2.5,
+    'July': 4,
+    'August': 8.5,
+    'September': 4.5,
+    'October': 2.5,
     'November': 0,
     'December': 0
 }
@@ -88,10 +88,10 @@ INDEX_TO_CLASS_NAME = {
 
 DEFAULT_PRICES = Arithmetic_Dict({
     "food": 1,
-    "wood": 1.2,
-    "stone": 2.334545,
-    "iron": 2.334545,
-    "tools": 2.672727
+    "wood": 1.5,
+    "stone": 2.5,
+    "iron": 2.5,
+    "tools": 3.5
 })
 
 OTHERS_WAGE = 0.5

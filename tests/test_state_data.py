@@ -594,14 +594,14 @@ def test_do_demotions():
 
 
 def test_get_max_increase_percent():
-    assert State_Data._get_max_increase_percent(0.1) == 0
-    assert State_Data._get_max_increase_percent(1) == 0
+    assert State_Data._get_max_increase_percent(0.1) == 0.1
+    assert State_Data._get_max_increase_percent(1) == 0.1
     assert State_Data._get_max_increase_percent(2) == \
-        approx(0.0413, abs=0.0001)
+        approx(0.2)
     assert State_Data._get_max_increase_percent(8) == \
-        approx(0.1)
+        approx(0.275)
     assert State_Data._get_max_increase_percent(2000) == \
-        approx(0.1841, abs=0.0001)
+        approx(0.2999, abs=0.0001)
 
 
 class Fake_Class_4:
@@ -710,7 +710,7 @@ def test_do_promotions():
     peasants = Fake_Class_4(resources)
     others = Fake_Class_4(resources)
     state = State_Data()
-    state.prices *= 8  # max_increase for peasants and artisans: 0.1
+    state.prices *= 1  # max_increase for peasants and artisans: 0.1
     state._classes = [nobles, artisans, peasants, others]
     promoted = state._do_promotions()
 

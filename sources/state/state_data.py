@@ -122,14 +122,7 @@ class State_Data:
         }
         return data
 
-    def _grow_populations(self, mobility=None):
-        if mobility is None:
-            mobility = {
-                "nobles": 0,
-                "artisans": 0,
-                "peasants": 0,
-                "others": 0
-            }
+    def _grow_populations(self):
         modifiers = {}
         grown = {}
         for index, social_class in enumerate(self.classes):
@@ -154,8 +147,6 @@ class State_Data:
 
             total_modifier = sum(modifiers[class_name].values())
             grown[class_name] = social_class.grow_population(total_modifier)
-
-            modifiers[class_name]["Mobility"] = mobility[class_name]
 
         return modifiers, grown
 
@@ -255,9 +246,9 @@ class State_Data:
     @staticmethod
     def _get_max_increase_percent(price_ratio):
         if price_ratio > 1:
-            return -0.2 / (price_ratio ** (1 / 3)) + 0.2
+            return -0.2 / price_ratio + 0.3
         else:
-            return 0
+            return 0.1
 
     def _do_one_promotion(self, class_from, class_to,
                           max_increase, increase_price):
@@ -277,7 +268,14 @@ class State_Data:
 
         return transferred
 
-    def _do_promotions(self):
+    def _do_promotions(self, modifiers=None):
+        if modifiers is None:
+            modifiers = {
+                "nobles": {"Starving": 0, "Freezing": 0},
+                "artisans": {"Starving": 0, "Freezing": 0},
+                "peasants": {"Starving": 0, "Freezing": 0},
+                "others": {"Starving": 0, "Freezing": 0}
+            }
         nobles = self.classes[0]
         artisans = self.classes[1]
         peasants = self.classes[2]
@@ -296,46 +294,54 @@ class State_Data:
             "others": 0
         })
 
-        # Peasants:
-        increase_price = 3 * self.prices["wood"] + 3 * self.prices["tools"]
-        food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
-        wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
-        price_ratio = max(food_price_ratio, wood_price_ratio)
-        peasant_increase = \
-            self._get_max_increase_percent(price_ratio) * peasants.population
-        transferred = self._do_one_promotion(
-            others, peasants, peasant_increase, increase_price
-        )
-        promoted["peasants"] += transferred
-        promoted["others"] -= transferred
+        if modifiers["others"].get("Starving", 0) == 0:
+            # Peasants:
+            increase_price = \
+                5 * (3 * self.prices["wood"] + 3 * self.prices["tools"])
+            food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
+            wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
+            price_ratio = max(food_price_ratio, wood_price_ratio)
+            peasant_increase = self._get_max_increase_percent(price_ratio) \
+                * peasants.population
+            transferred = self._do_one_promotion(
+                others, peasants, peasant_increase, increase_price
+            )
+            promoted["peasants"] += transferred
+            promoted["others"] -= transferred
 
-        # Artisans:
-        increase_price = 2 * self.prices["wood"] + 3 * self.prices["tools"]
-        price_ratio = self.prices["tools"] / DEFAULT_PRICES["tools"]
-        artisan_increase = \
-            self._get_max_increase_percent(price_ratio) * artisans.population
-        transferred = self._do_one_promotion(
-            others, artisans, artisan_increase, increase_price
-        )
-        promoted["others"] -= transferred
-        promoted["artisans"] += transferred
+            # Artisans:
+            increase_price = \
+                5 * (2 * self.prices["wood"] + 3 * self.prices["tools"])
+            price_ratio = self.prices["tools"] / DEFAULT_PRICES["tools"]
+            artisan_increase = self._get_max_increase_percent(price_ratio) \
+                * artisans.population
+            transferred = self._do_one_promotion(
+                others, artisans, artisan_increase, increase_price
+            )
+            promoted["others"] -= transferred
+            promoted["artisans"] += transferred
 
-        # Nobles (from peasants):
-        increase_price = 7 * self.prices["wood"] + \
-            4 * self.prices["stone"] + 1 * self.prices["tools"]
-        noble_increase = 0.05 * nobles.population
-        transferred = self._do_one_promotion(
-            peasants, nobles, noble_increase, increase_price
+        # Modifiers for nobles
+        increase_price = 5 * (
+            7 * self.prices["wood"] + 4 * self.prices["stone"] +
+            1 * self.prices["tools"]
         )
-        promoted["peasants"] -= transferred
-        promoted["nobles"] += transferred
+        noble_increase = 0.0005 * nobles.population
+        if modifiers["peasants"].get("Starving", 0) == 0:
+            # Nobles (from peasants):
+            transferred = self._do_one_promotion(
+                peasants, nobles, noble_increase, increase_price
+            )
+            promoted["peasants"] -= transferred
+            promoted["nobles"] += transferred
 
-        # Nobles (from artisans):
-        transferred = self._do_one_promotion(
-            artisans, nobles, noble_increase, increase_price
-        )
-        promoted["artisans"] -= transferred
-        promoted["nobles"] += transferred
+        if modifiers["artisans"].get("Starving", 0) == 0:
+            # Nobles (from artisans):
+            transferred = self._do_one_promotion(
+                artisans, nobles, noble_increase, increase_price
+            )
+            promoted["artisans"] -= transferred
+            promoted["nobles"] += transferred
 
         return promoted / initial_pops
 
@@ -363,9 +369,7 @@ class State_Data:
             month_data["used"][class_name] = used
 
         self._do_payments()
-        promoted = self._do_promotions()
         demoted = self._do_demotions()
-        mobility = promoted + demoted
         self._secure_classes()
 
         self._market.do_trade()
@@ -377,7 +381,15 @@ class State_Data:
             class_name = INDEX_TO_CLASS_NAME[index]
             month_data["consumed"][class_name] = consumed
 
-        modifiers, grown = self._grow_populations(mobility)
+        modifiers, grown = self._grow_populations()
+
+        promoted = self._do_promotions(modifiers)
+        mobility = promoted + demoted
+
+        for index, social_class in enumerate(self.classes):
+            class_name = INDEX_TO_CLASS_NAME[index]
+            modifiers[class_name]["Mobility"] = mobility[class_name]
+
         month_data["growth_modifiers"] = modifiers
         month_data["grown"] = grown
         self._do_demotions()
