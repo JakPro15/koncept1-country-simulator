@@ -112,18 +112,20 @@ class State_Data:
                 employees += social_class.population
         return employees
 
-    def from_dict(self, data: dict):
-        self.year = data["year"]
-        self.month = data["month"]
+    @classmethod
+    def from_dict(cls, data: dict):
+        state = cls(data["month"], data["year"])
 
-        nobles = Nobles.from_dict(self, data["classes"]["nobles"])
-        artisans = Artisans.from_dict(self, data["classes"]["artisans"])
-        peasants = Peasants.from_dict(self, data["classes"]["peasants"])
-        others = Others.from_dict(self, data["classes"]["others"])
+        nobles = Nobles.from_dict(state, data["classes"]["nobles"])
+        artisans = Artisans.from_dict(state, data["classes"]["artisans"])
+        peasants = Peasants.from_dict(state, data["classes"]["peasants"])
+        others = Others.from_dict(state, data["classes"]["others"])
         classes_list = [nobles, artisans, peasants, others]
-        self.classes = classes_list
 
-        self.prices = data["prices"]
+        state.classes = classes_list
+        state.prices = data["prices"]
+
+        return state
 
     def to_dict(self):
         data = {
@@ -331,7 +333,7 @@ class State_Data:
         # Eighth: trade
         self._market.do_trade()
         self.prices = self._market.prices
-        month_data["trade_prices"] = self.prices
+        month_data["prices"] = self.prices
 
         # Ninth: calculations done - advance to the next month
         self._advance_month()
@@ -349,8 +351,11 @@ class State_Data:
             "peasants": self.classes[2].population,
             "others": self.classes[3].population
         }
-        month_data["resources_change"] = \
-            month_data["resources_after"] - old_resources
+        month_data["resources_change"] = {
+            values_dict - old_resources[social_class]
+            for social_class, values_dict
+            in month_data["resources_after"].items()
+        }
         month_data["population_change"] = \
             month_data["population_change"] - old_population
         return month_data

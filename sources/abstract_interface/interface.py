@@ -8,15 +8,14 @@ class Interface:
     Handles State_Data and subclasses communicating with the outside world.
     Properties:
     state - the State_Data object the interface handles
-    history - history of the State_Data object
+    history - History of the State_Data object
     """
     def load_data(self, dirname):
         starting_state_file_name = "saves/" + dirname + "/starting_state.json"
         with open(starting_state_file_name, 'r') as load_file:
             starting_state = json.load(load_file)
 
-        self.state = State_Data()
-        self.state.from_dict(starting_state)
+        self.state = State_Data.from_dict(starting_state)
 
         history_file_name = "saves/" + dirname + "/history.txt"
         with open(history_file_name, 'r') as load_file:
