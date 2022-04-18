@@ -1,4 +1,5 @@
 from ...auxiliaries.constants import (
+    EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
     MONTHS,
@@ -45,8 +46,13 @@ class Class:
         assert new_parent.month in MONTHS
         self._parent = new_parent
 
+    @staticmethod
     @property
-    def class_name(self):
+    def class_name():
+        """
+        Returns the name of the class as a string.
+        Should never be used on the base Class, only on derived classes.
+        """
         return "base class"
 
     @property
@@ -59,6 +65,10 @@ class Class:
 
     @population.setter
     def population(self, number):
+        """
+        Does not modify the actual population, saves the changes in temporary
+        _new_population. Use flush() to confirm the changes.
+        """
         assert number >= 0
         difference = number - self._new_population
         self.resources -= INBUILT_RESOURCES[self.class_name] * difference
@@ -70,6 +80,10 @@ class Class:
 
     @resources.setter
     def resources(self, new_resources: dict | Arithmetic_Dict):
+        """
+        Does not modify the actual resources, saves the changes in temporary
+        _new_resources. Use flush() to confirm the changes.
+        """
         for resource in RESOURCES:
             assert resource in new_resources
         self._new_resources = Arithmetic_Dict(new_resources)
@@ -86,20 +100,30 @@ class Class:
 
     @property
     def missing_resources(self):
+        """
+        Returns the resources the class has negative.
+        WARNING: Uses the temporary _new_resources, not resources itself.
+        """
         return Arithmetic_Dict({
             resource: -amount if amount < 0 else 0
             for resource, amount
-            in self.resources.items()
+            in self._new_resources.items()
         })
 
     @property
     def class_overpopulation(self):
-        overpops = {}
+        """
+        Returns how many of the class need to be demoted to remove negative
+        resources.
+        """
+        overpops = []
         for res_name, value in self.missing_resources.items():
             res = INBUILT_RESOURCES[self.class_name][res_name]
+            res -= \
+                INBUILT_RESOURCES[self.lower_class_type.class_name][res_name]
             if res > 0:
-                overpops[res_name] = value / res
-        return max(INBUILT_RESOURCES[self.class_name].values())
+                overpops.append(value / res)
+        return max(overpops.values())
 
     def grow_population(self, modifier: float):
         """
@@ -128,7 +152,50 @@ class Class:
 
     @classmethod
     def from_dict(cls, parent, data):
+        """
+        Creates a social class object from the given dict.
+        """
         return cls(parent, data["population"], data["resources"])
+
+    def handle_empty_class(self):
+        """
+        Makes classes with pop < 0.5 effectively empty.
+        WARNING: Flushes the class.
+        """
+        self.flush()
+        if self.is_temp:
+            if self.population + self.temp["population"] < 0.5:
+                # Put all pop and res into temp
+                self.temp["population"] += self.population
+                self.temp["resources"] += self.resources
+                self.population = 0
+                self.resources = EMPTY_RESOURCES
+            else:
+                # Untemporarify the class
+                self.temp["resources"] += self.resources
+                self.population += self.temp["population"]
+                self.resources = self.temp["resources"]
+                self.is_temp = False
+                self.temp = \
+                    {"population": 0, "resources": EMPTY_RESOURCES}
+        elif self.population < 0.5:
+            # Make the class empty, save pop and res into temp
+            self.is_temp = True
+            self.temp["population"] = self.population
+            self.temp["resources"] = self.resources
+            self.population = 0
+            self.resources = EMPTY_RESOURCES
+        self.flush()
+
+    def handle_negative_resources(self):
+        """
+        Handles minimal negative resources resulting from floating-point
+        rounding errors.
+        """
+        for resource in self._new_resources:
+            if self._new_resources[resource] < 0 and \
+                 abs(self._new_resources[resource]) < 0.001:
+                self._new_resources[resource] = 0
 
     def flush(self):
         """

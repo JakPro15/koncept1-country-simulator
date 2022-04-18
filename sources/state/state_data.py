@@ -1,7 +1,10 @@
 from ..auxiliaries.constants import (
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
+    EMPTY_RESOURCES,
     FREEZING_MORTALITY,
+    INBUILT_RESOURCES,
+    INCREASE_PRICE_FACTOR,
     MONTHS,
     STARVATION_MORTALITY,
     WOOD_CONSUMPTION
@@ -74,6 +77,20 @@ class State_Data:
         self._classes = new_classes_list.copy()
         self._create_market()
 
+        # Create some more attributes for the classes
+        # These are used for demotions
+        self._classes[0].lower_class = self._classes[2]
+        self._classes[1].lower_class = self._classes[3]
+        self._classes[2].lower_class = self._classes[3]
+        self._classes[3].lower_class = self._classes[3]
+        # These are used for securing almost-empty classes
+        for social_class in self._classes:
+            social_class.is_temp = False
+            social_class.temp = {"population": 0, "resources": EMPTY_RESOURCES}
+        # These are used in promotions
+            social_class.starving = False
+            social_class.freezing = False
+
     def _advance_month(self):
         months_moved = MONTHS[1:] + [MONTHS[0]]
         next_months = {
@@ -98,10 +115,10 @@ class State_Data:
         self.year = data["year"]
         self.month = data["month"]
 
-        nobles = Nobles.create_from_dict(self, data["classes"]["nobles"])
-        artisans = Artisans.create_from_dict(self, data["classes"]["artisans"])
-        peasants = Peasants.create_from_dict(self, data["classes"]["peasants"])
-        others = Others.create_from_dict(self, data["classes"]["others"])
+        nobles = Nobles.from_dict(self, data["classes"]["nobles"])
+        artisans = Artisans.from_dict(self, data["classes"]["artisans"])
+        peasants = Peasants.from_dict(self, data["classes"]["peasants"])
+        others = Others.from_dict(self, data["classes"]["others"])
         classes_list = [nobles, artisans, peasants, others]
         self.classes = classes_list
 
@@ -121,230 +138,143 @@ class State_Data:
         }
         return data
 
-    def _grow_populations(self):
-        modifiers = {}
-        grown = {}
+    def _do_growth(self):
+        """
+        Does the natural population growth for all classes.
+        """
+        factor = DEFAULT_GROWTH_FACTOR / 12
         for social_class in self.classes:
-            class_name = social_class.class_name
-            modifiers[class_name] = {}
-            modifiers[class_name]["Base"] = DEFAULT_GROWTH_FACTOR / 12
+            social_class.grow_population(factor)
 
+    def _do_starvation(self):
+        """
+        Does starvation and freezing to fix negative food and wood.
+        Starving or freezing is marked with a bool attribute of the class.
+        """
+        modifiers = set()
+        for social_class in self.classes:
             missing_food = social_class.missing_resources["food"]
+            starving_number = 0
             if missing_food > 0:
-                starving_part = missing_food / social_class.population
-                modifiers[class_name]["Starving"] = \
-                    -starving_part * STARVATION_MORTALITY
+                starving_number = STARVATION_MORTALITY * missing_food \
+                    / social_class.population
+
                 social_class.resources["food"] = 0
+                modifiers.add("Starving")
+                social_class.starving = True
+            else:
+                social_class.starving = False
 
             missing_wood = social_class.missing_resources["wood"]
+            freezing_number = 0
             if missing_wood > 0:
-                freezing_number = missing_wood / WOOD_CONSUMPTION[self.month]
-                freezing_part = freezing_number / social_class.population
-                modifiers[class_name]["Freezing"] = \
-                    -freezing_part * FREEZING_MORTALITY
+                freezing_number = FREEZING_MORTALITY * missing_wood \
+                    / WOOD_CONSUMPTION[self.month]
+
                 social_class.resources["wood"] = 0
+                modifiers.add("Freezing")
+                social_class.freezing = True
+            else:
+                social_class.freezing = False
 
-            total_modifier = sum(modifiers[class_name].values())
-            grown[class_name] = social_class.grow_population(total_modifier)
-
-        return modifiers, grown
+            social_class.population -= (starving_number + freezing_number)
+        return modifiers
 
     def _do_payments(self):
+        """
+        Moves the payments into Others' pockets.
+        """
         self.classes[3].resources += self.payments
         for resource in self.payments:
             self.payments[resource] = 0
 
-    @staticmethod
-    def safe_division(arg1, arg2):
-        if arg2 != 0:
-            result = arg1 / arg2
-        elif arg1 < 0:
-            result = -9999
-        elif arg1 > 0:
-            result = 9999
-        else:
-            result = 0
-
-        if result > 9999:
-            result = 9999
-        elif result < -9999:
-            result = -9999
-        return result
-
     def _do_demotions(self):
-        nobles = self._classes[0]
-        artisans = self._classes[1]
-        peasants = self._classes[2]
-        others = self._classes[3]
+        """
+        Does demotions to fix as many negative resources as possible.
+        """
+        for social_class in self.classes:
+            lower_class = social_class.lower_class
+            lower_name = lower_class.class_name
 
-        nobles_moved = min(nobles.class_overpopulation, nobles.population)
-        nobles_moved_percent = \
-            State_Data.safe_division(nobles_moved, nobles.population)
-        peasants_pop = peasants.population
-        peasants.resources["wood"] += 3 * nobles_moved
-        peasants.resources["tools"] += 3 * nobles_moved
-        peasants.move_population(nobles_moved)
-        nobles.move_population(-nobles_moved, demotion=True)
+            moved_pop = \
+                min(social_class.class_overpopulation, social_class.population)
+            moved_res = INBUILT_RESOURCES[lower_name] * moved_pop
 
-        artisans_moved = \
-            min(artisans.class_overpopulation, artisans.population)
-        artisans_moved_percent = \
-            State_Data.safe_division(artisans_moved, artisans.population)
-        others.move_population(artisans_moved)
-        artisans.move_population(-artisans_moved, demotion=True)
-
-        peasants_moved = \
-            min(peasants.class_overpopulation, peasants.population)
-        peasants_moved_percent = State_Data.safe_division(
-            (-nobles_moved + peasants_moved), peasants_pop
-        )
-        others_moved_percent = State_Data.safe_division(
-            -(peasants_moved + artisans_moved), others.population
-        )
-
-        others.move_population(peasants_moved)
-        peasants.move_population(-peasants_moved, demotion=True)
-
-        demoted = {
-            "nobles": -nobles_moved_percent,
-            "artisans": -artisans_moved_percent,
-            "peasants": -peasants_moved_percent,
-            "others": -others_moved_percent
-        }
-        return demoted
-
-    @staticmethod
-    def _handle_empty_class(social_class, lower_class):
-        if social_class.population < 0.5:
-            social_class.population = 0
-            for resource in social_class.resources:
-                amount = social_class.resources[resource]
-                social_class.resources[resource] = 0
-                if amount > 0:
-                    lower_class.resources[resource] += amount
-
-    @staticmethod
-    def _handle_negative_resources(social_class):
-        for resource in social_class.resources:
-            if social_class.resources[resource] < 0 and \
-                 abs(social_class.resources[resource]) < 0.001:
-                social_class.resources[resource] = 0
+            social_class.resources -= moved_res
+            lower_class.resources += moved_res
+            social_class.population -= moved_pop
+            lower_class.population += moved_pop
 
     def _secure_classes(self):
-        nobles = self.classes[0]
-        artisans = self.classes[1]
-        peasants = self.classes[2]
-        others = self.classes[3]
-        self._handle_empty_class(nobles, peasants)
-        self._handle_empty_class(artisans, others)
-        self._handle_empty_class(peasants, others)
-        self._handle_empty_class(others, others)
+        """
+        Secures and flushes all classes.
+        """
         for social_class in self.classes:
-            self._handle_negative_resources(social_class)
+            social_class.handle_negative_resources()
+            social_class.handle_empty_class()
 
-    @staticmethod
-    def _get_max_increase_percent(price_ratio):
-        if price_ratio > 1:
-            return -0.2 / price_ratio + 0.3
-        else:
-            return 0.1
+    def _do_one_promotion(self, class_from, class_to, increase_price):
+        """
+        Does one promoton on the given classes.
+        """
+        from_wealth = sum((class_from.resources * self.prices).values())
+        if from_wealth < increase_price / 10:
+            return
 
-    def _do_one_promotion(self, class_from, class_to,
-                          max_increase, increase_price):
-        others_wealth = sum((class_from.resources * self.prices).values())
         paid = min(
-            max_increase * increase_price,
-            class_from.population * increase_price,
-            others_wealth
+            class_from.population * increase_price, from_wealth / 5
         )
-        part_paid = State_Data.safe_division(paid, others_wealth)
+        part_paid = paid / from_wealth
         class_to.resources += class_from.resources * part_paid
         class_from.resources -= class_from.resources * part_paid
 
         transferred = paid / increase_price
-        class_to.move_population(transferred)
-        class_from.move_population(-transferred)
+        class_to.population += transferred
+        class_from.population -= transferred
 
-        return transferred
-
-    def _do_promotions(self, modifiers=None):
-        if modifiers is None:
-            modifiers = {
-                "nobles": {"Starving": 0, "Freezing": 0},
-                "artisans": {"Starving": 0, "Freezing": 0},
-                "peasants": {"Starving": 0, "Freezing": 0},
-                "others": {"Starving": 0, "Freezing": 0}
-            }
+    def _do_promotions(self):
+        """
+        Does all the promotions of one month end.
+        """
         nobles = self.classes[0]
         artisans = self.classes[1]
         peasants = self.classes[2]
         others = self.classes[3]
 
-        initial_pops = {
-            "nobles": nobles.population,
-            "artisans": artisans.population,
-            "peasants": peasants.population,
-            "others": others.population
-        }
-        promoted = Arithmetic_Dict({
-            "nobles": 0,
-            "artisans": 0,
-            "peasants": 0,
-            "others": 0
-        })
-
-        if modifiers["others"].get("Starving", 0) == 0:
+        if not(others.starving) and (not others.freezing):
             # Peasants:
-            increase_price = \
-                5 * (3 * self.prices["wood"] + 3 * self.prices["tools"])
-            food_price_ratio = self.prices["food"] / DEFAULT_PRICES["food"]
-            wood_price_ratio = self.prices["wood"] / DEFAULT_PRICES["wood"]
-            price_ratio = max(food_price_ratio, wood_price_ratio)
-            peasant_increase = self._get_max_increase_percent(price_ratio) \
-                * peasants.population
-            transferred = self._do_one_promotion(
-                others, peasants, peasant_increase, increase_price
-            )
-            promoted["peasants"] += transferred
-            promoted["others"] -= transferred
+            increase_price = INCREASE_PRICE_FACTOR * \
+                (3 * self.prices["wood"] + 3 * self.prices["tools"])
+            self._do_one_promotion(others, peasants, increase_price)
 
             # Artisans:
-            increase_price = \
-                5 * (2 * self.prices["wood"] + 3 * self.prices["tools"])
-            price_ratio = self.prices["tools"] / DEFAULT_PRICES["tools"]
-            artisan_increase = self._get_max_increase_percent(price_ratio) \
-                * artisans.population
-            transferred = self._do_one_promotion(
-                others, artisans, artisan_increase, increase_price
-            )
-            promoted["others"] -= transferred
-            promoted["artisans"] += transferred
+            increase_price = INCREASE_PRICE_FACTOR * \
+                (2 * self.prices["wood"] + 3 * self.prices["tools"])
+            self._do_one_promotion(others, artisans, increase_price)
 
         # Modifiers for nobles
-        increase_price = 5 * (
+        increase_price = INCREASE_PRICE_FACTOR * (
             7 * self.prices["wood"] + 4 * self.prices["stone"] +
             1 * self.prices["tools"]
         )
-        noble_increase = 0.0005 * nobles.population
-        if modifiers["peasants"].get("Starving", 0) == 0:
+        if not(peasants.starving) and (not peasants.freezing):
             # Nobles (from peasants):
-            transferred = self._do_one_promotion(
-                peasants, nobles, noble_increase, increase_price
+            self._do_one_promotion(
+                peasants, nobles, increase_price
             )
-            promoted["peasants"] -= transferred
-            promoted["nobles"] += transferred
 
-        if modifiers["artisans"].get("Starving", 0) == 0:
+        if not(artisans.starving) and (not artisans.freezing) == 0:
             # Nobles (from artisans):
-            transferred = self._do_one_promotion(
-                artisans, nobles, noble_increase, increase_price
+            self._do_one_promotion(
+                artisans, nobles, increase_price
             )
-            promoted["artisans"] -= transferred
-            promoted["nobles"] += transferred
-
-        return promoted / initial_pops
 
     def do_month(self):
+        """
+        Does all the needed calculations and changes to end the month and move
+        on to the next. Returns a dict with data from the month.
+        """
+        # Check for game over
         someone_alive = False
         for social_class in self.classes:
             if social_class.population > 0:
@@ -352,50 +282,60 @@ class State_Data:
         if not someone_alive:
             raise EveryoneDeadError
 
-        month_data = {
-            "year": self.year,
-            "month": self.month,
-            "produced": {},
-            "used": {},
-            "consumed": {},
-            "resources_after": {}
+        # Save old resources to calculate the changes
+        old_resources = {
+            "nobles": self.classes[0].resources,
+            "artisans": self.classes[1].resources,
+            "peasants": self.classes[2].resources,
+            "others": self.classes[3].resources
+        }
+        old_population = {
+            "nobles": self.classes[0].population,
+            "artisans": self.classes[1].population,
+            "peasants": self.classes[2].population,
+            "others": self.classes[3].population
         }
 
-        for social_class in self.classes:
-            produced, used = social_class.produce()
-            class_name = social_class.class_name
-            month_data["produced"][class_name] = produced
-            month_data["used"][class_name] = used
+        # Create returned dict
+        month_data = {
+            "year": self.year,
+            "month": self.month
+        }
 
+        # First: growth - resources might become negative
+        self._do_growth()
+
+        # Second: production
+        for social_class in self.classes:
+            social_class.produce()
         self._do_payments()
-        demoted = self._do_demotions()
+
+        # Third: consumption
+        for social_class in self.classes:
+            social_class.consume()
+
+        # Fourth: demotions - should fix all except food and some wood
+        self._do_demotions()
+
+        # Fifth: starvation - should fix all remaining resources
+        self._do_starvation()
+
+        # Sixth: security and flushing
         self._secure_classes()
 
+        # Seventh: promotions
+        self._do_promotions()  # Might make resources negative again
+        self._do_demotions()  # Fix resources again
+
+        # Eighth: trade
         self._market.do_trade()
         self.prices = self._market.prices
         month_data["trade_prices"] = self.prices
 
-        for social_class in self.classes:
-            consumed = social_class.consume()
-            class_name = social_class.class_name
-            month_data["consumed"][class_name] = consumed
-
-        modifiers, grown = self._grow_populations()
-
-        promoted = self._do_promotions(modifiers)
-        mobility = promoted + demoted
-
-        for social_class in self.classes:
-            class_name = social_class.class_name
-            modifiers[class_name]["Mobility"] = mobility[class_name]
-
-        month_data["growth_modifiers"] = modifiers
-        month_data["grown"] = grown
-        self._do_demotions()
-        self._secure_classes()
-
+        # Ninth: calculations done - advance to the next month
         self._advance_month()
 
+        # Tenth: return the necessary data
         month_data["resources_after"] = {
             "nobles": self.classes[0].resources,
             "artisans": self.classes[1].resources,
@@ -408,9 +348,18 @@ class State_Data:
             "peasants": self.classes[2].population,
             "others": self.classes[3].population
         }
+        month_data["resources_change"] = \
+            month_data["resources_after"] - old_resources
+        month_data["population_change"] = \
+            month_data["population_change"] - old_population
         return month_data
 
-    def execute_commands(self, commands):
+    def execute_commands(self, commands: list[str]):
+        """
+        Executes the given commands.
+        Format:
+        <command> <argument>
+        """
         for line in commands:
             command = line.split(' ')
             if command[0] == "next":

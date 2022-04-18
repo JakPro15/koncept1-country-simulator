@@ -5,6 +5,13 @@ from .arithmetic_dict import Arithmetic_Dict
 RESOURCES = [
     "food", "wood", "stone", "iron", "tools"
 ]
+EMPTY_RESOURCES = Arithmetic_Dict({
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "iron": 0,
+    "tools": 0
+})
 MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -52,6 +59,10 @@ FOOD_PRODUCTION = {
     'September': 4.5, 'October': 2.5, 'November': 0, 'December': 0
 }
 WOOD_PRODUCTION = 1.5
+
+# PROMOTIONS CONSTANTS
+MAX_RES_PART_PROMOTED = 0.2
+INCREASE_PRICE_FACTOR = 5
 
 # POPULATION CONSTANTS
 DEFAULT_GROWTH_FACTOR = 0.1  # monthly is 1/12 of that

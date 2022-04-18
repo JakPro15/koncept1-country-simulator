@@ -510,7 +510,7 @@ def test_grow_populations():
     state = State_Data()
     state._classes = classes
 
-    state._grow_populations()
+    state._do_growth()
 
     assert class1.population == approx(363, abs=0.1)
     assert class2.population == approx(478, abs=0.1)

@@ -5,10 +5,14 @@ from .class_file import Class
 class Others(Class):
     """
     Represents Other people of the country.
-    They can work as peasants or in mines, on noble or government land.
-    They do not own land and they can work as employees.
+    They can work as peasants or in mines, when employed.
+    They can work as employees.
+    They promote to Peasants or Artisans.
+    They do not demote.
     """
-    def class_name(self):
+    @staticmethod
+    @property
+    def class_name():
         return CLASSES[3]
 
     @property

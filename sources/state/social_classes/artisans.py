@@ -13,10 +13,13 @@ class Artisans(Class):
     """
     Represents the Artisans of the country.
     Artisans use wood and iron to make tools.
-    They do not own land and they cannot work as employees.
+    They cannot work as employees.
+    They promote to Nobles.
+    They demote to Others.
     """
+    @staticmethod
     @property
-    def class_name(self):
+    def class_name():
         return CLASSES[1]
 
     def produce(self):

@@ -17,10 +17,14 @@ class Nobles(Class):
     """
     Represents the Nobles of the country.
     Nobles do not make anything.
-    They own land and they cannot work as employees.
+    They cannot work as employees.
+    They employ Others.
+    They do not promote.
+    They demote to Peasants.
     """
+    @staticmethod
     @property
-    def class_name(self):
+    def class_name():
         return CLASSES[0]
 
     def _get_employees(self):

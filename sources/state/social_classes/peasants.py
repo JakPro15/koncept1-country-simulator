@@ -13,9 +13,13 @@ class Peasants(Class):
     """
     Represents the Peasants of the country.
     Peasants make food and wood.
-    They own land (but not mines) and they cannot work as employees.
+    They cannot work as employees.
+    They promote to Nobles.
+    They demote to Others.
     """
-    def class_name(self):
+    @staticmethod
+    @property
+    def class_name():
         return CLASSES[2]
 
     def produce(self):
