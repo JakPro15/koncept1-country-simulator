@@ -169,7 +169,7 @@ class Class:
                 self.temp["population"] += self.population
                 self.temp["resources"] += self.resources
                 self.population = 0
-                self.resources = EMPTY_RESOURCES
+                self.resources = EMPTY_RESOURCES.copy()
             else:
                 # Untemporarify the class
                 self.temp["resources"] += self.resources
@@ -177,14 +177,14 @@ class Class:
                 self.resources = self.temp["resources"]
                 self.is_temp = False
                 self.temp = \
-                    {"population": 0, "resources": EMPTY_RESOURCES}
+                    {"population": 0, "resources": EMPTY_RESOURCES.copy()}
         elif self.population < 0.5:
             # Make the class empty, save pop and res into temp
             self.is_temp = True
             self.temp["population"] = self.population
             self.temp["resources"] = self.resources
             self.population = 0
-            self.resources = EMPTY_RESOURCES
+            self.resources = EMPTY_RESOURCES.copy()
         self.flush()
 
     def handle_negative_resources(self):

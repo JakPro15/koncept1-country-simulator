@@ -86,7 +86,8 @@ class State_Data:
         # These are used for securing almost-empty classes
         for social_class in self._classes:
             social_class.is_temp = False
-            social_class.temp = {"population": 0, "resources": EMPTY_RESOURCES}
+            social_class.temp = \
+                {"population": 0, "resources": EMPTY_RESOURCES.copy()}
         # These are used in promotions
             social_class.starving = False
             social_class.freezing = False
