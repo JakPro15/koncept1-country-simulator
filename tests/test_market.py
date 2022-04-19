@@ -45,6 +45,10 @@ class Fake_Social_Class:
         self.resources = Arithmetic_Dict(resources)
         self.optimal_resources = Arithmetic_Dict(optimal_resources)
         self.population = 1
+        self.flushed = False
+
+    def flush(self):
+        self.flushed = True
 
 
 def test_get_available_and_needed_resources():
@@ -172,7 +176,7 @@ def test_set_prices():
         "food": approx(0.483 * DEFAULT_PRICES["food"], abs=1e-2),
         "wood": approx(0.469 * DEFAULT_PRICES["wood"], abs=1e-2),
         "stone": approx(0.455 * DEFAULT_PRICES["stone"], abs=1e-2),
-        "iron": 0,
+        "iron": DEFAULT_PRICES["iron"],
         "tools": approx(0.429 * DEFAULT_PRICES["tools"], abs=1e-2)
     }
 
@@ -239,7 +243,7 @@ def test_buy_needed_resources():
     market._buy_needed_resources()
 
     assert class1.money == approx(91.8, abs=0.1)
-    assert class1.new_resources == {
+    assert class1.market_res == {
         "food": 50,
         "wood": 50,
         "stone": 50,
@@ -247,7 +251,7 @@ def test_buy_needed_resources():
         "tools": 50
     }
     assert class2.money == approx(275.4, abs=0.1)
-    assert class2.new_resources == {
+    assert class2.market_res == {
         "food": 50,
         "wood": 50,
         "stone": 50,
@@ -255,7 +259,7 @@ def test_buy_needed_resources():
         "tools": 50
     }
     assert class3.money == 0
-    assert class3.new_resources == {
+    assert class3.market_res == {
         "food": approx(26.9, abs=0.1),
         "wood": approx(26.9, abs=0.1),
         "stone": approx(26.9, abs=0.1),
@@ -280,7 +284,7 @@ def test_buy_other_resources():
         "iron": 100,
         "tools": 100
     }
-    new_resources = {
+    market_res = {
         "food": 50,
         "wood": 50,
         "stone": 50,
@@ -296,7 +300,7 @@ def test_buy_other_resources():
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
     class1.money = 91.8
-    class1.new_resources = Arithmetic_Dict(new_resources)
+    class1.market_res = Arithmetic_Dict(market_res)
 
     resources = {
         "food": 200,
@@ -305,7 +309,7 @@ def test_buy_other_resources():
         "iron": 200,
         "tools": 200
     }
-    new_resources = {
+    market_res = {
         "food": 50,
         "wood": 50,
         "stone": 50,
@@ -321,7 +325,7 @@ def test_buy_other_resources():
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
     class2.money = 275.4
-    class2.new_resources = Arithmetic_Dict(new_resources)
+    class2.market_res = Arithmetic_Dict(market_res)
 
     resources = {
         "food": 10,
@@ -330,7 +334,7 @@ def test_buy_other_resources():
         "iron": 40,
         "tools": 50
     }
-    new_resources = {
+    market_res = {
         "food": 26.9,
         "wood": 26.9,
         "stone": 26.9,
@@ -346,7 +350,7 @@ def test_buy_other_resources():
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
     class3.money = 0
-    class3.new_resources = Arithmetic_Dict(new_resources)
+    class3.market_res = Arithmetic_Dict(market_res)
 
     social_classes = [class1, class2, class3]
     market = Market(social_classes)
@@ -374,7 +378,7 @@ def test_buy_other_resources():
     market._buy_other_resources()
 
     assert class1.money == 0
-    assert class1.new_resources == {
+    assert class1.market_res == {
         "food": approx(95.8, abs=0.1),
         "wood": approx(98.3, abs=0.1),
         "stone": approx(100.8, abs=0.1),
@@ -382,7 +386,7 @@ def test_buy_other_resources():
         "tools": approx(105.8, abs=0.1)
     }
     assert class2.money == 0
-    assert class2.new_resources == {
+    assert class2.market_res == {
         "food": approx(187.3, abs=0.1),
         "wood": approx(194.8, abs=0.1),
         "stone": approx(202.3, abs=0.1),
@@ -390,7 +394,7 @@ def test_buy_other_resources():
         "tools": approx(217.3, abs=0.1)
     }
     assert class3.money == 0
-    assert class3.new_resources == {
+    assert class3.market_res == {
         "food": approx(26.9, abs=0.1),
         "wood": approx(26.9, abs=0.1),
         "stone": approx(26.9, abs=0.1),
@@ -443,15 +447,16 @@ def test_delete_trade_attributes():
     social_classes = [class1, class2]
     market = Market(social_classes)
     market._get_available_and_needed_resources()
-    market._set_prices()
+    market.prices = DEFAULT_PRICES
     market._buy_needed_resources()
     market._delete_trade_attributes()
 
     assert not hasattr(market, "available_resources")
     assert not hasattr(market, "needed_resources")
     for social_class in social_classes:
+        assert social_class.flushed
         assert not hasattr(social_class, "money")
-        assert not hasattr(social_class, "new_resources")
+        assert not hasattr(social_class, "market_res")
         assert social_class.resources == {
             "food": 50,
             "wood": 50,
@@ -505,7 +510,7 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "food": 50,
         "wood": 50,
         "stone": 50,
-        "iron": 0,
+        "iron": 1,
         "tools": 50
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
@@ -515,23 +520,23 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
     market.do_trade()
 
     assert class1.resources == {
-        "food": approx(95.2, abs=0.1),
-        "wood": approx(97.8, abs=0.1),
-        "stone": approx(99.5, abs=0.1),
-        "iron": approx(87.6, abs=0.1),
-        "tools": approx(103.6, abs=0.1)
+        "food": approx(94.2, abs=0.1),
+        "wood": approx(96.7, abs=0.1),
+        "stone": approx(99.2, abs=0.1),
+        "iron": approx(84.9, abs=0.1),
+        "tools": approx(104.2, abs=0.1)
     }
     assert class2.resources == {
-        "food": approx(180.2, abs=0.1),
-        "wood": approx(187.7, abs=0.1),
-        "stone": approx(198.0, abs=0.1),
-        "iron": approx(252.4, abs=0.1),
-        "tools": approx(216.3, abs=0.1)
+        "food": approx(182.3, abs=0.1),
+        "wood": approx(189.8, abs=0.1),
+        "stone": approx(197.3, abs=0.1),
+        "iron": approx(254.4, abs=0.1),
+        "tools": approx(212.3, abs=0.1)
     }
     assert class3.resources == {
-        "food": approx(34.5, abs=0.1),
-        "wood": approx(34.5, abs=0.1),
-        "stone": approx(32.5, abs=0.1),
-        "iron": 0,
-        "tools": approx(30.1, abs=0.1)
+        "food": approx(33.6, abs=0.1),
+        "wood": approx(33.6, abs=0.1),
+        "stone": approx(33.6, abs=0.1),
+        "iron": approx(0.7, abs=0.1),
+        "tools": approx(33.6, abs=0.1)
     }

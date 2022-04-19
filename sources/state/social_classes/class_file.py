@@ -26,13 +26,16 @@ class Class:
     def __init__(self, parent, population: int,
                  resources: dict = None):
         self.parent = parent
-        self.population = population
+        if population < 0:
+            self._population = 0
+        else:
+            self._population = population
         if resources is None:
-            self.resources = {
+            self._resources = {
                 resource: 0 for resource in RESOURCES
             }
         else:
-            self.resources = resources
+            self._resources = resources
 
         self._new_population = self.population
         self._new_resources = self.resources

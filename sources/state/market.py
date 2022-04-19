@@ -46,9 +46,10 @@ class Market:
         for social_class in self.classes:
             if social_class.population > 0:
                 corrected_optimal_resources = Arithmetic_Dict({})
+                rel_prices = self.prices / DEFAULT_PRICES
                 price_adjusted = {
-                    resource: amount / (self.prices[resource]
-                                        if self.prices[resource] > 0
+                    resource: amount / (rel_prices[resource]
+                                        if rel_prices[resource] > 0.1
                                         else 0.1)
                     for resource, amount
                     in social_class.optimal_resources.items()
