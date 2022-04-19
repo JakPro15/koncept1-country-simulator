@@ -17,6 +17,11 @@ class History:
     def obtain_data(self, key: str, double_dict: bool, ndigits=0):
         result = []
 
+        total = False
+        if(key == "total_resources"):
+            total = True
+            key = "resources"
+
         state = State_Data.from_dict(self.starting_state_dict)
         for line in self.history_lines:
             command = line.split(' ')
@@ -24,6 +29,15 @@ class History:
                 amount = int(command[1])
                 for _ in range(amount):
                     month_data = state.do_month()[key]
+
+                    if total:
+                        month_data = {
+                            key2: sum(value.values())
+                            for key2, value
+                            in month_data.items()
+                        }
+                        double_dict = False
+
                     if double_dict:
                         month_data = History.round_dict_of_dicts_values(
                             month_data, ndigits
@@ -32,6 +46,7 @@ class History:
                         month_data = History.round_dict_values(
                             month_data, ndigits
                         )
+
                     result.append(month_data)
         return result
 
@@ -68,3 +83,6 @@ class History:
 
     def prices(self):
         return self.obtain_data("prices", False, 4)
+
+    def total_resources(self):
+        return self.obtain_data("total_resources", False, 1)

@@ -27,7 +27,7 @@ def command_line_interface():
         while not os.path.isfile("saves/" + dirname + "/history.txt"):
             print("Invalid save name")
             dirname = input("Enter the name of the save: ").strip()
-    print("Loading " + "saves/" + dirname)
+    print("Loading saves/" + dirname)
     interface = Interface()
     interface.load_data(dirname)
 
@@ -37,17 +37,17 @@ def command_line_interface():
             answer = input().strip().split(' ')
             if answer[0] == "help":
                 help()
-            elif answer[0] == "save":
+            elif answer[0] in {"save", "sv"}:
                 save(answer, interface)
-            elif answer[0] == "exit":
+            elif answer[0] in {"exit", "e"}:
                 raise ShutDownCommand
-            elif answer[0] == "history":
+            elif answer[0] in {"history", "h"}:
                 history(answer, interface)
-            elif answer[0] == "next":
+            elif answer[0] in {"next", "n"}:
                 next(answer, interface)
-            elif answer[0] == "state":
+            elif answer[0] in {"state", "s"}:
                 state(answer, interface)
-            elif answer[0] == "del":
+            elif answer[0] in {"del", "d"}:
                 delete_save(answer)
             else:
                 print("Invalid command. Enter help for a list of commands.")
