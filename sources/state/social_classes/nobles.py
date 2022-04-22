@@ -22,9 +22,8 @@ class Nobles(Class):
     They do not promote.
     They demote to Peasants.
     """
-    @staticmethod
     @property
-    def class_name():
+    def class_name(self):
         return CLASSES[0]
 
     def _get_employees(self):
@@ -63,11 +62,10 @@ class Nobles(Class):
         """
         return self._get_ratios(self._parent.prices) * self._get_employees()
 
-    def _get_tools_used(self):
+    def _get_tools_used(self, employees):
         """
         Returns the amount of tools that will be used in production this month.
         """
-        employees = self._get_ratioed_employees()
         peasant_tools_used = PEASANT_TOOL_USAGE * \
             (employees["food"] + employees["wood"])
         miner_tools_used = MINER_TOOL_USAGE * \
@@ -85,8 +83,9 @@ class Nobles(Class):
             "stone": STONE_PRODUCTION,
             "iron": IRON_PRODUCTION
         })
-        produced = per_capita * self._get_ratioed_employees()
+        ratioed_emps = self._get_ratioed_employees()
+        produced = per_capita * ratioed_emps
 
-        self.resources["tools"] -= self._get_tools_used()
+        self.resources["tools"] -= self._get_tools_used(ratioed_emps)
         self.resources += produced * (1 - OTHERS_WAGE)
         self.parent.payments += produced * OTHERS_WAGE

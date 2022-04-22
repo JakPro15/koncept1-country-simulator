@@ -76,7 +76,7 @@ INBUILT_RESOURCES = {
         "wood": 7,
         "stone": 4,
         "iron": 0,
-        "tools": 1
+        "tools": 3
     }),
     "artisans": Arithmetic_Dict({
         "food": 0,

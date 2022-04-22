@@ -25,20 +25,24 @@ class Class:
     """
     def __init__(self, parent, population: int,
                  resources: dict = None):
+        """
+        Creates an object of type Class or a derived class.
+        Parent is the State_Data object this class belongs to.
+        """
         self.parent = parent
         if population < 0:
             self._population = 0
         else:
             self._population = population
         if resources is None:
-            self._resources = {
+            self._resources = Arithmetic_Dict({
                 resource: 0 for resource in RESOURCES
-            }
+            })
         else:
-            self._resources = resources
+            self._resources = Arithmetic_Dict(resources)
 
         self._new_population = self.population
-        self._new_resources = self.resources
+        self._new_resources = self.resources.copy()
 
     @property
     def parent(self):
@@ -49,9 +53,8 @@ class Class:
         assert new_parent.month in MONTHS
         self._parent = new_parent
 
-    @staticmethod
     @property
-    def class_name():
+    def class_name(self):
         """
         Returns the name of the class as a string.
         Should never be used on the base Class, only on derived classes.
@@ -93,6 +96,10 @@ class Class:
 
     @property
     def optimal_resources(self):
+        """
+        Returns optimal resources dict for the given social class object, for
+        trade purposes.
+        """
         opt_res = OPTIMAL_RESOURCES[self.class_name] * self.population
 
         # Special case for nobles (optimal resources per capita not constant):
@@ -116,17 +123,16 @@ class Class:
     @property
     def class_overpopulation(self):
         """
-        Returns how many of the class need to be demoted to remove negative
-        resources.
+        Returns how many of the class need to be demoted to remove
+        negative resources.
         """
         overpops = []
         for res_name, value in self.missing_resources.items():
-            res = INBUILT_RESOURCES[self.class_name][res_name]
-            res -= \
-                INBUILT_RESOURCES[self.lower_class_type.class_name][res_name]
+            res = INBUILT_RESOURCES[self.class_name][res_name] - \
+                INBUILT_RESOURCES[self.lower_class.class_name][res_name]
             if res > 0:
                 overpops.append(value / res)
-        return max(overpops.values())
+        return max(overpops)
 
     def grow_population(self, modifier: float):
         """
@@ -147,6 +153,9 @@ class Class:
         })
 
     def to_dict(self):
+        """
+        Converts the social class object to a dict.
+        """
         data = {
             "population": self.population,
             "resources": dict(self.resources)

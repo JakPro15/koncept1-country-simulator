@@ -10,9 +10,8 @@ class Others(Class):
     They promote to Peasants or Artisans.
     They do not demote.
     """
-    @staticmethod
     @property
-    def class_name():
+    def class_name(self):
         return CLASSES[3]
 
     @property

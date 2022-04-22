@@ -1,10 +1,15 @@
 from ..sources.auxiliaries.constants import (
     DEFAULT_PRICES,
+    EMPTY_RESOURCES,
+    FOOD_CONSUMPTION,
     FOOD_PRODUCTION,
+    INBUILT_RESOURCES,
     IRON_PRODUCTION,
     MINER_TOOL_USAGE,
+    OPTIMAL_RESOURCES,
     OTHERS_WAGE,
     PEASANT_TOOL_USAGE,
+    RESOURCES,
     STONE_PRODUCTION,
     WOOD_CONSUMPTION,
     WOOD_PRODUCTION
@@ -13,7 +18,6 @@ from ..sources.state.state_data import State_Data
 from ..sources.state.social_classes.nobles import Nobles
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from pytest import approx
-from math import ceil
 
 
 def test_constructor():
@@ -25,13 +29,7 @@ def test_constructor():
         "stone": 0,
         "tools": 100
     }
-    land = {
-        "fields": 1500,
-        "woods": 900,
-        "stone_mines": 5,
-        "iron_mines": 2
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
     assert nobles.parent == state
 
@@ -44,11 +42,6 @@ def test_constructor():
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 0
     assert nobles.resources["tools"] == 100
-
-    assert nobles.land["fields"] == 1500
-    assert nobles.land["woods"] == 900
-    assert nobles.land["stone_mines"] == 5
-    assert nobles.land["iron_mines"] == 2
 
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
@@ -70,150 +63,14 @@ def test_default_constructor():
     assert nobles.resources["stone"] == 0
     assert nobles.resources["tools"] == 0
 
-    assert nobles.land["fields"] == 0
-    assert nobles.land["woods"] == 0
-    assert nobles.land["stone_mines"] == 0
-    assert nobles.land["iron_mines"] == 0
-
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
 
-    assert nobles.class_overpopulation == 200
 
-
-def test_add_population_enough_resources():
+def test_class_name():
     state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100
-    }
-    land = {
-        "fields": 10000,
-        "woods": 1000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles._add_population(20)
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 0
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 20
-    assert nobles.resources["tools"] == 20
-
-    assert nobles.class_overpopulation == 0
-
-
-def test_add_population_not_enough_tools():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 20000,
-        "iron": 0,
-        "stone": 1000,
-        "tools": 120
-    }
-    land = {
-        "fields": 10000,
-        "woods": 5000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles._add_population(50)
-    assert nobles.resources["food"] == 100
-    assert nobles.resources["wood"] == 19500
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 800
-    assert nobles.resources["tools"] == -80
-
-    assert nobles.class_overpopulation == 80
-
-
-def test_add_population_not_enough_stone():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 20000,
-        "iron": 0,
-        "stone": 120,
-        "tools": 1000
-    }
-    land = {
-        "fields": 10000,
-        "woods": 5000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles._add_population(50)
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 19500
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == -80
-    assert nobles.resources["tools"] == 800
-
-    assert nobles.class_overpopulation == 20
-
-
-def test_add_population_not_enough_wood():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 120,
-        "iron": 0,
-        "stone": 10000,
-        "tools": 20000
-    }
-    land = {
-        "fields": 10000,
-        "woods": 5000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles._add_population(50)
-    assert nobles.resources["food"] == 100
-    assert nobles.resources["wood"] == -380
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 9800
-    assert nobles.resources["tools"] == 19800
-
-    assert ceil(nobles.class_overpopulation) == 55
-
-
-def test_add_population_not_enough_all():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 120,
-        "iron": 0,
-        "stone": 8,
-        "tools": 180
-    }
-    land = {
-        "fields": 1000,
-        "woods": 500,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles._add_population(50)
-    assert nobles.resources["food"] == 100
-    assert nobles.resources["wood"] == -380
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == -192
-    assert nobles.resources["tools"] == -20
-
-    assert ceil(nobles.class_overpopulation) == 55
+    nobles = Nobles(state, 200)
+    assert nobles.class_name == "nobles"
 
 
 def test_grow_population():
@@ -225,22 +82,12 @@ def test_grow_population():
         "stone": 100,
         "tools": 100
     }
-    land = {
-        "fields": 10000,
-        "woods": 5000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
     nobles.grow_population(0.25)
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 0
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 20
-    assert nobles.resources["tools"] == 20
-
-    assert nobles.class_overpopulation == 0
+    assert nobles._new_population == 100
+    assert nobles._new_resources == \
+        nobles.resources - INBUILT_RESOURCES["nobles"] * 20
 
 
 def test_grow_population_not_enough_resources():
@@ -252,25 +99,15 @@ def test_grow_population_not_enough_resources():
         "stone": 120,
         "tools": 1000
     }
-    land = {
-        "fields": 10000,
-        "woods": 5000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
     nobles.grow_population(0.625)
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 19500
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == -80
-    assert nobles.resources["tools"] == 800
-
-    assert nobles.class_overpopulation == 20
+    assert nobles._new_population == 130
+    assert nobles._new_resources == \
+        nobles.resources - INBUILT_RESOURCES["nobles"] * 50
 
 
-def test_optimal_resources_per_capita_january():
+def test_optimal_resources_january():
     state = Fake_State_Data(100, "January")
     resources = {
         "food": 0,
@@ -279,22 +116,13 @@ def test_optimal_resources_per_capita_january():
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 2500,
-        "woods": 1500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, resources, land)
-    opt_res = nobles.optimal_resources_per_capita()
-    assert opt_res["food"] == 12
-    assert opt_res["wood"] == 4.6 + sum(WOOD_CONSUMPTION.values())
-    assert opt_res["iron"] == 0
-    assert opt_res["stone"] == 8
-    assert opt_res["tools"] == approx(7.75)
+    nobles = Nobles(state, 80, resources)
+    opt_res = nobles.optimal_resources
+    added_tools = Arithmetic_Dict({"tools": 400})
+    assert opt_res == OPTIMAL_RESOURCES["nobles"] * 80 + added_tools
 
 
-def test_optimal_resources_per_capita_july():
+def test_optimal_resources_july():
     state = Fake_State_Data(500, "July")
     resources = {
         "food": 0,
@@ -303,56 +131,125 @@ def test_optimal_resources_per_capita_july():
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 2500,
-        "woods": 1500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, resources, land)
-    opt_res = nobles.optimal_resources_per_capita()
-    assert opt_res["food"] == 12
-    assert opt_res["wood"] == 4.6 + sum(WOOD_CONSUMPTION.values())
-    assert opt_res["iron"] == 0
-    assert opt_res["stone"] == 8
-    assert opt_res["tools"] == approx(22.75)
+    nobles = Nobles(state, 80, resources)
+    opt_res = nobles.optimal_resources
+    added_tools = Arithmetic_Dict({"tools": 2000})
+    assert opt_res == OPTIMAL_RESOURCES["nobles"] * 80 + added_tools
 
 
-def test_calculate_optimal_resources():
-    state = Fake_State_Data(600, "July")
+def test_missing_resources_1():
+    state = Fake_State_Data(500, "July")
     resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
+        "food": -200,
+        "wood": 500,
+        "stone": -20,
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 2500,
-        "woods": 1500,
-        "stone_mines": 2,
-        "iron_mines": 1
+    missing = {
+        "food": 200,
+        "wood": 0,
+        "stone": 20,
+        "iron": 0,
+        "tools": 0
     }
-    nobles = Nobles(state, 200, resources, land)
-    opt_res = nobles.optimal_resources
-    assert opt_res["food"] == 2400
-    assert opt_res["wood"] == (4.6 + sum(WOOD_CONSUMPTION.values())) * 200
-    assert opt_res["iron"] == 0
-    assert opt_res["stone"] == 1600
-    assert opt_res["tools"] == 2300
+    nobles = Nobles(state, 80, resources)
+    assert nobles.missing_resources == missing
 
 
-def test_get_total_land_for_produce():
-    state = State_Data()
-    land = {
-        "fields": 1000,
-        "woods": 500,
-        "stone_mines": 2,
-        "iron_mines": 1
+def test_missing_resources_2():
+    state = Fake_State_Data(500, "July")
+    resources = {
+        "food": 200,
+        "wood": 500,
+        "stone": 20,
+        "iron": -1,
+        "tools": -300
     }
-    nobles = Nobles(state, 80, land=land)
+    missing = {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 1,
+        "tools": 300
+    }
+    nobles = Nobles(state, 80)
+    nobles.resources = resources
+    assert nobles.missing_resources == missing
 
-    assert nobles._get_total_land_for_produce() == 7500
+
+class Fake_Class:
+    def __init__(self):
+        self.class_name = "peasants"
+
+
+def test_class_overpopulation_1():
+    state = Fake_State_Data(500, "July")
+    resources = {
+        "food": 200,
+        "wood": -500,
+        "stone": -20,
+        "iron": 0,
+        "tools": 1200
+    }
+    missing_wood = 500
+    missing_stone = 20
+
+    nobles = Nobles(state, 80, resources)
+    peasants = Fake_Class()
+    nobles.lower_class = peasants
+
+    inbuilt_wood = INBUILT_RESOURCES["nobles"]["wood"] - \
+        INBUILT_RESOURCES["peasants"]["wood"]
+    inbuilt_stone = INBUILT_RESOURCES["nobles"]["stone"] - \
+        INBUILT_RESOURCES["peasants"]["stone"]
+
+    overpop = max(missing_wood / inbuilt_wood, missing_stone / inbuilt_stone)
+
+    assert nobles.class_overpopulation == overpop
+
+
+def test_class_overpopulation_2():
+    state = Fake_State_Data(500, "July")
+    resources = {
+        "food": 200,
+        "wood": -50,
+        "stone": -200,
+        "iron": 0,
+        "tools": 1200
+    }
+    missing_wood = 50
+    missing_stone = 200
+
+    nobles = Nobles(state, 80, resources)
+    peasants = Fake_Class()
+    nobles.lower_class = peasants
+
+    inbuilt_wood = INBUILT_RESOURCES["nobles"]["wood"] - \
+        INBUILT_RESOURCES["peasants"]["wood"]
+    inbuilt_stone = INBUILT_RESOURCES["nobles"]["stone"] - \
+        INBUILT_RESOURCES["peasants"]["stone"]
+
+    overpop = max(missing_wood / inbuilt_wood, missing_stone / inbuilt_stone)
+
+    assert nobles.class_overpopulation == overpop
+
+
+def test_class_overpopulation_3():
+    state = Fake_State_Data(500, "July")
+    resources = {
+        "food": 200,
+        "wood": 500,
+        "stone": 20,
+        "iron": 0,
+        "tools": 100
+    }
+
+    nobles = Nobles(state, 80, resources)
+    peasants = Fake_Class()
+    nobles.lower_class = peasants
+
+    assert nobles.class_overpopulation == 0
 
 
 class Fake_State_Data(State_Data):
@@ -368,30 +265,10 @@ class Fake_State_Data(State_Data):
             "stone": 0,
             "tools": 0
         })
-        self.prices = prices.copy()
+        self.prices = Arithmetic_Dict(prices.copy())
 
     def get_available_employees(self):
         return self.available_employees
-
-
-def test_get_employees_from_land():
-    state = Fake_State_Data(1000)
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200
-    }
-    land = {
-        "fields": 1000,
-        "woods": 500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    assert nobles._get_employees() == 375
 
 
 def test_get_employees_from_resources():
@@ -403,13 +280,7 @@ def test_get_employees_from_resources():
         "iron": 0,
         "tools": 900
     }
-    land = {
-        "fields": 1000,
-        "woods": 500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
     assert nobles._get_employees() == 300
 
@@ -423,26 +294,14 @@ def test_get_employees_from_state():
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 1000,
-        "woods": 500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
     assert nobles._get_employees() == 250
 
 
 def test_get_ratios_default_prices():
     state = State_Data()
-    land = {
-        "fields": 2500,
-        "woods": 1500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, land=land)
+    nobles = Nobles(state, 80)
 
     ratios = nobles._get_ratios(DEFAULT_PRICES)
     assert ratios["food"] == approx(0.25)
@@ -453,13 +312,7 @@ def test_get_ratios_default_prices():
 
 def test_get_ratios_different_prices():
     state = State_Data()
-    land = {
-        "fields": 2500,
-        "woods": 1500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, land=land)
+    nobles = Nobles(state, 80)
 
     prices = Arithmetic_Dict({
         "food": 1.2,
@@ -477,13 +330,7 @@ def test_get_ratios_different_prices():
 
 def test_get_ratios_prices_with_zeros():
     state = State_Data()
-    land = {
-        "fields": 2500,
-        "woods": 1500,
-        "stone_mines": 2,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 80, land=land)
+    nobles = Nobles(state, 80)
 
     prices = Arithmetic_Dict({
         "food": 1.2,
@@ -499,7 +346,7 @@ def test_get_ratios_prices_with_zeros():
     assert ratios["iron"] == 0
 
 
-def test_get_ratioed_employees_enough_land():
+def test_get_ratioed_employees():
     prices = Arithmetic_Dict({
         "food": 1.2,
         "wood": 1.5 * DEFAULT_PRICES["wood"],
@@ -515,13 +362,7 @@ def test_get_ratioed_employees_enough_land():
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 25000,
-        "woods": 15000,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
     employees = nobles._get_ratioed_employees()
     assert employees["food"] == approx(28.6, abs=0.1)
@@ -530,100 +371,7 @@ def test_get_ratioed_employees_enough_land():
     assert employees["iron"] == approx(21.4, abs=0.1)
 
 
-def test_get_ratioed_employees_not_enough_land_1():
-    prices = Arithmetic_Dict({
-        "food": 1.2,
-        "wood": 1.5 * DEFAULT_PRICES["wood"],
-        "stone": 0.6 * DEFAULT_PRICES["stone"],
-        "iron": 0.9 * DEFAULT_PRICES["iron"]
-    })
-
-    state = Fake_State_Data(120, prices=prices)
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200
-    }
-    land = {
-        "fields": 25000,
-        "woods": 400,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 100, resources, land)
-
-    employees = nobles._get_ratioed_employees()
-    assert employees["food"] == approx(44.4, abs=0.1)
-    assert employees["wood"] == 20
-    assert employees["stone"] == approx(22.2, abs=0.1)
-    assert employees["iron"] == approx(33.3, abs=0.1)
-
-
-def test_get_ratioed_employees_not_enough_land_2():
-    prices = Arithmetic_Dict({
-        "food": 1.2,
-        "wood": 1.5 * DEFAULT_PRICES["wood"],
-        "stone": 0.6 * DEFAULT_PRICES["stone"],
-        "iron": 0.9 * DEFAULT_PRICES["iron"]
-    })
-
-    state = Fake_State_Data(120, prices=prices)
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200
-    }
-    land = {
-        "fields": 25000,
-        "woods": 400,
-        "stone_mines": 20,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 100, resources, land)
-
-    employees = nobles._get_ratioed_employees()
-    assert employees["food"] == approx(66.7, abs=0.1)
-    assert employees["wood"] == 20
-    assert employees["stone"] == approx(33.3, abs=0.1)
-    assert employees["iron"] == 0
-
-
-def test_get_ratioed_employees_employees_limited_by_land():
-    prices = Arithmetic_Dict({
-        "food": 1.2,
-        "wood": 1.5 * DEFAULT_PRICES["wood"],
-        "stone": 0.6 * DEFAULT_PRICES["stone"],
-        "iron": 0.9 * DEFAULT_PRICES["iron"]
-    })
-
-    state = Fake_State_Data(1000, prices=prices)
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200
-    }
-    land = {
-        "fields": 200,
-        "woods": 400,
-        "stone_mines": 0,
-        "iron_mines": 1
-    }
-    nobles = Nobles(state, 100, resources, land)
-
-    employees = nobles._get_ratioed_employees()
-    assert employees["food"] == approx(10)
-    assert employees["wood"] == approx(20)
-    assert employees["stone"] == 0
-    assert employees["iron"] == approx(100)
-
-
-def test_get_produced_resources_february():
+def test_get_tools_used():
     prices = Arithmetic_Dict({
         "food": 1.2,
         "wood": 1.5 * DEFAULT_PRICES["wood"],
@@ -639,86 +387,15 @@ def test_get_produced_resources_february():
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 25000,
-        "woods": 15000,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
-    produced = nobles._get_produced_resources()
-    assert produced["food"] == \
-        approx(FOOD_PRODUCTION["February"] * 28.6, abs=0.1)
-    assert produced["wood"] == approx(WOOD_PRODUCTION * 35.7, abs=0.1)
-    assert produced["stone"] == approx(STONE_PRODUCTION * 14.3, abs=0.1)
-    assert produced["iron"] == approx(IRON_PRODUCTION * 21.4, abs=0.1)
-
-
-def test_get_produced_resources_august():
-    prices = Arithmetic_Dict({
-        "food": 1.2,
-        "wood": 1.5 * DEFAULT_PRICES["wood"],
-        "stone": 0.6 * DEFAULT_PRICES["stone"],
-        "iron": 0.9 * DEFAULT_PRICES["iron"]
-    })
-
-    state = Fake_State_Data(100, "August", prices)
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200
-    }
-    land = {
-        "fields": 25000,
-        "woods": 15000,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    produced = nobles._get_produced_resources()
-
-    assert produced["food"] == \
-        approx(FOOD_PRODUCTION["August"] * 28.6, abs=0.6)
-    assert produced["wood"] == approx(WOOD_PRODUCTION * 35.7, abs=0.1)
-    assert produced["stone"] == approx(STONE_PRODUCTION * 14.3, abs=0.1)
-    assert produced["iron"] == approx(IRON_PRODUCTION * 21.4, abs=0.1)
-
-
-def test_get_tools_used_february():
-    prices = Arithmetic_Dict({
-        "food": 1.2,
-        "wood": 1.5 * DEFAULT_PRICES["wood"],
-        "stone": 0.6 * DEFAULT_PRICES["stone"],
-        "iron": 0.9 * DEFAULT_PRICES["iron"]
-    })
-
-    state = Fake_State_Data(100, "February", prices)
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200
-    }
-    land = {
-        "fields": 25000,
-        "woods": 15000,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    assert nobles._get_tools_used() == approx(
-        MINER_TOOL_USAGE * 35.7 + PEASANT_TOOL_USAGE["February"] * 64.3,
+    assert nobles._get_tools_used(nobles._get_ratioed_employees()) == approx(
+        MINER_TOOL_USAGE * 35.7 + PEASANT_TOOL_USAGE * 64.3,
         abs=0.1
     )
 
 
-def test_get_tools_used_august():
+def test_produce_february():
     prices = Arithmetic_Dict({
         "food": 1.2,
         "wood": 1.5 * DEFAULT_PRICES["wood"],
@@ -726,7 +403,7 @@ def test_get_tools_used_august():
         "iron": 0.9 * DEFAULT_PRICES["iron"]
     })
 
-    state = Fake_State_Data(100, "August", prices)
+    state = Fake_State_Data(100, "February", prices)
     resources = {
         "food": 0,
         "wood": 0,
@@ -734,72 +411,69 @@ def test_get_tools_used_august():
         "iron": 0,
         "tools": 1200
     }
-    land = {
-        "fields": 25000,
-        "woods": 15000,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 80, resources, land)
+    nobles = Nobles(state, 80, resources)
 
-    assert nobles._get_tools_used() == approx(
-            MINER_TOOL_USAGE * 35.7 + PEASANT_TOOL_USAGE["August"] * 64.3,
-            abs=0.1
-        )
-
-
-def test_produce():
-    prices = Arithmetic_Dict({
-        "food": 1.2,
-        "wood": 1.5 * DEFAULT_PRICES["wood"],
-        "stone": 0.6 * DEFAULT_PRICES["stone"],
-        "iron": 0.9 * DEFAULT_PRICES["iron"]
+    final_res = Arithmetic_Dict({
+        "food": FOOD_PRODUCTION["February"] * 28.6,
+        "wood": WOOD_PRODUCTION * 35.7,
+        "stone": STONE_PRODUCTION * 14.3,
+        "iron": IRON_PRODUCTION * 21.4,
+        "tools": 0
     })
+    payments = final_res * OTHERS_WAGE
+    final_res -= payments
+    final_res["tools"] = 1200 - (
+        MINER_TOOL_USAGE * 35.7 + PEASANT_TOOL_USAGE * 64.3
+    )
 
-    state = Fake_State_Data(100, "August", prices)
-    resources = {
-        "food": 1000,
-        "wood": 50,
-        "stone": 5,
-        "iron": 30,
-        "tools": 1200
-    }
-    land = {
-        "fields": 25000,
-        "woods": 15000,
-        "stone_mines": 20,
-        "iron_mines": 10
-    }
-    nobles = Nobles(state, 80, resources, land)
     nobles.produce()
+    for resource in RESOURCES:
+        assert nobles._new_resources[resource] == \
+            approx(final_res[resource], abs=1)
+        assert state.payments[resource] == \
+            approx(payments[resource], abs=1)
 
-    assert nobles.resources["food"] == approx(
-        (1 - OTHERS_WAGE) * FOOD_PRODUCTION["August"] * 28.6 + 1000, abs=0.6
+
+def test_produce_august():
+    prices = Arithmetic_Dict({
+        "food": 1.2,
+        "wood": 1.5 * DEFAULT_PRICES["wood"],
+        "stone": 0.6 * DEFAULT_PRICES["stone"],
+        "iron": 0.9 * DEFAULT_PRICES["iron"]
+    })
+
+    state = Fake_State_Data(100, "August", prices)
+    resources = {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 1200
+    }
+    nobles = Nobles(state, 80, resources)
+
+    final_res = Arithmetic_Dict({
+        "food": FOOD_PRODUCTION["August"] * 28.6,
+        "wood": WOOD_PRODUCTION * 35.7,
+        "stone": STONE_PRODUCTION * 14.3,
+        "iron": IRON_PRODUCTION * 21.4,
+        "tools": 0
+    })
+    payments = final_res * OTHERS_WAGE
+    final_res -= payments
+    final_res["tools"] = 1200 - (
+        MINER_TOOL_USAGE * 35.7 + PEASANT_TOOL_USAGE * 64.3
     )
-    assert nobles.resources["wood"] == \
-        approx((1 - OTHERS_WAGE) * WOOD_PRODUCTION * 35.7 + 50, abs=0.1)
-    assert nobles.resources["stone"] == \
-        approx((1 - OTHERS_WAGE) * STONE_PRODUCTION * 14.3 + 5, abs=0.1)
-    assert nobles.resources["iron"] == \
-        approx((1 - OTHERS_WAGE) * IRON_PRODUCTION * 21.4 + 30, abs=0.1)
-    assert nobles.resources["tools"] == approx(
-        1200 - MINER_TOOL_USAGE * 35.7 - PEASANT_TOOL_USAGE["August"] * 64.3,
-        abs=0.1
-    )
 
-    assert state.payments["food"] == \
-        approx(OTHERS_WAGE * FOOD_PRODUCTION["August"] * 28.6, abs=0.6)
-    assert state.payments["wood"] == \
-        approx(OTHERS_WAGE * WOOD_PRODUCTION * 35.7, abs=0.1)
-    assert state.payments["stone"] == \
-        approx(OTHERS_WAGE * STONE_PRODUCTION * 14.3, abs=0.1)
-    assert state.payments["iron"] == \
-        approx(OTHERS_WAGE * IRON_PRODUCTION * 21.4, abs=0.1)
-
-    assert nobles.class_overpopulation == 0
+    nobles.produce()
+    for resource in RESOURCES:
+        assert nobles._new_resources[resource] == \
+            approx(final_res[resource], abs=1)
+        assert state.payments[resource] == \
+            approx(payments[resource], abs=1)
 
 
-def test_consume_enough_resources():
+def test_consume():
     state = State_Data()
     resources = {
         "food": 100,
@@ -810,224 +484,11 @@ def test_consume_enough_resources():
     }
     nobles = Nobles(state, 80, resources)
     nobles.consume()
-    assert nobles.resources["food"] == 20
-    assert nobles.resources["wood"] == 152
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 100
 
-    assert nobles.missing_resources["food"] == 0
-    assert nobles.missing_resources["wood"] == 0
-
-
-def test_consume_not_enough_food():
-    state = State_Data()
-    resources = {
-        "food": 50,
-        "wood": 100,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100
+    consumed = {
+        "food": FOOD_CONSUMPTION * 80,
+        "wood": WOOD_CONSUMPTION["January"] * 80
     }
-    nobles = Nobles(state, 80, resources)
-    nobles.consume()
-    assert nobles.resources["food"] == -30
-    assert nobles.resources["wood"] == 52
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 100
 
-    assert nobles.missing_resources["food"] == 30
-    assert nobles.missing_resources["wood"] == 0
-
-
-def test_consume_not_enough_wood():
-    state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 40,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100
-    }
-    nobles = Nobles(state, 80, resources)
-    nobles.consume()
-    assert nobles.resources["food"] == 20
-    assert nobles.resources["wood"] == -8
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 100
-
-    assert nobles.missing_resources["food"] == 0
-    assert nobles.missing_resources["wood"] == 8
-
-
-def test_consume_not_enough_both():
-    state = State_Data()
-    resources = {
-        "food": 50,
-        "wood": 40,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100
-    }
-    nobles = Nobles(state, 80, resources)
-    nobles.consume()
-    assert nobles.resources["food"] == -30
-    assert nobles.resources["wood"] == -8
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 100
-
-    assert nobles.missing_resources["food"] == 30
-    assert nobles.missing_resources["wood"] == 8
-
-
-def test_move_population_in_enough_resources():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100
-    }
-    land = {
-        "fields": 10000,
-        "woods": 1000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles.move_population(20)
-
-    assert nobles.population == 100
-
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 0
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 20
-    assert nobles.resources["tools"] == 20
-
-    assert nobles.class_overpopulation == 0
-
-
-def test_move_population_in_not_enough_resources():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 20000,
-        "iron": 0,
-        "stone": 1000,
-        "tools": 120
-    }
-    land = {
-        "fields": 10000,
-        "woods": 5000,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles.move_population(50, True)
-
-    assert nobles.population == 130
-
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 19500
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 800
-    assert nobles.resources["tools"] == -80
-
-    assert nobles.class_overpopulation == 80
-
-
-def test_move_population_in_not_enough_land():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 200,
-        "iron": 0,
-        "stone": 200,
-        "tools": 100
-    }
-    land = {
-        "fields": 2575,
-        "woods": 667,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles.move_population(20)
-
-    assert nobles.population == 100
-
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 0
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 120
-    assert nobles.resources["tools"] == 20
-
-    assert ceil(nobles.class_overpopulation) == 19
-
-
-def test_move_population_out_no_demotion():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 120,
-        "iron": 0,
-        "stone": 0,
-        "tools": 200
-    }
-    land = {
-        "fields": 10000,
-        "woods": 500,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles.move_population(-20)
-
-    assert nobles.population == 60
-
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 120
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 200
-
-    assert nobles.class_overpopulation == 0
-
-
-def test_move_population_out_demotion():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 120,
-        "iron": 0,
-        "stone": 0,
-        "tools": 200
-    }
-    land = {
-        "fields": 10000,
-        "woods": 500,
-        "stone_mines": 0,
-        "iron_mines": 0
-    }
-    nobles = Nobles(state, 80, resources, land)
-
-    nobles.move_population(-20, True)
-
-    assert nobles.population == 60
-
-    assert nobles.resources["food"] == 1000
-    assert nobles.resources["wood"] == 260
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 80
-    assert nobles.resources["tools"] == 220
-
-    assert nobles.class_overpopulation == 0
+    assert nobles._new_resources == nobles.resources - consumed
+    assert nobles.missing_resources == EMPTY_RESOURCES

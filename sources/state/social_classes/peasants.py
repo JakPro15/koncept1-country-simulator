@@ -17,9 +17,8 @@ class Peasants(Class):
     They promote to Nobles.
     They demote to Others.
     """
-    @staticmethod
     @property
-    def class_name():
+    def class_name(self):
         return CLASSES[2]
 
     def produce(self):
