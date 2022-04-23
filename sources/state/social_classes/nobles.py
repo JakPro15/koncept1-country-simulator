@@ -31,7 +31,8 @@ class Nobles(Class):
         Returns the number of people the nobles will employ this month.
         """
         return min(
-            self.resources["tools"] / 3, self._parent.get_available_employees()
+            self.new_resources["tools"] / 3,
+            self.parent.get_available_employees()
         )
 
     def _get_ratios(self, prices):
@@ -60,7 +61,7 @@ class Nobles(Class):
         """
         Returns a dict of particular resource producing employees.
         """
-        return self._get_ratios(self._parent.prices) * self._get_employees()
+        return self._get_ratios(self.parent.prices) * self._get_employees()
 
     def _get_tools_used(self, employees):
         """
@@ -86,6 +87,6 @@ class Nobles(Class):
         ratioed_emps = self._get_ratioed_employees()
         produced = per_capita * ratioed_emps
 
-        self.resources["tools"] -= self._get_tools_used(ratioed_emps)
-        self.resources += produced * (1 - OTHERS_WAGE)
+        self.new_resources["tools"] -= self._get_tools_used(ratioed_emps)
+        self.new_resources += produced * (1 - OTHERS_WAGE)
         self.parent.payments += produced * OTHERS_WAGE

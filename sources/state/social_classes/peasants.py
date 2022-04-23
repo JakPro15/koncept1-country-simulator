@@ -38,4 +38,4 @@ class Peasants(Class):
             "tools": -PEASANT_TOOL_USAGE[month] * self.population
         })
 
-        self.resources += changes
+        self.new_resources += changes

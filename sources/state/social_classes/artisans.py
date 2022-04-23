@@ -34,5 +34,5 @@ class Artisans(Class):
             "tools": ARTISAN_TOOL_USAGE * self.population
         })
 
-        self.resources -= used
-        self.resources += produced
+        self.new_resources -= used
+        self.new_resources += produced

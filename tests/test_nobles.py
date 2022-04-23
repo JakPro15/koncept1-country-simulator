@@ -174,7 +174,7 @@ def test_missing_resources_2():
         "tools": 300
     }
     nobles = Nobles(state, 80)
-    nobles.resources = resources
+    nobles.new_resources = resources
     assert nobles.missing_resources == missing
 
 

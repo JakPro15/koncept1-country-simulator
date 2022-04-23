@@ -69,30 +69,38 @@ class Class:
     def population(self):
         return self._population
 
-    @population.setter
-    def population(self, number):
+    @property
+    def new_population(self):
+        return self._new_population
+
+    @new_population.setter
+    def new_population(self, number):
         """
         Does not modify the actual population, saves the changes in temporary
         _new_population. Use flush() to confirm the changes.
         """
         assert number >= 0
         difference = number - self._new_population
-        self.resources -= INBUILT_RESOURCES[self.class_name] * difference
+        self.new_resources -= INBUILT_RESOURCES[self.class_name] * difference
         self._new_population = number
 
     @property
     def resources(self):
         return self._resources
 
-    @resources.setter
-    def resources(self, new_resources: dict | Arithmetic_Dict):
+    @property
+    def new_resources(self):
+        return self._new_resources
+
+    @new_resources.setter
+    def new_resources(self, new_new_resources: dict | Arithmetic_Dict):
         """
         Does not modify the actual resources, saves the changes in temporary
         _new_resources. Use flush() to confirm the changes.
         """
         for resource in RESOURCES:
-            assert resource in new_resources
-        self._new_resources = Arithmetic_Dict(new_resources)
+            assert resource in new_new_resources
+        self._new_resources = Arithmetic_Dict(new_new_resources)
 
     @property
     def optimal_resources(self):
@@ -141,20 +149,21 @@ class Class:
         Modifier 0 means no change in population.
         Also consumes the class' resources, if they are needed for growth.
         """
-        self.population *= (1 + modifier)
+        self.new_population *= (1 + modifier)
 
     def consume(self):
         """
         Removes resources the class consumed in the month.
         """
-        self.resources -= Arithmetic_Dict({
+        self.new_resources -= Arithmetic_Dict({
             "food": FOOD_CONSUMPTION * self.population,
             "wood": WOOD_CONSUMPTION[self.parent.month] * self.population
         })
 
     def to_dict(self):
         """
-        Converts the social class object to a dict.
+        Converts the social class object to a dict. Does not save temporary
+        attributes (new_population and new_resources).
         """
         data = {
             "population": self.population,
@@ -180,13 +189,13 @@ class Class:
                 # Put all pop and res into temp
                 self.temp["population"] += self.population
                 self.temp["resources"] += self.resources
-                self.population = 0
-                self.resources = EMPTY_RESOURCES.copy()
+                self.new_population = 0
+                self.new_resources = EMPTY_RESOURCES.copy()
             else:
                 # Untemporarify the class
                 self.temp["resources"] += self.resources
-                self.population += self.temp["population"]
-                self.resources = self.temp["resources"]
+                self.new_population += self.temp["population"]
+                self.new_resources = self.temp["resources"]
                 self.is_temp = False
                 self.temp = \
                     {"population": 0, "resources": EMPTY_RESOURCES.copy()}
@@ -195,8 +204,8 @@ class Class:
             self.is_temp = True
             self.temp["population"] = self.population
             self.temp["resources"] = self.resources
-            self.population = 0
-            self.resources = EMPTY_RESOURCES.copy()
+            self.new_population = 0
+            self.new_resources = EMPTY_RESOURCES.copy()
         self.flush()
 
     def handle_negative_resources(self):
