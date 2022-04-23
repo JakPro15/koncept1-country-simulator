@@ -17,7 +17,7 @@ from ..sources.auxiliaries.constants import (
 from ..sources.state.state_data import State_Data
 from ..sources.state.social_classes.nobles import Nobles
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from pytest import approx
+from pytest import approx, raises
 
 
 def test_constructor():
@@ -71,6 +71,62 @@ def test_class_name():
     state = State_Data()
     nobles = Nobles(state, 200)
     assert nobles.class_name == "nobles"
+
+
+def test_population_1():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    nobles = Nobles(state, 80, resources)
+    nobles.new_population += 20
+    assert nobles.resources == resources
+    assert nobles.population == 80
+    assert nobles.new_resources == resources - INBUILT_RESOURCES["nobles"] * 20
+    assert nobles.new_population == 100
+
+
+def test_population_2():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    nobles = Nobles(state, 80, resources)
+    nobles.new_population -= 20
+    assert nobles.resources == resources
+    assert nobles.population == 80
+    assert nobles.new_resources == resources + INBUILT_RESOURCES["nobles"] * 20
+    assert nobles.new_population == 60
+
+
+def test_resources():
+    state = State_Data()
+    resources1 = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    resources2 = Arithmetic_Dict({
+        "food": 150,
+        "wood": 10,
+        "iron": 11,
+        "stone": 12,
+        "tools": 100
+    })
+    nobles = Nobles(state, 80, resources1)
+    nobles.new_resources = resources2
+    assert nobles.resources == resources1
+    assert nobles.new_resources == resources2
 
 
 def test_grow_population_1():
@@ -492,3 +548,169 @@ def test_consume():
 
     assert nobles._new_resources == nobles.resources - consumed
     assert nobles.missing_resources == EMPTY_RESOURCES
+
+
+def test_to_dict():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    nobles = Nobles(state, 80, resources)
+    nobles.new_population += 20
+
+    dicted = nobles.to_dict()
+    assert dicted["population"] == 80
+    assert dicted["resources"] == resources
+
+
+def test_from_dict():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    dicted = {
+        "population": 80,
+        "resources": dict(resources.copy())
+    }
+    nobles = Nobles.from_dict(state, dicted)
+
+    assert nobles.parent == state
+    assert nobles.population == 80
+    assert nobles.resources == resources
+    assert nobles.new_population == 80
+    assert nobles.new_resources == resources
+
+
+def test_handle_empty_class_emptying():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    nobles = Nobles(state, 0.3, resources)
+
+    # This is normally done by State_Data when adding classes
+    nobles.is_temp = False
+    nobles.temp = {"population": 0, "resources": EMPTY_RESOURCES.copy()}
+
+    nobles.handle_empty_class()
+    assert nobles.population == 0
+    assert nobles.resources == EMPTY_RESOURCES
+    assert nobles.is_temp
+    assert nobles.temp["population"] == 0.3
+    assert nobles.temp["resources"] == resources
+
+
+def test_handle_empty_class_unemptying():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    nobles = Nobles(state, 0, EMPTY_RESOURCES)
+
+    nobles.is_temp = True
+    nobles.temp = {"population": 0.4, "resources": resources.copy()}
+    nobles._new_population = 0.2
+
+    nobles.handle_empty_class()
+    assert nobles.population == approx(0.6)
+    assert nobles.resources == resources
+    assert not nobles.is_temp
+    assert nobles.temp["population"] == 0
+    assert nobles.temp["resources"] == EMPTY_RESOURCES
+
+
+def test_handle_empty_class_adding_to_temp():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    nobles = Nobles(state, 0, EMPTY_RESOURCES)
+
+    nobles.is_temp = True
+    nobles.temp = {"population": 0.2, "resources": resources.copy()}
+    nobles._new_population = 0.2
+    nobles._new_resources = resources.copy()
+
+    nobles.handle_empty_class()
+    assert nobles.population == 0
+    assert nobles.resources == EMPTY_RESOURCES
+    assert nobles.is_temp
+    assert nobles.temp["population"] == approx(0.4)
+    assert nobles.temp["resources"] == resources * 2
+
+
+def test_handle_negative_resources():
+    state = State_Data()
+    nobles = Nobles(state, 5)
+
+    nobles._new_resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": -100,
+        "stone": -0.0001,
+        "iron": -0.00099999,
+        "tools": 0.0001
+    })
+
+    nobles.handle_negative_resources()
+    assert nobles.new_resources == {
+        "food": 100,
+        "wood": -100,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0.0001
+    }
+
+
+def test_flush_typical():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 100,
+        "tools": 100
+    })
+    new_res = resources - INBUILT_RESOURCES["nobles"] * 20
+    nobles = Nobles(state, 80, resources)
+    nobles.new_population += 20
+    nobles.flush()
+
+    assert nobles.resources == new_res
+    assert nobles.population == 100
+    assert nobles.new_resources == new_res
+    assert nobles.new_population == 100
+
+
+def test_flush_exception():
+    state = State_Data()
+    nobles = Nobles(state, 80)
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": -200,
+        "iron": 0,
+        "stone": 100,
+        "tools": 100
+    })
+    nobles.new_resources = resources
+    with raises(AssertionError):
+        nobles.flush()

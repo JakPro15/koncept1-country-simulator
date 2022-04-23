@@ -100,7 +100,7 @@ class Class:
         """
         for resource in RESOURCES:
             assert resource in new_new_resources
-        self._new_resources = Arithmetic_Dict(new_new_resources)
+        self._new_resources = Arithmetic_Dict(new_new_resources.copy())
 
     @property
     def optimal_resources(self):

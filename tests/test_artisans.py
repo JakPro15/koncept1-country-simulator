@@ -13,7 +13,7 @@ from ..sources.auxiliaries.constants import (
 from ..sources.state.state_data import State_Data
 from ..sources.state.social_classes.artisans import Artisans
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from pytest import approx
+from pytest import approx, raises
 
 
 def test_constructor():
@@ -67,6 +67,64 @@ def test_class_name():
     state = State_Data()
     artisans = Artisans(state, 200)
     assert artisans.class_name == "artisans"
+
+
+def test_population_1():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    artisans = Artisans(state, 80, resources)
+    artisans.new_population += 20
+    assert artisans.resources == resources
+    assert artisans.population == 80
+    assert artisans.new_resources == \
+        resources - INBUILT_RESOURCES["artisans"] * 20
+    assert artisans.new_population == 100
+
+
+def test_population_2():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    artisans = Artisans(state, 80, resources)
+    artisans.new_population -= 20
+    assert artisans.resources == resources
+    assert artisans.population == 80
+    assert artisans.new_resources == \
+        resources + INBUILT_RESOURCES["artisans"] * 20
+    assert artisans.new_population == 60
+
+
+def test_resources():
+    state = State_Data()
+    resources1 = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    resources2 = Arithmetic_Dict({
+        "food": 150,
+        "wood": 10,
+        "iron": 11,
+        "stone": 12,
+        "tools": 100
+    })
+    artisans = Artisans(state, 80, resources1)
+    artisans.new_resources = resources2
+    assert artisans.resources == resources1
+    assert artisans.new_resources == resources2
 
 
 def test_grow_population_1():
@@ -298,3 +356,169 @@ def test_consume():
 
     assert artisans._new_resources == artisans.resources - consumed
     assert artisans.missing_resources == EMPTY_RESOURCES
+
+
+def test_to_dict():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    artisans = Artisans(state, 80, resources)
+    artisans.new_population += 20
+
+    dicted = artisans.to_dict()
+    assert dicted["population"] == 80
+    assert dicted["resources"] == resources
+
+
+def test_from_dict():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    dicted = {
+        "population": 80,
+        "resources": dict(resources.copy())
+    }
+    artisans = Artisans.from_dict(state, dicted)
+
+    assert artisans.parent == state
+    assert artisans.population == 80
+    assert artisans.resources == resources
+    assert artisans.new_population == 80
+    assert artisans.new_resources == resources
+
+
+def test_handle_empty_class_emptying():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    artisans = Artisans(state, 0.3, resources)
+
+    # This is normally done by State_Data when adding classes
+    artisans.is_temp = False
+    artisans.temp = {"population": 0, "resources": EMPTY_RESOURCES.copy()}
+
+    artisans.handle_empty_class()
+    assert artisans.population == 0
+    assert artisans.resources == EMPTY_RESOURCES
+    assert artisans.is_temp
+    assert artisans.temp["population"] == 0.3
+    assert artisans.temp["resources"] == resources
+
+
+def test_handle_empty_class_unemptying():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    artisans = Artisans(state, 0, EMPTY_RESOURCES)
+
+    artisans.is_temp = True
+    artisans.temp = {"population": 0.4, "resources": resources.copy()}
+    artisans._new_population = 0.2
+
+    artisans.handle_empty_class()
+    assert artisans.population == approx(0.6)
+    assert artisans.resources == resources
+    assert not artisans.is_temp
+    assert artisans.temp["population"] == 0
+    assert artisans.temp["resources"] == EMPTY_RESOURCES
+
+
+def test_handle_empty_class_adding_to_temp():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100
+    })
+    artisans = Artisans(state, 0, EMPTY_RESOURCES)
+
+    artisans.is_temp = True
+    artisans.temp = {"population": 0.2, "resources": resources.copy()}
+    artisans._new_population = 0.2
+    artisans._new_resources = resources.copy()
+
+    artisans.handle_empty_class()
+    assert artisans.population == 0
+    assert artisans.resources == EMPTY_RESOURCES
+    assert artisans.is_temp
+    assert artisans.temp["population"] == approx(0.4)
+    assert artisans.temp["resources"] == resources * 2
+
+
+def test_handle_negative_resources():
+    state = State_Data()
+    artisans = Artisans(state, 5)
+
+    artisans._new_resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": -100,
+        "stone": -0.0001,
+        "iron": -0.00099999,
+        "tools": 0.0001
+    })
+
+    artisans.handle_negative_resources()
+    assert artisans.new_resources == {
+        "food": 100,
+        "wood": -100,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0.0001
+    }
+
+
+def test_flush_typical():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 100,
+        "stone": 0,
+        "tools": 100
+    })
+    new_res = resources - INBUILT_RESOURCES["artisans"] * 20
+    artisans = Artisans(state, 80, resources)
+    artisans.new_population += 20
+    artisans.flush()
+
+    assert artisans.resources == new_res
+    assert artisans.population == 100
+    assert artisans.new_resources == new_res
+    assert artisans.new_population == 100
+
+
+def test_flush_exception():
+    state = State_Data()
+    artisans = Artisans(state, 80)
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": -200,
+        "iron": 0,
+        "stone": 100,
+        "tools": 100
+    })
+    artisans.new_resources = resources
+    with raises(AssertionError):
+        artisans.flush()
