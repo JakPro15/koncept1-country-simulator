@@ -2,7 +2,6 @@ from ..sources.auxiliaries.constants import (
     ARTISAN_IRON_USAGE,
     ARTISAN_TOOL_USAGE,
     ARTISAN_WOOD_USAGE,
-    DEFAULT_PRICES,
     EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
@@ -70,7 +69,7 @@ def test_class_name():
     assert artisans.class_name == "artisans"
 
 
-def test_grow_population():
+def test_grow_population_1():
     state = State_Data()
     resources = {
         "food": 1000,
@@ -87,7 +86,7 @@ def test_grow_population():
         artisans.resources - INBUILT_RESOURCES["artisans"] * 20
 
 
-def test_grow_population_not_enough_resources():
+def test_grow_population_2():
     state = State_Data()
     resources = {
         "food": 1000,
@@ -105,7 +104,7 @@ def test_grow_population_not_enough_resources():
 
 
 def test_optimal_resources():
-    state = Fake_State_Data(100)
+    state = State_Data()
     resources = {
         "food": 0,
         "wood": 0,
@@ -119,7 +118,7 @@ def test_optimal_resources():
 
 
 def test_missing_resources_1():
-    state = Fake_State_Data(500, "July")
+    state = State_Data("July")
     resources = {
         "food": -200,
         "wood": 500,
@@ -139,7 +138,7 @@ def test_missing_resources_1():
 
 
 def test_missing_resources_2():
-    state = Fake_State_Data(500, "July")
+    state = State_Data("July")
     resources = {
         "food": 200,
         "wood": 500,
@@ -165,7 +164,7 @@ class Fake_Class:
 
 
 def test_class_overpopulation_1():
-    state = Fake_State_Data(500, "July")
+    state = State_Data("July")
     resources = {
         "food": 200,
         "wood": -500,
@@ -191,7 +190,7 @@ def test_class_overpopulation_1():
 
 
 def test_class_overpopulation_2():
-    state = Fake_State_Data(500, "July")
+    state = State_Data("July")
     resources = {
         "food": 200,
         "wood": -50,
@@ -217,7 +216,7 @@ def test_class_overpopulation_2():
 
 
 def test_class_overpopulation_3():
-    state = Fake_State_Data(500, "July")
+    state = State_Data("July")
     resources = {
         "food": 200,
         "wood": 500,
@@ -231,25 +230,6 @@ def test_class_overpopulation_3():
     artisans.lower_class = others
 
     assert artisans.class_overpopulation == 0
-
-
-class Fake_State_Data(State_Data):
-    def __init__(
-        self, available_employees, month="January", prices=DEFAULT_PRICES
-    ):
-        self._month = month
-        self.available_employees = available_employees
-        self.payments = Arithmetic_Dict({
-            "food": 0,
-            "wood": 0,
-            "iron": 0,
-            "stone": 0,
-            "tools": 0
-        })
-        self.prices = Arithmetic_Dict(prices.copy())
-
-    def get_available_employees(self):
-        return self.available_employees
 
 
 def test_produce_1():

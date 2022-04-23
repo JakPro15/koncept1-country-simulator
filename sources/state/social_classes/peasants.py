@@ -35,7 +35,7 @@ class Peasants(Class):
         changes = Arithmetic_Dict({
             "food": FOOD_PRODUCTION[month] * food_peasants,
             "wood": WOOD_PRODUCTION * wood_peasants,
-            "tools": -PEASANT_TOOL_USAGE[month] * self.population
+            "tools": -PEASANT_TOOL_USAGE * self.population
         })
 
         self.new_resources += changes

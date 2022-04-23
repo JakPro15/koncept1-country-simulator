@@ -73,7 +73,7 @@ def test_class_name():
     assert nobles.class_name == "nobles"
 
 
-def test_grow_population():
+def test_grow_population_1():
     state = State_Data()
     resources = {
         "food": 1000,
@@ -90,7 +90,7 @@ def test_grow_population():
         nobles.resources - INBUILT_RESOURCES["nobles"] * 20
 
 
-def test_grow_population_not_enough_resources():
+def test_grow_population_2():
     state = State_Data()
     resources = {
         "food": 1000,

@@ -140,7 +140,11 @@ class Class:
                 INBUILT_RESOURCES[self.lower_class.class_name][res_name]
             if res > 0:
                 overpops.append(value / res)
-        return max(overpops)
+
+        if overpops:
+            return max(overpops)
+        else:
+            return 0
 
     def grow_population(self, modifier: float):
         """
