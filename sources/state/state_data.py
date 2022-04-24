@@ -17,6 +17,7 @@ from .social_classes.artisans import Artisans
 from .social_classes.peasants import Peasants
 from .social_classes.others import Others
 from .market import Market
+from math import log
 
 
 class EveryoneDeadError(Exception):
@@ -227,24 +228,40 @@ class State_Data:
             social_class.handle_negative_resources()
             social_class.handle_empty_class()
 
-    def _do_one_promotion(self, class_from, class_to, increase_price):
+    @staticmethod
+    def _promotion_math(from_wealth, from_pop, increase_price):
         """
-        Does one promoton on the given classes.
+        Calculates how many of the class will be promoted.
+        """
+        avg_wealth = from_wealth / from_pop
+        avger_wealth = avg_wealth / increase_price  # avg relative to inc price
+        part_promoted = min(log(avger_wealth + 0.6666, 100), 1)
+        part_paid = (part_promoted - 1) ** 3 + 1
+
+        paid = part_paid * from_wealth
+        transferred = part_promoted * from_pop
+
+        # quick check if Math™ hasn't failed
+        assert paid >= transferred * increase_price
+
+        return paid, transferred
+
+    def _do_one_promotion(
+        self, class_from: Class, class_to: Class, increase_price
+    ):
+        """
+        Does one promotion on the given classes.
         """
         from_wealth = sum((class_from.resources * self.prices).values())
-        if from_wealth < increase_price / 10:
-            return
-
-        paid = min(
-            class_from.population * increase_price, from_wealth / 5
+        paid, transferred = State_Data._promotion_math(
+            from_wealth, class_from.population, increase_price
         )
-        part_paid = paid / from_wealth
-        class_to.resources += class_from.resources * part_paid
-        class_from.resources -= class_from.resources * part_paid
 
-        transferred = paid / increase_price
-        class_to.population += transferred
-        class_from.population -= transferred
+        class_to.new_resources += paid
+        class_from.new_resources -= paid
+
+        class_to.new_population += transferred
+        class_from.new_population -= transferred
 
     def _do_promotions(self):
         """

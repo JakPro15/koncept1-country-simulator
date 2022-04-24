@@ -717,9 +717,8 @@ class Fake_Class_5:
     def __init__(self, resources):
         self.population = 100
         self.resources = Arithmetic_Dict(resources.copy())
-
-    def move_population(self, pop):
-        self.population += pop
+        self.new_population = 100
+        self.new_resources = Arithmetic_Dict(resources.copy())
 
 
 def test_do_one_promotion_max_increase():
@@ -741,18 +740,18 @@ def test_do_one_promotion_max_increase():
         "iron": 4,
         "tools": 5
     }
-    state._do_one_promotion(class_from, class_to, 10, 15)
+    state._do_one_promotion(class_from, class_to, 10)
 
-    assert class_from.population == 90
-    assert class_from.resources == {
+    assert class_from.new_population == 90
+    assert class_from.new_resources == {
         "food": 990,
         "wood": 990,
         "stone": 990,
         "iron": 990,
         "tools": 990
     }
-    assert class_to.population == 110
-    assert class_to.resources == {
+    assert class_to.new_population == 110
+    assert class_to.new_resources == {
         "food": 1010,
         "wood": 1010,
         "stone": 1010,
