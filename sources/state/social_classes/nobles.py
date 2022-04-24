@@ -87,6 +87,6 @@ class Nobles(Class):
         ratioed_emps = self._get_ratioed_employees()
         produced = per_capita * ratioed_emps
 
-        self.new_resources["tools"] -= self._get_tools_used(ratioed_emps)
+        self._new_resources["tools"] -= self._get_tools_used(ratioed_emps)
         self.new_resources += produced * (1 - OTHERS_WAGE)
         self.parent.payments += produced * OTHERS_WAGE

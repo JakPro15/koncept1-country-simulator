@@ -484,7 +484,7 @@ def test_produce_february():
 
     nobles.produce()
     for resource in RESOURCES:
-        assert nobles._new_resources[resource] == \
+        assert nobles.new_resources[resource] == \
             approx(final_res[resource], abs=1)
         assert state.payments[resource] == \
             approx(payments[resource], abs=1)

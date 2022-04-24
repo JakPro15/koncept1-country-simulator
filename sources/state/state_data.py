@@ -2,6 +2,7 @@ from ..auxiliaries.constants import (
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
+    FOOD_CONSUMPTION,
     FREEZING_MORTALITY,
     INBUILT_RESOURCES,
     INCREASE_PRICE_FACTOR,
@@ -35,8 +36,8 @@ class State_Data:
     """
     def __init__(self, starting_month: str = "January",
                  starting_year: int = 0):
-        self.year = starting_year
-        self.month = starting_month
+        self._year = starting_year
+        self._month = starting_month
         self.payments = Arithmetic_Dict({
             "food": 0,
             "wood": 0,
@@ -50,18 +51,13 @@ class State_Data:
     def month(self):
         return self._month
 
-    @month.setter
-    def month(self, new_month: str):
-        assert new_month in MONTHS
-        self._month = new_month
-
     @property
     def year(self):
         return self._year
 
     @year.setter
     def year(self, new_year: int):
-        assert new_year >= 0
+        assert new_year == self._year + 1
         self._year = new_year
 
     @property
@@ -154,16 +150,21 @@ class State_Data:
         Does starvation and freezing to fix negative food and wood.
         Starving or freezing is marked with a bool attribute of the class.
         """
-        modifiers = set()
         for social_class in self.classes:
             missing_food = social_class.missing_resources["food"]
             starving_number = 0
             if missing_food > 0:
                 starving_number = STARVATION_MORTALITY * missing_food \
-                    / social_class.population
+                    / FOOD_CONSUMPTION
 
-                social_class.resources["food"] = 0
-                modifiers.add("Starving")
+                food_zerofier = {
+                    "food": 0,
+                    "wood": 1,
+                    "stone": 1,
+                    "iron": 1,
+                    "tools": 1
+                }
+                social_class.new_resources *= food_zerofier
                 social_class.starving = True
             else:
                 social_class.starving = False
@@ -174,22 +175,31 @@ class State_Data:
                 freezing_number = FREEZING_MORTALITY * missing_wood \
                     / WOOD_CONSUMPTION[self.month]
 
-                social_class.resources["wood"] = 0
-                modifiers.add("Freezing")
+                wood_zerofier = {
+                    "food": 1,
+                    "wood": 0,
+                    "stone": 1,
+                    "iron": 1,
+                    "tools": 1
+                }
+                social_class.new_resources *= wood_zerofier
                 social_class.freezing = True
             else:
                 social_class.freezing = False
 
-            social_class.population -= (starving_number + freezing_number)
-        return modifiers
+            if starving_number + freezing_number < social_class.new_population:
+                social_class.new_population -= (
+                    starving_number + freezing_number
+                )
+            else:
+                social_class.new_population = 0
 
     def _do_payments(self):
         """
         Moves the payments into Others' pockets.
         """
-        self.classes[3].resources += self.payments
-        for resource in self.payments:
-            self.payments[resource] = 0
+        self.classes[3].new_resources += self.payments
+        self.payments = EMPTY_RESOURCES.copy()
 
     def _do_demotions(self):
         """
@@ -199,14 +209,15 @@ class State_Data:
             lower_class = social_class.lower_class
             lower_name = lower_class.class_name
 
-            moved_pop = \
-                min(social_class.class_overpopulation, social_class.population)
+            moved_pop = min(
+                social_class.class_overpopulation, social_class.new_population
+            )
             moved_res = INBUILT_RESOURCES[lower_name] * moved_pop
 
-            social_class.resources -= moved_res
-            lower_class.resources += moved_res
-            social_class.population -= moved_pop
-            lower_class.population += moved_pop
+            social_class.new_resources -= moved_res
+            lower_class.new_resources += moved_res
+            social_class.new_population -= moved_pop
+            lower_class.new_population += moved_pop
 
     def _secure_classes(self):
         """
@@ -327,7 +338,7 @@ class State_Data:
         self._secure_classes()
 
         # Seventh: promotions
-        self._do_promotions()  # Might make resources negative again
+        self._do_promotions()  # Might make resources negative
         self._do_demotions()  # Fix resources again
 
         # Eighth: trade

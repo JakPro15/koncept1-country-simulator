@@ -86,11 +86,11 @@ class Class:
 
     @property
     def resources(self):
-        return self._resources
+        return self._resources.copy()
 
     @property
     def new_resources(self):
-        return self._new_resources
+        return self._new_resources.copy()
 
     @new_resources.setter
     def new_resources(self, new_new_resources: dict | Arithmetic_Dict):
