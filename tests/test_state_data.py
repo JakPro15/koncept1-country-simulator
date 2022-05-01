@@ -10,7 +10,8 @@ from ..sources.auxiliaries.constants import (
     INBUILT_RESOURCES,
     RESOURCES,
     STARVATION_MORTALITY,
-    WOOD_CONSUMPTION
+    WOOD_CONSUMPTION,
+    INCREASE_PRICE_FACTOR
 )
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from pytest import approx, raises
@@ -713,22 +714,35 @@ def test_secure_classes():
         assert social_class.unemptied
 
 
+def test_promotion_math():
+    from random import randint
+    wealths = [randint(1, 10000) for _ in range(10000)]
+    pops = [randint(1, 10000) for _ in range(10000)]
+    incprices = [randint(1, 10000) for _ in range(10000)]
+    for wealth, pop, incpr in zip(wealths, pops, incprices):
+        part_paid, transferred = State_Data._promotion_math(wealth, pop, incpr)
+        assert 0 <= part_paid <= 1
+        assert 0 <= transferred <= pop
+
+
 class Fake_Class_5:
     def __init__(self, resources):
         self.population = 100
         self.resources = Arithmetic_Dict(resources.copy())
         self.new_population = 100
         self.new_resources = Arithmetic_Dict(resources.copy())
+        self.starving = False
+        self.freezing = False
 
 
-def test_do_one_promotion_max_increase():
-    resources = {
+def test_do_one_promotion():
+    resources = Arithmetic_Dict({
         "food": 1000,
         "wood": 1000,
         "stone": 1000,
         "iron": 1000,
         "tools": 1000
-    }
+    })
     class_from = Fake_Class_5(resources)
     class_to = Fake_Class_5(resources)
     state = State_Data()
@@ -741,37 +755,27 @@ def test_do_one_promotion_max_increase():
         "tools": 5
     }
     state._do_one_promotion(class_from, class_to, 10)
+    part_paid, transferred = state._promotion_math(15000, 100, 10)
 
-    assert class_from.new_population == 90
-    assert class_from.new_resources == {
-        "food": 990,
-        "wood": 990,
-        "stone": 990,
-        "iron": 990,
-        "tools": 990
-    }
-    assert class_to.new_population == 110
-    assert class_to.new_resources == {
-        "food": 1010,
-        "wood": 1010,
-        "stone": 1010,
-        "iron": 1010,
-        "tools": 1010
-    }
+    assert class_from.new_population == 100 - transferred
+    assert class_from.new_resources == resources * (1 - part_paid)
+    assert class_to.new_population == 100 + transferred
+    assert class_to.new_resources == resources * (1 + part_paid)
 
 
-def test_do_one_promotion_smaller_increase():
-    resources = {
-        "food": 100,
-        "wood": 100,
-        "stone": 100,
-        "iron": 100,
-        "tools": 70
-    }
+def test_do_double_promotion():
+    resources = Arithmetic_Dict({
+        "food": 1000,
+        "wood": 1000,
+        "stone": 1000,
+        "iron": 1000,
+        "tools": 1000
+    })
     class_from = Fake_Class_5(resources)
-    class_to = Fake_Class_5(resources)
+    class_to_1 = Fake_Class_5(resources)
+    class_to_2 = Fake_Class_5(resources)
     state = State_Data()
-    state._classes = [class_from, class_to]
+    state._classes = [class_from, class_to_1, class_to_2]
     state.prices = {
         "food": 1,
         "wood": 2,
@@ -779,85 +783,138 @@ def test_do_one_promotion_smaller_increase():
         "iron": 4,
         "tools": 5
     }
-    state._do_one_promotion(class_from, class_to, 100, 15)
+    state._do_double_promotion(class_from, class_to_1, 30, class_to_2, 10)
+    part_paid, transferred = state._promotion_math(15000, 100, 20)
+    part_paid_1 = 0.75 * part_paid
+    part_paid_2 = 0.25 * part_paid
 
-    assert class_from.population == 10
-    assert class_from.resources == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0
-    }
-    assert class_to.population == 190
-    assert class_to.resources == {
-        "food": 200,
-        "wood": 200,
-        "stone": 200,
-        "iron": 200,
-        "tools": 140
-    }
+    assert class_from.new_population == 100 - transferred
+    assert class_from.new_resources == resources * (1 - part_paid)
+    assert class_to_1.new_population == 100 + transferred / 2
+    assert class_to_1.new_resources == resources * (1 + part_paid_1)
+    assert class_to_2.new_population == 100 + transferred / 2
+    assert class_to_2.new_resources == resources * (1 + part_paid_2)
 
 
-def test_do_promotions():
+def test_do_promotions_no_starvation():
+    # force default prices to all be equal to 1
     a = DEFAULT_PRICES
     a["food"] = 1
     a["wood"] = 1
     a["stone"] = 1
     a["iron"] = 1
     a["tools"] = 1
-    resources = {
+
+    resources = Arithmetic_Dict({
         "food": 1000,
         "wood": 1000,
         "stone": 1000,
         "iron": 1000,
         "tools": 1000
-    }
+    })
     nobles = Fake_Class_5(resources)
     artisans = Fake_Class_5(resources)
     peasants = Fake_Class_5(resources)
     others = Fake_Class_5(resources)
     state = State_Data()
-    state.prices *= 1  # max_increase for peasants and artisans: 0.1
     state._classes = [nobles, artisans, peasants, others]
-    promoted = state._do_promotions()
+    state._do_promotions()
 
-    assert nobles.population == 110
-    assert nobles.resources == {
-        "food": 1024,
-        "wood": 1024,
-        "stone": 1024,
-        "iron": 1024,
-        "tools": 1024
-    }
-    assert artisans.population == 105
-    assert artisans.resources == {
-        "food": 998,
-        "wood": 998,
-        "stone": 998,
-        "iron": 998,
-        "tools": 998
-    }
-    assert peasants.population == 105
-    assert peasants.resources == {
+    increase_price_peasants = INCREASE_PRICE_FACTOR * \
+        sum((INBUILT_RESOURCES["peasants"] * state.prices).values())
+    increase_price_artisans = INCREASE_PRICE_FACTOR * \
+        sum((INBUILT_RESOURCES["artisans"] * state.prices).values())
+    increase_price_nobles = INCREASE_PRICE_FACTOR * \
+        sum((INBUILT_RESOURCES["nobles"] * state.prices).values())
+
+    part_paid_nobles, transferred_nobles = State_Data._promotion_math(
+        5000, 100, increase_price_nobles
+    )
+    part_paid_others, transferred_others = State_Data._promotion_math(
+        5000, 100, increase_price_artisans
+    )
+    part_paid_artisans = part_paid_others * increase_price_artisans / \
+        (increase_price_artisans + increase_price_peasants)
+    part_paid_peasants = part_paid_others * increase_price_peasants / \
+        (increase_price_artisans + increase_price_peasants)
+
+    assert nobles.new_population == 100 + transferred_nobles * 2
+    assert nobles.new_resources == resources * (1 + part_paid_nobles * 2)
+
+    assert artisans.new_population == \
+        100 + transferred_others / 2 - transferred_nobles
+    assert artisans.new_resources == \
+        resources * (1 + part_paid_artisans - part_paid_nobles)
+
+    assert peasants.new_population == \
+        100 + transferred_others / 2 - transferred_nobles
+    assert peasants.new_resources == \
+        resources * (1 + part_paid_peasants - part_paid_nobles)
+
+    assert others.new_population == 100 - transferred_others
+    assert others.new_resources == resources * (1 - part_paid_others)
+
+
+def test_do_promotions_with_starvation():
+    # force default prices to all be equal to 1
+    a = DEFAULT_PRICES
+    a["food"] = 1
+    a["wood"] = 1
+    a["stone"] = 1
+    a["iron"] = 1
+    a["tools"] = 1
+
+    resources = Arithmetic_Dict({
         "food": 1000,
         "wood": 1000,
         "stone": 1000,
         "iron": 1000,
         "tools": 1000
-    }
-    assert others.population == 80
-    assert others.resources == {
-        "food": 978,
-        "wood": 978,
-        "stone": 978,
-        "iron": 978,
-        "tools": 978
-    }
+    })
+    nobles = Fake_Class_5(resources)
+    artisans = Fake_Class_5(resources)
+    peasants = Fake_Class_5(resources)
+    peasants.starving = True
+    others = Fake_Class_5(resources)
+    others.freezing = True
+    state = State_Data()
+    state._classes = [nobles, artisans, peasants, others]
+    state._do_promotions()
 
-    assert promoted == {
-        "nobles": 0.1,
-        "artisans": 0.05,
-        "peasants": 0.05,
-        "others": -0.2
-    }
+    increase_price_nobles = INCREASE_PRICE_FACTOR * \
+        sum((INBUILT_RESOURCES["nobles"] * state.prices).values())
+
+    part_paid_nobles, transferred_nobles = State_Data._promotion_math(
+        5000, 100, increase_price_nobles
+    )
+
+    assert nobles.new_population == 100 + transferred_nobles
+    assert nobles.new_resources == resources * (1 + part_paid_nobles)
+
+    assert artisans.new_population == 100 - transferred_nobles
+    assert artisans.new_resources == resources * (1 - part_paid_nobles)
+
+    assert peasants.new_population == 100
+    assert peasants.new_resources == resources
+
+    assert others.new_population == 100
+    assert others.new_resources == resources
+
+
+def test_execute_commands():
+    def fake_do_month(self):
+        self.did_month += 1
+
+    State_Data.do_month = fake_do_month
+
+    state = State_Data()
+    state.did_month = 0
+
+    state.execute_commands(["next 2"])
+    assert state.did_month == 2
+
+    state.execute_commands(["next 100"])
+    assert state.did_month == 102
+
+    state.execute_commands(["next 1", "next 1", "next 2"])
+    assert state.did_month == 106

@@ -38,6 +38,12 @@ def test_constructor():
     assert others.missing_resources["food"] == 0
     assert others.missing_resources["wood"] == 0
 
+    assert not others.is_temp
+    assert others.temp["population"] == 0
+    assert others.temp["resources"] == EMPTY_RESOURCES
+    assert not others.starving
+    assert not others.freezing
+
 
 def test_default_constructor():
     state = State_Data()
@@ -57,6 +63,12 @@ def test_default_constructor():
 
     assert others.missing_resources["food"] == 0
     assert others.missing_resources["wood"] == 0
+
+    assert not others.is_temp
+    assert others.temp["population"] == 0
+    assert others.temp["resources"] == EMPTY_RESOURCES
+    assert not others.starving
+    assert not others.freezing
 
 
 def test_class_name():
@@ -147,12 +159,12 @@ def test_grow_population_2():
         "stone": 120,
         "tools": 1000
     }
-    peasants = Others(state, 80, resources)
+    others = Others(state, 80, resources)
 
-    peasants.grow_population(0.625)
-    assert peasants._new_population == 130
-    assert peasants._new_resources == \
-        peasants.resources - INBUILT_RESOURCES["others"] * 50
+    others.grow_population(0.625)
+    assert others._new_population == 130
+    assert others._new_resources == \
+        others.resources - INBUILT_RESOURCES["others"] * 50
 
 
 def test_optimal_resources():

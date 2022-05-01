@@ -74,20 +74,11 @@ class State_Data:
         self._classes = new_classes_list.copy()
         self._create_market()
 
-        # Create some more attributes for the classes
         # These are used for demotions
         self._classes[0].lower_class = self._classes[2]
         self._classes[1].lower_class = self._classes[3]
         self._classes[2].lower_class = self._classes[3]
         self._classes[3].lower_class = self._classes[3]
-        # These are used for securing almost-empty classes
-        for social_class in self._classes:
-            social_class.is_temp = False
-            social_class.temp = \
-                {"population": 0, "resources": EMPTY_RESOURCES.copy()}
-        # These are used in promotions
-            social_class.starving = False
-            social_class.freezing = False
 
     def _advance_month(self):
         months_moved = MONTHS[1:] + [MONTHS[0]]
@@ -235,16 +226,15 @@ class State_Data:
         """
         avg_wealth = from_wealth / from_pop
         avger_wealth = avg_wealth / increase_price  # avg relative to inc price
-        part_promoted = min(log(avger_wealth + 0.6666, 100), 1)
+        part_promoted = max(min(log(avger_wealth + 0.6666, 100), 1), 0)
         part_paid = (part_promoted - 1) ** 3 + 1
 
-        paid = part_paid * from_wealth
         transferred = part_promoted * from_pop
 
         # quick check if Math™ hasn't failed
-        assert paid >= transferred * increase_price
+        assert part_paid * from_wealth >= transferred * increase_price
 
-        return paid, transferred
+        return part_paid, transferred
 
     def _do_one_promotion(
         self, class_from: Class, class_to: Class, increase_price
@@ -253,14 +243,41 @@ class State_Data:
         Does one promotion on the given classes.
         """
         from_wealth = sum((class_from.resources * self.prices).values())
-        paid, transferred = State_Data._promotion_math(
+        part_paid, transferred = State_Data._promotion_math(
             from_wealth, class_from.population, increase_price
         )
 
-        class_to.new_resources += paid
-        class_from.new_resources -= paid
+        class_to.new_resources += class_from.resources * part_paid
+        class_from.new_resources -= class_from.resources * part_paid
 
         class_to.new_population += transferred
+        class_from.new_population -= transferred
+
+    def _do_double_promotion(
+        self, class_from: Class, class_to_1: Class, increase_price_1,
+        class_to_2: Class, increase_price_2
+    ):
+        """
+        Does one promotion on the given classes.
+        """
+        from_wealth = sum((class_from.resources * self.prices).values())
+
+        summed_price = (increase_price_1 + increase_price_2)
+        increase_price = summed_price / 2
+
+        part_paid, transferred = State_Data._promotion_math(
+            from_wealth, class_from.population, increase_price
+        )
+
+        part_paid_1 = part_paid * increase_price_1 / summed_price
+        part_paid_2 = part_paid * increase_price_2 / summed_price
+
+        class_to_1.new_resources += class_from.resources * part_paid_1
+        class_to_2.new_resources += class_from.resources * part_paid_2
+        class_from.new_resources -= class_from.resources * part_paid
+
+        class_to_1.new_population += transferred / 2
+        class_to_2.new_population += transferred / 2
         class_from.new_population -= transferred
 
     def _do_promotions(self):
@@ -273,28 +290,25 @@ class State_Data:
         others = self.classes[3]
 
         if not(others.starving) and (not others.freezing):
-            # Peasants:
-            increase_price = INCREASE_PRICE_FACTOR * \
-                (3 * self.prices["wood"] + 3 * self.prices["tools"])
-            self._do_one_promotion(others, peasants, increase_price)
+            # Peasants and artisans (from others):
+            increase_price_1 = INCREASE_PRICE_FACTOR * \
+                sum((INBUILT_RESOURCES["peasants"] * self.prices).values())
+            increase_price_2 = INCREASE_PRICE_FACTOR * \
+                sum((INBUILT_RESOURCES["artisans"] * self.prices).values())
+            self._do_double_promotion(others, peasants, increase_price_1,
+                                      artisans, increase_price_2)
 
-            # Artisans:
-            increase_price = INCREASE_PRICE_FACTOR * \
-                (2 * self.prices["wood"] + 3 * self.prices["tools"])
-            self._do_one_promotion(others, artisans, increase_price)
+        # Increase price for nobles
+        increase_price = INCREASE_PRICE_FACTOR * \
+            sum((INBUILT_RESOURCES["nobles"] * self.prices).values())
 
-        # Modifiers for nobles
-        increase_price = INCREASE_PRICE_FACTOR * (
-            7 * self.prices["wood"] + 4 * self.prices["stone"] +
-            1 * self.prices["tools"]
-        )
         if not(peasants.starving) and (not peasants.freezing):
             # Nobles (from peasants):
             self._do_one_promotion(
                 peasants, nobles, increase_price
             )
 
-        if not(artisans.starving) and (not artisans.freezing) == 0:
+        if not(artisans.starving) and (not artisans.freezing):
             # Nobles (from artisans):
             self._do_one_promotion(
                 artisans, nobles, increase_price
@@ -364,6 +378,7 @@ class State_Data:
         month_data["prices"] = self.prices
 
         # Ninth: calculations done - advance to the next month
+        self._secure_classes()
         self._advance_month()
 
         # Tenth: return the necessary data

@@ -42,6 +42,12 @@ def test_constructor():
     assert peasants.missing_resources["food"] == 0
     assert peasants.missing_resources["wood"] == 0
 
+    assert not peasants.is_temp
+    assert peasants.temp["population"] == 0
+    assert peasants.temp["resources"] == EMPTY_RESOURCES
+    assert not peasants.starving
+    assert not peasants.freezing
+
 
 def test_default_constructor():
     state = State_Data()
@@ -61,6 +67,12 @@ def test_default_constructor():
 
     assert peasants.missing_resources["food"] == 0
     assert peasants.missing_resources["wood"] == 0
+
+    assert not peasants.is_temp
+    assert peasants.temp["population"] == 0
+    assert peasants.temp["resources"] == EMPTY_RESOURCES
+    assert not peasants.starving
+    assert not peasants.freezing
 
 
 def test_class_name():

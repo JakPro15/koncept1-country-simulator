@@ -44,6 +44,12 @@ class Class:
         self._new_population = self.population
         self._new_resources = self.resources.copy()
 
+        self.is_temp = False
+        self.temp = {"population": 0, "resources": EMPTY_RESOURCES.copy()}
+
+        self.starving = False
+        self.freezing = False
+
     @property
     def parent(self):
         return self._parent

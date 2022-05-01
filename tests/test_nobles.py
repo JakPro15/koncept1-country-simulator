@@ -46,6 +46,12 @@ def test_constructor():
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
 
+    assert not nobles.is_temp
+    assert nobles.temp["population"] == 0
+    assert nobles.temp["resources"] == EMPTY_RESOURCES
+    assert not nobles.starving
+    assert not nobles.freezing
+
 
 def test_default_constructor():
     state = State_Data()
@@ -65,6 +71,12 @@ def test_default_constructor():
 
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
+
+    assert not nobles.is_temp
+    assert nobles.temp["population"] == 0
+    assert nobles.temp["resources"] == EMPTY_RESOURCES
+    assert not nobles.starving
+    assert not nobles.freezing
 
 
 def test_class_name():

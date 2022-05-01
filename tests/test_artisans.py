@@ -42,6 +42,12 @@ def test_constructor():
     assert artisans.missing_resources["food"] == 0
     assert artisans.missing_resources["wood"] == 0
 
+    assert not artisans.is_temp
+    assert artisans.temp["population"] == 0
+    assert artisans.temp["resources"] == EMPTY_RESOURCES
+    assert not artisans.starving
+    assert not artisans.freezing
+
 
 def test_default_constructor():
     state = State_Data()
@@ -61,6 +67,12 @@ def test_default_constructor():
 
     assert artisans.missing_resources["food"] == 0
     assert artisans.missing_resources["wood"] == 0
+
+    assert not artisans.is_temp
+    assert artisans.temp["population"] == 0
+    assert artisans.temp["resources"] == EMPTY_RESOURCES
+    assert not artisans.starving
+    assert not artisans.freezing
 
 
 def test_class_name():
