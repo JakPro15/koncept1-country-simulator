@@ -14,6 +14,7 @@ from ..sources.auxiliaries.constants import (
     INCREASE_PRICE_FACTOR
 )
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
+from ..sources.auxiliaries.testing import dict_eq
 from pytest import approx, raises
 
 
@@ -757,10 +758,10 @@ def test_do_one_promotion():
     state._do_one_promotion(class_from, class_to, 10)
     part_paid, transferred = state._promotion_math(15000, 100, 10)
 
-    assert class_from.new_population == 100 - transferred
-    assert class_from.new_resources == resources * (1 - part_paid)
-    assert class_to.new_population == 100 + transferred
-    assert class_to.new_resources == resources * (1 + part_paid)
+    assert class_from.new_population == approx(100 - transferred)
+    dict_eq(class_from.new_resources, resources * (1 - part_paid))
+    assert class_to.new_population == approx(100 + transferred)
+    dict_eq(class_to.new_resources, resources * (1 + part_paid))
 
 
 def test_do_double_promotion():
@@ -788,12 +789,12 @@ def test_do_double_promotion():
     part_paid_1 = 0.75 * part_paid
     part_paid_2 = 0.25 * part_paid
 
-    assert class_from.new_population == 100 - transferred
-    assert class_from.new_resources == resources * (1 - part_paid)
-    assert class_to_1.new_population == 100 + transferred / 2
-    assert class_to_1.new_resources == resources * (1 + part_paid_1)
-    assert class_to_2.new_population == 100 + transferred / 2
-    assert class_to_2.new_resources == resources * (1 + part_paid_2)
+    assert class_from.new_population == approx(100 - transferred)
+    dict_eq(class_from.new_resources, resources * (1 - part_paid))
+    assert class_to_1.new_population == approx(100 + transferred / 2)
+    dict_eq(class_to_1.new_resources, resources * (1 + part_paid_1))
+    assert class_to_2.new_population == approx(100 + transferred / 2)
+    dict_eq(class_to_2.new_resources, resources * (1 + part_paid_2))
 
 
 def test_do_promotions_no_starvation():

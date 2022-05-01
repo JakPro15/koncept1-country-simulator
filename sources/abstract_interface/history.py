@@ -7,12 +7,12 @@ class History:
     Attributes:
     starting_state_dict - dict representing the starting state
                           (loaded from starting_state.json)
-    history_lines - list of command inputted by the user necessary to
+    history_lines - list of commands inputted by the user necessary to
                     remake the history of the state
     """
     def __init__(self, starting_state_dict, history_lines):
-        self.starting_state_dict = starting_state_dict
-        self.history_lines = history_lines
+        self.starting_state_dict = starting_state_dict.copy()
+        self.history_lines = history_lines.copy()
 
     def obtain_data(self, key: str, double_dict: bool, ndigits=0):
         result = []
@@ -20,7 +20,7 @@ class History:
         total = False
         if(key == "total_resources"):
             total = True
-            key = "resources"
+            key = "resources_after"
 
         state = State_Data.from_dict(self.starting_state_dict)
         for line in self.history_lines:
@@ -31,11 +31,14 @@ class History:
                     month_data = state.do_month()[key]
 
                     if total:
-                        month_data = {
-                            key2: sum(value.values())
-                            for key2, value
-                            in month_data.items()
-                        }
+                        new_data = {}
+                        for dicti in month_data.values():
+                            for key2 in dicti:
+                                try:
+                                    new_data[key2] += dicti[key2]
+                                except KeyError:
+                                    new_data[key2] = dicti[key2]
+                        month_data = new_data
                         double_dict = False
 
                     if double_dict:
