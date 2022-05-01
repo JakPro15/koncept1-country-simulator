@@ -111,7 +111,7 @@ class State_Data:
         classes_list = [nobles, artisans, peasants, others]
 
         state.classes = classes_list
-        state.prices = data["prices"]
+        state.prices = Arithmetic_Dict(data["prices"])
 
         return state
 
@@ -395,12 +395,13 @@ class State_Data:
             "others": self.classes[3].population
         }
         month_data["resources_change"] = {
-            values_dict - old_resources[social_class]
+            social_class: dict(values_dict - old_resources[social_class])
             for social_class, values_dict
             in month_data["resources_after"].items()
         }
-        month_data["population_change"] = \
-            month_data["population_change"] - old_population
+        month_data["population_change"] = dict(
+            Arithmetic_Dict(month_data["population_after"]) - old_population
+        )
         return month_data
 
     def execute_commands(self, commands: list[str]):

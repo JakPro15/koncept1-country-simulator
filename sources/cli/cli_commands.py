@@ -169,13 +169,14 @@ def history(args: list[str], interface: Interface):
             data = interface.history.total_resources()
             begin_month, data = set_months_of_history(args, interface, data)
             print("Total resources stats:")
-            print(" " * 14 + "  Nobles Artisans Peasants   Others")
+            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools")
             for index, month_data in enumerate(data):
                 print(f"{get_month_string(index + begin_month)}"
-                      f"{month_data['nobles']: >9}"
-                      f"{month_data['artisans']: >9}"
-                      f"{month_data['peasants']: >9}"
-                      f"{month_data['others']: >9}")
+                      f" {res_to_str(month_data['food']): >7}"
+                      f" {res_to_str(month_data['wood']): >7}"
+                      f" {res_to_str(month_data['stone']): >7}"
+                      f" {res_to_str(month_data['iron']): >7}"
+                      f" {res_to_str(month_data['tools']): >7}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of history command")
 

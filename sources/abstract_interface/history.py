@@ -34,9 +34,9 @@ class History:
                         new_data = {}
                         for dicti in month_data.values():
                             for key2 in dicti:
-                                try:
+                                if key2 in new_data:
                                     new_data[key2] += dicti[key2]
-                                except KeyError:
+                                else:
                                     new_data[key2] = dicti[key2]
                         month_data = new_data
                         double_dict = False
@@ -60,6 +60,8 @@ class History:
             result[key] = round(result[key], ndigits)
             if ndigits > 0:
                 result[key] = float(result[key])
+            else:
+                result[key] = int(result[key])
         return result
 
     @staticmethod
@@ -70,6 +72,8 @@ class History:
                 result[key][key2] = round(result[key][key2], ndigits)
                 if ndigits > 0:
                     result[key][key2] = float(result[key][key2])
+                else:
+                    result[key][key2] = int(result[key])
         return result
 
     def population(self):

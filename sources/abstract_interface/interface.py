@@ -10,7 +10,14 @@ class Interface:
     state - the State_Data object the interface handles
     history - History of the State_Data object
     """
+    def __init__(self, dirname=None):
+        if dirname is not None:
+            self.load_data(dirname)
+
     def load_data(self, dirname):
+        """
+        Loads a game state from the given directory.
+        """
         starting_state_file_name = "saves/" + dirname + "/starting_state.json"
         with open(starting_state_file_name, 'r') as load_file:
             starting_state = json.load(load_file)
@@ -27,6 +34,9 @@ class Interface:
         self.state.execute_commands(history_lines)
 
     def save_data(self, dirname):
+        """
+        Saves the game state into the given directory.
+        """
         starting_state_file_name = "saves/" + dirname + "/starting_state.json"
         with open(starting_state_file_name, 'w') as save_file:
             json.dump(self.history.starting_state_dict, save_file, indent=4)
@@ -37,6 +47,9 @@ class Interface:
                 save_file.write(line + '\n')
 
     def next_month(self):
+        """
+        Advances the month by one and saves it in history.
+        """
         self.state.do_month()
         if len(self.history.history_lines) == 0:
             self.history.history_lines.append('next 1')

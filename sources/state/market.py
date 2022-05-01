@@ -104,7 +104,7 @@ class Market:
         for social_class in self.classes:
             if social_class.population > 0:
                 del social_class.money
-                social_class.resources = social_class.market_res
+                social_class.new_resources = social_class.market_res
                 social_class.flush()
                 del social_class.market_res
 

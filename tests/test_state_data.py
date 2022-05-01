@@ -237,6 +237,15 @@ def test_from_dict():
         "tools": 55
     }
 
+    assert isinstance(state.prices, Arithmetic_Dict)
+    assert state.prices == {
+        "food": 0.1,
+        "wood": 0.2,
+        "stone": 0.3,
+        "iron": 1.4,
+        "tools": 0.5
+    }
+
 
 def test_to_dict():
     state = State_Data("June", 3)
@@ -906,6 +915,7 @@ def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
 
+    old_do_month = State_Data.do_month
     State_Data.do_month = fake_do_month
 
     state = State_Data()
@@ -919,3 +929,5 @@ def test_execute_commands():
 
     state.execute_commands(["next 1", "next 1", "next 2"])
     assert state.did_month == 106
+
+    State_Data.do_month = old_do_month
