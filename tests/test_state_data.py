@@ -119,14 +119,14 @@ def test_advance_month():
 
 def test_year_setter():
     state = State_Data("August")
-    with raises(AssertionError):
+    with raises(Exception):
         state.year = 2
     state.year = 1
     state.year = 2
     assert state.year == 2
-    with raises(AssertionError):
+    with raises(Exception):
         state.year = 5
-    with raises(AssertionError):
+    with raises(Exception):
         state.year = 1
 
 

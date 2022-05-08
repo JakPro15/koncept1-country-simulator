@@ -1,4 +1,5 @@
 from ..state.state_data import State_Data
+from math import isnan, isinf
 
 
 class History:
@@ -61,7 +62,10 @@ class History:
             if ndigits > 0:
                 result[key] = float(result[key])
             else:
-                result[key] = int(result[key])
+                if not (isnan(result[key]) or isinf(result[key])):
+                    result[key] = int(result[key])
+                else:
+                    result[key] = result[key]
         return result
 
     @staticmethod
@@ -73,7 +77,7 @@ class History:
                 if ndigits > 0:
                     result[key][key2] = float(result[key][key2])
                 else:
-                    result[key][key2] = int(result[key])
+                    result[key][key2] = int(result[key][key2])
         return result
 
     def population(self):

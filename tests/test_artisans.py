@@ -532,5 +532,5 @@ def test_flush_exception():
         "tools": 100
     })
     artisans.new_resources = resources
-    with raises(AssertionError):
+    with raises(Exception):
         artisans.flush()

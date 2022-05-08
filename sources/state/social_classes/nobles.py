@@ -31,7 +31,7 @@ class Nobles(Class):
         Returns the number of people the nobles will employ this month.
         """
         return min(
-            self.new_resources["tools"] / 3,
+            self.resources["tools"] / 3,
             self.parent.get_available_employees()
         )
 

@@ -66,13 +66,16 @@ class Market:
                 needed_money = sum(
                     (corrected_optimal_resources * self.prices).values()
                 )
-                part_bought = min(social_class.money / needed_money, 1)
-                money_spent = min(social_class.money, needed_money)
-                social_class.money -= money_spent
+                if needed_money > 0:
+                    part_bought = min(social_class.money / needed_money, 1)
+                    money_spent = min(social_class.money, needed_money)
+                    social_class.money -= money_spent
 
-                social_class.market_res = \
-                    corrected_optimal_resources * part_bought
-                self.available_resources -= social_class.market_res
+                    social_class.market_res = \
+                        corrected_optimal_resources * part_bought
+                    self.available_resources -= social_class.market_res
+                else:
+                    social_class.market_res = EMPTY_RESOURCES.copy()
 
     def _buy_other_resources(self):
         """

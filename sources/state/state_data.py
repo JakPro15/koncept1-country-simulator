@@ -1,4 +1,5 @@
 from ..auxiliaries.constants import (
+    debug,
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
@@ -17,10 +18,22 @@ from .social_classes.artisans import Artisans
 from .social_classes.peasants import Peasants
 from .social_classes.others import Others
 from .market import Market
-from math import log
+from math import isinf, log
 
 
 class EveryoneDeadError(Exception):
+    pass
+
+
+class InvalidYearChangeError(Exception):
+    pass
+
+
+class InvalidClassesListError(Exception):
+    pass
+
+
+class MathTmFailure(Exception):
     pass
 
 
@@ -58,7 +71,8 @@ class State_Data:
 
     @year.setter
     def year(self, new_year: int):
-        assert new_year == self._year + 1
+        if new_year != self._year + 1:
+            raise InvalidYearChangeError
         self._year = new_year
 
     @property
@@ -67,10 +81,12 @@ class State_Data:
 
     @classes.setter
     def classes(self, new_classes_list: "list[Class]"):
-        assert isinstance(new_classes_list[0], Nobles)
-        assert isinstance(new_classes_list[1], Artisans)
-        assert isinstance(new_classes_list[2], Peasants)
-        assert isinstance(new_classes_list[3], Others)
+        if not (isinstance(new_classes_list[0], Nobles) and
+                isinstance(new_classes_list[1], Artisans) and
+                isinstance(new_classes_list[2], Peasants) and
+                isinstance(new_classes_list[3], Others)):
+            raise InvalidClassesListError
+
         self._classes = new_classes_list.copy()
         self._create_market()
 
@@ -224,15 +240,21 @@ class State_Data:
         """
         Calculates how many of the class will be promoted.
         """
-        avg_wealth = from_wealth / from_pop
-        avger_wealth = avg_wealth / increase_price  # avg relative to inc price
-        part_promoted = max(min(log(avger_wealth + 0.6666, 100), 1), 0)
-        part_paid = (part_promoted - 1) ** 3 + 1
+        if not isinf(increase_price):
+            avg_wealth = from_wealth / from_pop
+            # Average relative to increase price
+            avger_wealth = avg_wealth / increase_price
+            part_promoted = max(min(log(avger_wealth + 0.6666, 100), 1), 0)
+            part_paid = (part_promoted - 1) ** 3 + 1
 
-        transferred = part_promoted * from_pop
+            transferred = part_promoted * from_pop
 
-        # quick check if Math™ hasn't failed
-        assert part_paid * from_wealth >= transferred * increase_price
+            # quick check if Math™ hasn't failed
+            if part_paid * from_wealth < transferred * increase_price:
+                raise MathTmFailure
+        else:
+            part_paid = 0
+            transferred = 0
 
         return part_paid, transferred
 
@@ -252,6 +274,11 @@ class State_Data:
 
         class_to.new_population += transferred
         class_from.new_population -= transferred
+
+        if transferred > 0:
+            debug(f"{self.month} {self.year}")
+            debug(f"Promoted {transferred} {class_from.class_name} to "
+                  f"{class_to.class_name}")
 
     def _do_double_promotion(
         self, class_from: Class, class_to_1: Class, increase_price_1,
@@ -280,6 +307,11 @@ class State_Data:
         class_to_2.new_population += transferred / 2
         class_from.new_population -= transferred
 
+        if transferred > 0:
+            debug(f"{self.month} {self.year}")
+            debug(f"Double promoted {transferred} {class_from.class_name} to "
+                  f"{class_to_1.class_name} and {class_to_2.class_name}")
+
     def _do_promotions(self):
         """
         Does all the promotions of one month end.
@@ -289,30 +321,33 @@ class State_Data:
         peasants = self.classes[2]
         others = self.classes[3]
 
-        if not(others.starving) and (not others.freezing):
-            # Peasants and artisans (from others):
-            increase_price_1 = INCREASE_PRICE_FACTOR * \
-                sum((INBUILT_RESOURCES["peasants"] * self.prices).values())
-            increase_price_2 = INCREASE_PRICE_FACTOR * \
-                sum((INBUILT_RESOURCES["artisans"] * self.prices).values())
-            self._do_double_promotion(others, peasants, increase_price_1,
-                                      artisans, increase_price_2)
+        if others.population > 0:
+            if not(others.starving) and (not others.freezing):
+                # Peasants and artisans (from others):
+                increase_price_1 = INCREASE_PRICE_FACTOR * \
+                    sum((INBUILT_RESOURCES["peasants"] * self.prices).values())
+                increase_price_2 = INCREASE_PRICE_FACTOR * \
+                    sum((INBUILT_RESOURCES["artisans"] * self.prices).values())
+                self._do_double_promotion(others, peasants, increase_price_1,
+                                          artisans, increase_price_2)
 
         # Increase price for nobles
         increase_price = INCREASE_PRICE_FACTOR * \
             sum((INBUILT_RESOURCES["nobles"] * self.prices).values())
 
-        if not(peasants.starving) and (not peasants.freezing):
-            # Nobles (from peasants):
-            self._do_one_promotion(
-                peasants, nobles, increase_price
-            )
+        if peasants.population > 0:
+            if not(peasants.starving) and (not peasants.freezing):
+                # Nobles (from peasants):
+                self._do_one_promotion(
+                    peasants, nobles, increase_price
+                )
 
-        if not(artisans.starving) and (not artisans.freezing):
-            # Nobles (from artisans):
-            self._do_one_promotion(
-                artisans, nobles, increase_price
-            )
+        if artisans.population > 0:
+            if not(artisans.starving) and (not artisans.freezing):
+                # Nobles (from artisans):
+                self._do_one_promotion(
+                    artisans, nobles, increase_price
+                )
 
     def do_month(self):
         """

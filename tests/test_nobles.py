@@ -724,5 +724,5 @@ def test_flush_exception():
         "tools": 100
     })
     nobles.new_resources = resources
-    with raises(AssertionError):
+    with raises(Exception):
         nobles.flush()

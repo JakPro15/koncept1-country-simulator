@@ -48,6 +48,8 @@ class Fake_Social_Class:
         self.flushed = False
 
     def flush(self):
+        if hasattr(self, "new_resources"):
+            self.resources = self.new_resources.copy()
         self.flushed = True
 
 

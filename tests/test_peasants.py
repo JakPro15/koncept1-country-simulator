@@ -561,5 +561,5 @@ def test_flush_exception():
         "tools": 100
     })
     peasants.new_resources = resources
-    with raises(AssertionError):
+    with raises(Exception):
         peasants.flush()

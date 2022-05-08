@@ -10,6 +10,22 @@ from ...auxiliaries.constants import (
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 
 
+class NegativeResourcesError(Exception):
+    pass
+
+
+class NegativePopulationError(Exception):
+    pass
+
+
+class InvalidParentError(Exception):
+    pass
+
+
+class InvalidResourcesDictError(Exception):
+    pass
+
+
 class Class:
     """
     Represents one social class of the country.
@@ -56,7 +72,10 @@ class Class:
 
     @parent.setter
     def parent(self, new_parent):
-        assert new_parent.month in MONTHS
+        if not hasattr(new_parent, "month"):
+            raise InvalidParentError
+        if new_parent.month not in MONTHS:
+            raise InvalidParentError
         self._parent = new_parent
 
     @property
@@ -85,7 +104,8 @@ class Class:
         Does not modify the actual population, saves the changes in temporary
         _new_population. Use flush() to confirm the changes.
         """
-        assert number >= 0
+        if number < 0:
+            raise NegativePopulationError
         difference = number - self._new_population
         self.new_resources -= INBUILT_RESOURCES[self.class_name] * difference
         self._new_population = number
@@ -105,7 +125,8 @@ class Class:
         _new_resources. Use flush() to confirm the changes.
         """
         for resource in RESOURCES:
-            assert resource in new_new_resources
+            if resource not in new_new_resources:
+                raise InvalidResourcesDictError
         self._new_resources = Arithmetic_Dict(new_new_resources.copy())
 
     @property
@@ -233,10 +254,15 @@ class Class:
         To be run after multifunctional calculations - to save the temporary
         changes, after checking validity.
         """
-        assert self._new_population >= 0
-        assert set(self._new_resources.keys()) == set(RESOURCES)
+        if self._new_population < 0:
+            raise NegativePopulationError
+        if set(self._new_resources.keys()) != set(RESOURCES):
+            raise InvalidResourcesDictError
+
+        self.handle_negative_resources()
         for value in self._new_resources.values():
-            assert value >= 0
+            if value < 0:
+                raise NegativeResourcesError
 
         self._population = self._new_population
-        self._resources = self._new_resources
+        self._resources = self._new_resources.copy()

@@ -1,5 +1,12 @@
 from .arithmetic_dict import Arithmetic_Dict
 
+DEBUG_MODE = True
+
+
+def debug(text: str):
+    if DEBUG_MODE:
+        print(text)
+
 
 # NAME CONSTANTS
 RESOURCES = [
@@ -76,7 +83,7 @@ INBUILT_RESOURCES = {
         "wood": 7,
         "stone": 4,
         "iron": 0,
-        "tools": 3
+        "tools": 5
     }),
     "artisans": Arithmetic_Dict({
         "food": 0,
