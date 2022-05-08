@@ -1,4 +1,5 @@
 from ..auxiliaries.constants import (
+    NOBLES_CAP,
     debug,
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
@@ -331,23 +332,25 @@ class State_Data:
                 self._do_double_promotion(others, peasants, increase_price_1,
                                           artisans, increase_price_2)
 
-        # Increase price for nobles
-        increase_price = INCREASE_PRICE_FACTOR * \
-            sum((INBUILT_RESOURCES["nobles"] * self.prices).values())
+        # Check the nobles' cap
+        if nobles.population < NOBLES_CAP * self.get_available_employees():
+            # Increase price for nobles
+            increase_price = INCREASE_PRICE_FACTOR * \
+                sum((INBUILT_RESOURCES["nobles"] * self.prices).values())
 
-        if peasants.population > 0:
-            if not(peasants.starving) and (not peasants.freezing):
-                # Nobles (from peasants):
-                self._do_one_promotion(
-                    peasants, nobles, increase_price
-                )
+            if peasants.population > 0:
+                if not(peasants.starving) and (not peasants.freezing):
+                    # Nobles (from peasants):
+                    self._do_one_promotion(
+                        peasants, nobles, increase_price
+                    )
 
-        if artisans.population > 0:
-            if not(artisans.starving) and (not artisans.freezing):
-                # Nobles (from artisans):
-                self._do_one_promotion(
-                    artisans, nobles, increase_price
-                )
+            if artisans.population > 0:
+                if not(artisans.starving) and (not artisans.freezing):
+                    # Nobles (from artisans):
+                    self._do_one_promotion(
+                        artisans, nobles, increase_price
+                    )
 
     def do_month(self):
         """

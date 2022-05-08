@@ -736,13 +736,15 @@ def test_promotion_math():
 
 
 class Fake_Class_5:
-    def __init__(self, resources):
+    def __init__(self, resources, employable=False):
         self.population = 100
         self.resources = Arithmetic_Dict(resources.copy())
         self.new_population = 100
         self.new_resources = Arithmetic_Dict(resources.copy())
         self.starving = False
         self.freezing = False
+        self.class_name = "fake"
+        self.employable = employable
 
 
 def test_do_one_promotion():
@@ -808,6 +810,7 @@ def test_do_double_promotion():
 
 def test_do_promotions_no_starvation():
     # force default prices to all be equal to 1
+    saved_defaults = DEFAULT_PRICES.copy()
     a = DEFAULT_PRICES
     a["food"] = 1
     a["wood"] = 1
@@ -823,9 +826,11 @@ def test_do_promotions_no_starvation():
         "tools": 1000
     })
     nobles = Fake_Class_5(resources)
+    nobles.population = 10
+    nobles.new_population = 10
     artisans = Fake_Class_5(resources)
     peasants = Fake_Class_5(resources)
-    others = Fake_Class_5(resources)
+    others = Fake_Class_5(resources, True)
     state = State_Data()
     state._classes = [nobles, artisans, peasants, others]
     state._do_promotions()
@@ -848,25 +853,31 @@ def test_do_promotions_no_starvation():
     part_paid_peasants = part_paid_others * increase_price_peasants / \
         (increase_price_artisans + increase_price_peasants)
 
-    assert nobles.new_population == 100 + transferred_nobles * 2
-    assert nobles.new_resources == resources * (1 + part_paid_nobles * 2)
+    assert nobles.new_population == 10 + transferred_nobles * 2
+    dict_eq(nobles.new_resources,
+            resources * (1 + part_paid_nobles * 2))
 
     assert artisans.new_population == \
         100 + transferred_others / 2 - transferred_nobles
-    assert artisans.new_resources == \
-        resources * (1 + part_paid_artisans - part_paid_nobles)
+    dict_eq(artisans.new_resources,
+            resources * (1 + part_paid_artisans - part_paid_nobles))
 
     assert peasants.new_population == \
         100 + transferred_others / 2 - transferred_nobles
-    assert peasants.new_resources == \
-        resources * (1 + part_paid_peasants - part_paid_nobles)
+    dict_eq(peasants.new_resources,
+            resources * (1 + part_paid_peasants - part_paid_nobles))
 
     assert others.new_population == 100 - transferred_others
-    assert others.new_resources == resources * (1 - part_paid_others)
+    dict_eq(others.new_resources,
+            resources * (1 - part_paid_others))
+
+    for key in saved_defaults:
+        a[key] = saved_defaults[key]
 
 
 def test_do_promotions_with_starvation():
     # force default prices to all be equal to 1
+    saved_defaults = DEFAULT_PRICES.copy()
     a = DEFAULT_PRICES
     a["food"] = 1
     a["wood"] = 1
@@ -882,10 +893,12 @@ def test_do_promotions_with_starvation():
         "tools": 1000
     })
     nobles = Fake_Class_5(resources)
+    nobles.population = 10
+    nobles.new_population = 10
     artisans = Fake_Class_5(resources)
     peasants = Fake_Class_5(resources)
     peasants.starving = True
-    others = Fake_Class_5(resources)
+    others = Fake_Class_5(resources, True)
     others.freezing = True
     state = State_Data()
     state._classes = [nobles, artisans, peasants, others]
@@ -898,17 +911,79 @@ def test_do_promotions_with_starvation():
         5000, 100, increase_price_nobles
     )
 
-    assert nobles.new_population == 100 + transferred_nobles
-    assert nobles.new_resources == resources * (1 + part_paid_nobles)
+    assert nobles.new_population == 10 + transferred_nobles
+    dict_eq(nobles.new_resources, resources * (1 + part_paid_nobles))
 
     assert artisans.new_population == 100 - transferred_nobles
-    assert artisans.new_resources == resources * (1 - part_paid_nobles)
+    dict_eq(artisans.new_resources, resources * (1 - part_paid_nobles))
 
     assert peasants.new_population == 100
-    assert peasants.new_resources == resources
+    dict_eq(peasants.new_resources, resources)
 
     assert others.new_population == 100
-    assert others.new_resources == resources
+    dict_eq(others.new_resources, resources)
+
+    for key in saved_defaults:
+        a[key] = saved_defaults[key]
+
+
+def test_do_promotions_with_nobles_cap():
+    # force default prices to all be equal to 1
+    saved_defaults = DEFAULT_PRICES.copy()
+    a = DEFAULT_PRICES
+    a["food"] = 1
+    a["wood"] = 1
+    a["stone"] = 1
+    a["iron"] = 1
+    a["tools"] = 1
+
+    resources = Arithmetic_Dict({
+        "food": 1000,
+        "wood": 1000,
+        "stone": 1000,
+        "iron": 1000,
+        "tools": 1000
+    })
+    nobles = Fake_Class_5(resources)
+    nobles.population = 10000
+    nobles.new_population = 10000
+    artisans = Fake_Class_5(resources)
+    peasants = Fake_Class_5(resources)
+    others = Fake_Class_5(resources, True)
+    state = State_Data()
+    state._classes = [nobles, artisans, peasants, others]
+    state._do_promotions()
+
+    increase_price_peasants = INCREASE_PRICE_FACTOR * \
+        sum((INBUILT_RESOURCES["peasants"] * state.prices).values())
+    increase_price_artisans = INCREASE_PRICE_FACTOR * \
+        sum((INBUILT_RESOURCES["artisans"] * state.prices).values())
+
+    part_paid_others, transferred_others = State_Data._promotion_math(
+        5000, 100, increase_price_artisans
+    )
+    part_paid_artisans = part_paid_others * increase_price_artisans / \
+        (increase_price_artisans + increase_price_peasants)
+    part_paid_peasants = part_paid_others * increase_price_peasants / \
+        (increase_price_artisans + increase_price_peasants)
+
+    assert nobles.new_population == 10000
+    dict_eq(nobles.new_resources, resources)
+
+    assert artisans.new_population == 100 + transferred_others / 2
+    dict_eq(artisans.new_resources,
+            resources * (1 + part_paid_artisans))
+
+    assert peasants.new_population == 100 + transferred_others / 2
+    dict_eq(peasants.new_resources,
+            resources * (1 + part_paid_peasants))
+
+    assert others.new_population == 100 - transferred_others
+    dict_eq(others.new_resources,
+            resources * (1 - part_paid_others))
+
+    for key in saved_defaults:
+        a[key] = saved_defaults[key]
 
 
 def test_execute_commands():

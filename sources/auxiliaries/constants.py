@@ -56,20 +56,22 @@ OTHERS_WAGE = 0.5
 
 ARTISAN_WOOD_USAGE = 0.2
 ARTISAN_IRON_USAGE = 0.5
-ARTISAN_TOOL_USAGE = 0.1
-TOOLS_PRODUCTION = 1.2
+ARTISAN_TOOL_USAGE = 0.2
+TOOLS_PRODUCTION = 0.9
 
 PEASANT_TOOL_USAGE = 0.1
-FOOD_PRODUCTION = {
-    'January': 0, 'February': 0, 'March': 2,
-    'April': 3, 'May': 3, 'June': 2.5, 'July': 4, 'August': 8.5,
-    'September': 4.5, 'October': 2.5, 'November': 0, 'December': 0
-}
-WOOD_PRODUCTION = 1.5
+FOOD_RATIOS = Arithmetic_Dict({
+    'January': 0, 'February': 0, 'March': 0.5,
+    'April': 1, 'May': 1, 'June': 0.5, 'July': 1.5, 'August': 5,
+    'September': 2, 'October': 1, 'November': 0, 'December': 0
+})
+AVG_FOOD_PRODUCTION = 2.2
+FOOD_PRODUCTION = FOOD_RATIOS * AVG_FOOD_PRODUCTION
+WOOD_PRODUCTION = 1.4
 
 # PROMOTIONS CONSTANTS
-MAX_RES_PART_PROMOTED = 0.2
 INCREASE_PRICE_FACTOR = 5
+NOBLES_CAP = 0.25  # max ratio of nobles to employees
 
 # POPULATION CONSTANTS
 DEFAULT_GROWTH_FACTOR = 0.1  # monthly is 1/12 of that
@@ -121,7 +123,7 @@ OPTIMAL_RESOURCES = {
         "food": 4 * FOOD_CONSUMPTION,
         "wood": sum(WOOD_CONSUMPTION.values()) / 3 + 4 * ARTISAN_WOOD_USAGE,
         "stone": 0,
-        "iron": 4 * ARTISAN_IRON_USAGE,
+        "iron": 20 * ARTISAN_IRON_USAGE,
         "tools": 4 * ARTISAN_TOOL_USAGE
     }),
     "peasants": Arithmetic_Dict({
@@ -146,3 +148,4 @@ DEFAULT_PRICES = Arithmetic_Dict({
     "iron": 2.5,
     "tools": 3.5
 })
+MAX_PRICES = DEFAULT_PRICES * 10
