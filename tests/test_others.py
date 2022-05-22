@@ -2,7 +2,6 @@ from ..sources.auxiliaries.constants import (
     EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
-    OPTIMAL_RESOURCES,
     RESOURCES,
     WOOD_CONSUMPTION
 )
@@ -19,7 +18,8 @@ def test_constructor():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     others = Others(state, 80, resources)
 
@@ -34,6 +34,7 @@ def test_constructor():
     assert others.resources["iron"] == 0
     assert others.resources["stone"] == 0
     assert others.resources["tools"] == 100
+    assert others.resources["land"] == 0
 
     assert others.missing_resources["food"] == 0
     assert others.missing_resources["wood"] == 0
@@ -60,6 +61,7 @@ def test_default_constructor():
     assert others.resources["iron"] == 0
     assert others.resources["stone"] == 0
     assert others.resources["tools"] == 0
+    assert others.resources["land"] == 0
 
     assert others.missing_resources["food"] == 0
     assert others.missing_resources["wood"] == 0
@@ -84,7 +86,8 @@ def test_population_1():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 80, resources)
     others.new_population += 20
@@ -101,7 +104,8 @@ def test_population_2():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 80, resources)
     others.new_population -= 20
@@ -118,14 +122,16 @@ def test_resources():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     resources2 = Arithmetic_Dict({
         "food": 150,
         "wood": 10,
         "iron": 11,
         "stone": 12,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 80, resources1)
     others.new_resources = resources2
@@ -140,7 +146,8 @@ def test_grow_population_1():
         "wood": 200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     others = Others(state, 80, resources)
 
@@ -157,7 +164,8 @@ def test_grow_population_2():
         "wood": 20000,
         "iron": 0,
         "stone": 120,
-        "tools": 1000
+        "tools": 1000,
+        "land": 0
     }
     others = Others(state, 80, resources)
 
@@ -174,11 +182,12 @@ def test_optimal_resources():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     others = Others(state, 80, resources)
     opt_res = others.optimal_resources
-    assert opt_res == OPTIMAL_RESOURCES["others"] * 80
+    assert opt_res == state.sm.optimal_resources["others"] * 80
 
 
 def test_missing_resources_1():
@@ -188,14 +197,16 @@ def test_missing_resources_1():
         "wood": 500,
         "stone": -20,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing = {
         "food": 200,
         "wood": 0,
         "stone": 20,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
     others = Others(state, 80, resources)
     assert others.missing_resources == missing
@@ -208,14 +219,16 @@ def test_missing_resources_2():
         "wood": 500,
         "stone": 20,
         "iron": -1,
-        "tools": -300
+        "tools": -300,
+        "land": 0
     }
     missing = {
         "food": 0,
         "wood": 0,
         "stone": 0,
         "iron": 1,
-        "tools": 300
+        "tools": 300,
+        "land": 0
     }
     others = Others(state, 80)
     others.new_resources = resources
@@ -234,7 +247,8 @@ def test_class_overpopulation_1():
         "wood": -500,
         "stone": 0,
         "iron": 20,
-        "tools": -40
+        "tools": -40,
+        "land": 0
     }
 
     others = Others(state, 80, resources)
@@ -251,7 +265,8 @@ def test_class_overpopulation_2():
         "wood": 500,
         "stone": 20,
         "iron": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
 
     others = Others(state, 80, resources)
@@ -268,7 +283,8 @@ def test_produce_january():
         "wood": 400,
         "stone": 0,
         "iron": 400,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     })
     others = Others(state, 80, resources)
 
@@ -286,7 +302,8 @@ def test_produce_august():
         "wood": 400,
         "stone": 0,
         "iron": 400,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     })
     others = Others(state, 80, resources)
 
@@ -304,7 +321,8 @@ def test_consume():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     others = Others(state, 80, resources)
     others.consume()
@@ -325,7 +343,8 @@ def test_to_dict():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 80, resources)
     others.new_population += 20
@@ -342,7 +361,8 @@ def test_from_dict():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     dicted = {
         "population": 80,
@@ -364,7 +384,8 @@ def test_handle_empty_class_emptying():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 0.3, resources)
 
@@ -387,7 +408,8 @@ def test_handle_empty_class_unemptying():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 0, EMPTY_RESOURCES)
 
@@ -410,7 +432,8 @@ def test_handle_empty_class_adding_to_temp():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others = Others(state, 0, EMPTY_RESOURCES)
 
@@ -436,7 +459,8 @@ def test_handle_negative_resources():
         "wood": -100,
         "stone": -0.0001,
         "iron": -0.00099999,
-        "tools": 0.0001
+        "tools": 0.0001,
+        "land": 0
     })
 
     others.handle_negative_resources()
@@ -445,7 +469,8 @@ def test_handle_negative_resources():
         "wood": -100,
         "stone": 0,
         "iron": 0,
-        "tools": 0.0001
+        "tools": 0.0001,
+        "land": 0
     }
 
 
@@ -456,7 +481,8 @@ def test_flush_typical():
         "wood": 200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     new_res = resources - INBUILT_RESOURCES["others"] * 20
     others = Others(state, 80, resources)
@@ -477,7 +503,8 @@ def test_flush_exception():
         "wood": -200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     others.new_resources = resources
     with raises(Exception):

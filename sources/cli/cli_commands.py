@@ -12,16 +12,27 @@ class ShutDownCommand(Exception):
     pass
 
 
+def fill_command(string, commands):
+    """
+    Finds all commands fitting the given string. Returns a list of them.
+    """
+    results = []
+    for command in commands:
+        if string == command[0:len(string)]:
+            results.append(command)
+    return results
+
+
 def help():
     print("List of available commands:")
-    print("exit, e - shuts down the program")
-    print("save <DIR>, sv <DIR> - saves the game state into saves/<DIR>"
+    print("exit - shuts down the program")
+    print("save <DIR>- saves the game state into saves/<DIR>"
           " directory")
-    print("del <DIR>, d <DIR> - deletes the game state from saves/<DIR>"
+    print("delete <DIR> - deletes the game state from saves/<DIR>"
           " directory")
-    print("next <AMOUNT>, n <AMOUNT> - ends the month and advances to the "
+    print("next <AMOUNT> - ends the month and advances to the "
           "next <AMOUNT> times - only once if <AMOUNT> not specified")
-    print("history <STAT> <MONTHS>, h <STAT> <MONTHS> - shows the history of "
+    print("history <STAT> <MONTHS> - shows the history of "
           "the country")
     print("    <STAT> decides which statistic to show")
     print("    Valid values:")
@@ -33,7 +44,7 @@ def help():
     print("        prices (pr)")
     print("    <MONTHS> decides how many months of history should"
           "be shown - left empty shows entire history")
-    print("state <STAT>, s <STAT> - shows the current state of the country")
+    print("state <STAT> - shows the current state of the country")
     print("    <STAT> decides which statistic to show")
     print("    Valid values:")
     print("        population (p)")
@@ -116,10 +127,10 @@ def history(args: list[str], interface: Interface):
             data = interface.history.resources()
             begin_month, data = set_months_of_history(args, interface, data)
             print("Resources stats:")
-            print(" " * 14 + f"{'Nobles': ^35}{'Artisans': ^35}"
-                  f"{'Peasants': ^35}{'Others': ^35}")
+            print(" " * 14 + f"{'Nobles': ^42}{'Artisans': ^42}"
+                  f"{'Peasants': ^42}{'Others': ^42}")
             print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
-                  f"{'iron': ^6} {'tools': ^6}" * 4)
+                  f"{'iron': ^6} {'tools': ^6} {'land': ^6}" * 4)
             for index, month_data in enumerate(data):
                 line = f"{get_month_string(index + begin_month)}"
                 for social_class in month_data:
@@ -154,10 +165,10 @@ def history(args: list[str], interface: Interface):
             data = interface.history.resources_change()
             begin_month, data = set_months_of_history(args, interface, data)
             print("Resources changes stats:")
-            print(" " * 14 + f"{'Nobles': ^35}{'Artisans': ^35}"
-                  f"{'Peasants': ^35}{'Others': ^35}")
+            print(" " * 14 + f"{'Nobles': ^42}{'Artisans': ^42}"
+                  f"{'Peasants': ^42}{'Others': ^42}")
             print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
-                  f"{'iron': ^6} {'tools': ^6}" * 4)
+                  f"{'iron': ^6} {'tools': ^6} {'land': ^6}" * 4)
             for index, month_data in enumerate(data):
                 line = f"{get_month_string(index + begin_month)}"
                 for social_class in month_data:
@@ -169,14 +180,15 @@ def history(args: list[str], interface: Interface):
             data = interface.history.total_resources()
             begin_month, data = set_months_of_history(args, interface, data)
             print("Total resources stats:")
-            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools")
+            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools   Land")
             for index, month_data in enumerate(data):
                 print(f"{get_month_string(index + begin_month)}"
                       f" {res_to_str(month_data['food']): >7}"
                       f" {res_to_str(month_data['wood']): >7}"
                       f" {res_to_str(month_data['stone']): >7}"
                       f" {res_to_str(month_data['iron']): >7}"
-                      f" {res_to_str(month_data['tools']): >7}")
+                      f" {res_to_str(month_data['tools']): >7}"
+                      f" {res_to_str(month_data['land']): >7}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of history command")
 

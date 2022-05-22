@@ -33,7 +33,9 @@ class Nobles(Class):
         Returns a dict of ratios: resource producers to total employees.
         """
         new_prices = Arithmetic_Dict(prices) / DEFAULT_PRICES
-        total_prices = sum(new_prices.values()) - new_prices["tools"]
+        total_prices = sum(new_prices.values())
+        total_prices -= new_prices["tools"]
+        total_prices -= new_prices["land"]
         if total_prices != 0:
             ratios = Arithmetic_Dict({
                 "food": new_prices["food"] / total_prices,

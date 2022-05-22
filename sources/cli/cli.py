@@ -1,6 +1,7 @@
 from ..abstract_interface.interface import Interface
 from .cli_commands import (
     ShutDownCommand,
+    fill_command,
     help,
     save,
     history,
@@ -31,26 +32,39 @@ def command_line_interface():
     interface = Interface()
     interface.load_data(dirname)
 
+    commands = {"help", "save", "exit", "history", "next", "state", "delete"}
+
     while True:
         try:
             print("Enter a command. Enter help for a list of commands.")
             answer = input().strip().split(' ')
-            if answer[0] == "help":
-                help()
-            elif answer[0] in {"save", "sv"}:
-                save(answer, interface)
-            elif answer[0] in {"exit", "e"}:
-                raise ShutDownCommand
-            elif answer[0] in {"history", "h"}:
-                history(answer, interface)
-            elif answer[0] in {"next", "n"}:
-                next(answer, interface)
-            elif answer[0] in {"state", "s"}:
-                state(answer, interface)
-            elif answer[0] in {"del", "d"}:
-                delete_save(answer)
-            else:
+            answer[0] = fill_command(answer[0], commands)
+            if len(answer[0]) == 0:
                 print("Invalid command. Enter help for a list of commands.")
+            elif len(answer[0]) > 1:
+                strin = ""
+                for command in answer[0]:
+                    strin += command
+                    strin += " "
+                print(strin)
+            else:
+                answer[0] = answer[0][0]
+                if answer[0] == "help":
+                    help()
+                elif answer[0] == "save":
+                    save(answer, interface)
+                elif answer[0] == "exit":
+                    raise ShutDownCommand
+                elif answer[0] == "history":
+                    history(answer, interface)
+                elif answer[0] == "next":
+                    next(answer, interface)
+                elif answer[0] == "state":
+                    state(answer, interface)
+                elif answer[0] == "delete":
+                    delete_save(answer)
+                else:
+                    print("Invalid command. Enter help for a list of commands")
         except ShutDownCommand:
             print("Shutting down")
             return

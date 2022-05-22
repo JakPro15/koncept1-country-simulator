@@ -5,7 +5,6 @@ from ..sources.auxiliaries.constants import (
     EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
-    OPTIMAL_RESOURCES,
     RESOURCES,
     TOOLS_PRODUCTION,
     WOOD_CONSUMPTION
@@ -23,7 +22,8 @@ def test_constructor():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     artisans = Artisans(state, 80, resources)
 
@@ -88,7 +88,8 @@ def test_population_1():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 80, resources)
     artisans.new_population += 20
@@ -106,7 +107,8 @@ def test_population_2():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 80, resources)
     artisans.new_population -= 20
@@ -124,14 +126,16 @@ def test_resources():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     resources2 = Arithmetic_Dict({
         "food": 150,
         "wood": 10,
         "iron": 11,
         "stone": 12,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 80, resources1)
     artisans.new_resources = resources2
@@ -146,7 +150,8 @@ def test_grow_population_1():
         "wood": 200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     artisans = Artisans(state, 80, resources)
 
@@ -163,7 +168,8 @@ def test_grow_population_2():
         "wood": 20000,
         "iron": 0,
         "stone": 120,
-        "tools": 1000
+        "tools": 1000,
+        "land": 0
     }
     artisans = Artisans(state, 80, resources)
 
@@ -180,11 +186,12 @@ def test_optimal_resources():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     artisans = Artisans(state, 80, resources)
     opt_res = artisans.optimal_resources
-    assert opt_res == OPTIMAL_RESOURCES["artisans"] * 80
+    assert opt_res == state.sm.optimal_resources["artisans"] * 80
 
 
 def test_missing_resources_1():
@@ -194,14 +201,16 @@ def test_missing_resources_1():
         "wood": 500,
         "stone": -20,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing = {
         "food": 200,
         "wood": 0,
         "stone": 20,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
     artisans = Artisans(state, 80, resources)
     assert artisans.missing_resources == missing
@@ -214,14 +223,16 @@ def test_missing_resources_2():
         "wood": 500,
         "stone": 20,
         "iron": -1,
-        "tools": -300
+        "tools": -300,
+        "land": 0
     }
     missing = {
         "food": 0,
         "wood": 0,
         "stone": 0,
         "iron": 1,
-        "tools": 300
+        "tools": 300,
+        "land": 0
     }
     artisans = Artisans(state, 80)
     artisans.new_resources = resources
@@ -240,7 +251,8 @@ def test_class_overpopulation_1():
         "wood": -500,
         "stone": 0,
         "iron": -20,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing_wood = 500
     missing_iron = 20
@@ -266,7 +278,8 @@ def test_class_overpopulation_2():
         "wood": -50,
         "stone": 0,
         "iron": -200,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing_wood = 50
     missing_iron = 200
@@ -292,7 +305,8 @@ def test_class_overpopulation_3():
         "wood": 500,
         "stone": 20,
         "iron": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
 
     artisans = Artisans(state, 80, resources)
@@ -309,7 +323,8 @@ def test_produce_1():
         "wood": 400,
         "stone": 0,
         "iron": 400,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     })
     artisans = Artisans(state, 80, resources)
 
@@ -332,7 +347,8 @@ def test_produce_2():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     })
     artisans = Artisans(state, 100, resources)
 
@@ -341,7 +357,8 @@ def test_produce_2():
         "wood": -ARTISAN_WOOD_USAGE * 100,
         "stone": 0,
         "iron": -ARTISAN_IRON_USAGE * 100,
-        "tools": (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 100
+        "tools": (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 100,
+        "land": 0
     }
 
     artisans.produce()
@@ -356,7 +373,8 @@ def test_consume():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     artisans = Artisans(state, 80, resources)
     artisans.consume()
@@ -377,7 +395,8 @@ def test_to_dict():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 80, resources)
     artisans.new_population += 20
@@ -394,7 +413,8 @@ def test_from_dict():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     dicted = {
         "population": 80,
@@ -416,7 +436,8 @@ def test_handle_empty_class_emptying():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 0.3, resources)
 
@@ -439,7 +460,8 @@ def test_handle_empty_class_unemptying():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 0, EMPTY_RESOURCES)
 
@@ -462,7 +484,8 @@ def test_handle_empty_class_adding_to_temp():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans = Artisans(state, 0, EMPTY_RESOURCES)
 
@@ -488,7 +511,8 @@ def test_handle_negative_resources():
         "wood": -100,
         "stone": -0.0001,
         "iron": -0.00099999,
-        "tools": 0.0001
+        "tools": 0.0001,
+        "land": 0
     })
 
     artisans.handle_negative_resources()
@@ -497,7 +521,8 @@ def test_handle_negative_resources():
         "wood": -100,
         "stone": 0,
         "iron": 0,
-        "tools": 0.0001
+        "tools": 0.0001,
+        "land": 0
     }
 
 
@@ -508,7 +533,8 @@ def test_flush_typical():
         "wood": 200,
         "iron": 100,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     new_res = resources - INBUILT_RESOURCES["artisans"] * 20
     artisans = Artisans(state, 80, resources)
@@ -529,7 +555,8 @@ def test_flush_exception():
         "wood": -200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     artisans.new_resources = resources
     with raises(Exception):

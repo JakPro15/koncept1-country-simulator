@@ -5,14 +5,15 @@ DEBUG_MODE = True
 
 # NAME CONSTANTS
 RESOURCES = [
-    "food", "wood", "stone", "iron", "tools"
+    "food", "wood", "stone", "iron", "tools", "land"
 ]
 EMPTY_RESOURCES = Arithmetic_Dict({
     "food": 0,
     "wood": 0,
     "stone": 0,
     "iron": 0,
-    "tools": 0
+    "tools": 0,
+    "land": 0
 })
 MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -80,68 +81,43 @@ INBUILT_RESOURCES = {
         "wood": 7,
         "stone": 4,
         "iron": 0,
-        "tools": 5
+        "tools": 5,
+        "land": 0
     }),
     "artisans": Arithmetic_Dict({
         "food": 0,
         "wood": 2,
         "stone": 0,
         "iron": 1,
-        "tools": 3
+        "tools": 3,
+        "land": 0
     }),
     "peasants": Arithmetic_Dict({
         "food": 0,
         "wood": 3,
         "stone": 0,
         "iron": 0,
-        "tools": 3
+        "tools": 3,
+        "land": 0
     }),
     "others": Arithmetic_Dict({
         "food": 0,
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }),
 }
 
 # TRADE CONSTANTS
-OPTIMAL_RESOURCES = {
-    "nobles": Arithmetic_Dict({
-        "food": 12 * FOOD_CONSUMPTION,
-        "wood": sum(WOOD_CONSUMPTION.values()),
-        "stone": 2 * INBUILT_RESOURCES["nobles"]["stone"],
-        "iron": 0,
-        "tools": 4  # Possibly more, depending on number of employees
-    }),
-    "artisans": Arithmetic_Dict({
-        "food": 4 * FOOD_CONSUMPTION,
-        "wood": sum(WOOD_CONSUMPTION.values()) / 3 + 4 * ARTISAN_WOOD_USAGE,
-        "stone": 0,
-        "iron": 20 * ARTISAN_IRON_USAGE,
-        "tools": 4 * ARTISAN_TOOL_USAGE
-    }),
-    "peasants": Arithmetic_Dict({
-        "food": 4 * FOOD_CONSUMPTION,
-        "wood": sum(WOOD_CONSUMPTION.values()) / 3,
-        "stone": 0,
-        "iron": 0,
-        "tools": 4 * PEASANT_TOOL_USAGE
-    }),
-    "others": Arithmetic_Dict({
-        "food": 4 * FOOD_CONSUMPTION,
-        "wood": sum(WOOD_CONSUMPTION.values()) / 3,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0
-    }),
-}
 DEFAULT_PRICES = Arithmetic_Dict({
     "food": 1,
     "wood": 1.5,
     "stone": 2.5,
     "iron": 2.5,
-    "tools": 3.5
+    "tools": 3.5,
+    "land": 10
 })
 # MAX_PRICES being None signifies there being no max prices.
 MAX_PRICES = DEFAULT_PRICES * 3

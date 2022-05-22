@@ -337,6 +337,7 @@ def test_total_resources():
             "stone": 0,
             "iron": 0,
             "tools": 0,
+            "land": 0,
             "a": 3636.4
         }
 

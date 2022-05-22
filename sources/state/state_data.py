@@ -85,6 +85,40 @@ class State_Modifiers:
     def food_production(self):
         return FOOD_RATIOS * self.avg_food_production
 
+    @property
+    def optimal_resources(self):
+        return {
+            "nobles": Arithmetic_Dict({
+                "food": 12 * FOOD_CONSUMPTION,
+                "wood": sum(WOOD_CONSUMPTION.values()),
+                "stone": 2 * INBUILT_RESOURCES["nobles"]["stone"],
+                "iron": 0,
+                "tools": 4,  # Possibly more, depending on number of employees
+            }),
+            "artisans": Arithmetic_Dict({
+                "food": 4 * FOOD_CONSUMPTION,
+                "wood": sum(WOOD_CONSUMPTION.values()) / 3 + \
+                4 * self.artisan_wood_usage,
+                "stone": 0,
+                "iron": 20 * self.artisan_iron_usage,
+                "tools": 4 * self.artisan_tool_usage
+            }),
+            "peasants": Arithmetic_Dict({
+                "food": 4 * FOOD_CONSUMPTION,
+                "wood": sum(WOOD_CONSUMPTION.values()) / 3,
+                "stone": 0,
+                "iron": 0,
+                "tools": 4 * self.peasant_tool_usage
+            }),
+            "others": Arithmetic_Dict({
+                "food": 4 * FOOD_CONSUMPTION,
+                "wood": sum(WOOD_CONSUMPTION.values()) / 3,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0
+            }),
+        }
+
 
 class State_Data:
     """
@@ -95,7 +129,6 @@ class State_Data:
     _market - Market of the country
     payments - employee payments from the last produce
     prices - last month's resource prices on the market
-    log - whether to log the actions
     """
     def __init__(self, starting_month: str = "January",
                  starting_year: int = 0):
@@ -106,7 +139,8 @@ class State_Data:
             "wood": 0,
             "iron": 0,
             "stone": 0,
-            "tools": 0
+            "tools": 0,
+            "land": 0
         })
         self.prices = DEFAULT_PRICES.copy()
         self.sm = State_Modifiers()

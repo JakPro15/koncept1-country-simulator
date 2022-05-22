@@ -3,7 +3,6 @@ from ...auxiliaries.constants import (
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
     MONTHS,
-    OPTIMAL_RESOURCES,
     RESOURCES,
     WOOD_CONSUMPTION
 )
@@ -56,6 +55,9 @@ class Class:
                 resource: 0 for resource in RESOURCES
             })
         else:
+            for resource in RESOURCES:
+                if resource not in resources:
+                    raise InvalidResourcesDictError
             self._resources = Arithmetic_Dict(resources)
 
         self._new_population = self.population
@@ -136,7 +138,8 @@ class Class:
         Returns optimal resources dict for the given social class object, for
         trade purposes.
         """
-        opt_res = OPTIMAL_RESOURCES[self.class_name] * self.population
+        opt_res = \
+            self.parent.sm.optimal_resources[self.class_name] * self.population
 
         # Special case for nobles (optimal resources per capita not constant):
         if self.class_name == "nobles":

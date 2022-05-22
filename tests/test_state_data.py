@@ -27,7 +27,8 @@ def test_constructor():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
     assert isinstance(state.payments, Arithmetic_Dict)
     assert state.prices == DEFAULT_PRICES
@@ -43,7 +44,8 @@ def test_default_constructor():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
     assert isinstance(state.payments, Arithmetic_Dict)
     assert state.prices == DEFAULT_PRICES
@@ -57,7 +59,8 @@ def test_classes_setter():
         "wood": 32,
         "stone": 33,
         "iron": 34,
-        "tools": 35
+        "tools": 35,
+        "land": 0
     }
 
     nobles = Nobles(state, 20)
@@ -151,7 +154,8 @@ def test_from_dict():
                     "wood": 22,
                     "stone": 23,
                     "iron": 24,
-                    "tools": 25
+                    "tools": 25,
+                    "land": 0
                 }
             },
             "artisans": {
@@ -161,7 +165,8 @@ def test_from_dict():
                     "wood": 32,
                     "stone": 33,
                     "iron": 34,
-                    "tools": 35
+                    "tools": 35,
+                    "land": 0
                 }
             },
             "peasants": {
@@ -171,7 +176,8 @@ def test_from_dict():
                     "wood": 42,
                     "stone": 43,
                     "iron": 44,
-                    "tools": 45
+                    "tools": 45,
+                    "land": 0
                 }
             },
             "others": {
@@ -181,7 +187,8 @@ def test_from_dict():
                     "wood": 52,
                     "stone": 53,
                     "iron": 54,
-                    "tools": 55
+                    "tools": 55,
+                    "land": 0
                 }
             }
         },
@@ -190,7 +197,8 @@ def test_from_dict():
             "wood": 0.2,
             "stone": 0.3,
             "iron": 1.4,
-            "tools": 0.5
+            "tools": 0.5,
+            "land": 10
         }
     }
     state = State_Data.from_dict(data)
@@ -204,7 +212,8 @@ def test_from_dict():
         "wood": 22,
         "stone": 23,
         "iron": 24,
-        "tools": 25
+        "tools": 25,
+        "land": 0
     }
 
     assert isinstance(state.classes[1], Artisans)
@@ -214,7 +223,8 @@ def test_from_dict():
         "wood": 32,
         "stone": 33,
         "iron": 34,
-        "tools": 35
+        "tools": 35,
+        "land": 0
     }
 
     assert isinstance(state.classes[2], Peasants)
@@ -224,7 +234,8 @@ def test_from_dict():
         "wood": 42,
         "stone": 43,
         "iron": 44,
-        "tools": 45
+        "tools": 45,
+        "land": 0
     }
 
     assert isinstance(state.classes[3], Others)
@@ -234,7 +245,8 @@ def test_from_dict():
         "wood": 52,
         "stone": 53,
         "iron": 54,
-        "tools": 55
+        "tools": 55,
+        "land": 0
     }
 
     assert isinstance(state.prices, Arithmetic_Dict)
@@ -243,7 +255,8 @@ def test_from_dict():
         "wood": 0.2,
         "stone": 0.3,
         "iron": 1.4,
-        "tools": 0.5
+        "tools": 0.5,
+        "land": 10
     }
 
 
@@ -260,7 +273,8 @@ def test_to_dict():
                     "wood": 22,
                     "stone": 23,
                     "iron": 24,
-                    "tools": 25
+                    "tools": 25,
+                    "land": 0
                 }
             },
             "artisans": {
@@ -270,7 +284,8 @@ def test_to_dict():
                     "wood": 32,
                     "stone": 33,
                     "iron": 34,
-                    "tools": 35
+                    "tools": 35,
+                    "land": 0
                 }
             },
             "peasants": {
@@ -280,7 +295,8 @@ def test_to_dict():
                     "wood": 42,
                     "stone": 43,
                     "iron": 44,
-                    "tools": 45
+                    "tools": 45,
+                    "land": 0
                 }
             },
             "others": {
@@ -290,7 +306,8 @@ def test_to_dict():
                     "wood": 52,
                     "stone": 53,
                     "iron": 54,
-                    "tools": 55
+                    "tools": 55,
+                    "land": 0
                 }
             }
         },
@@ -299,7 +316,8 @@ def test_to_dict():
             "wood": 0.2,
             "stone": 0.3,
             "iron": 1.4,
-            "tools": 0.5
+            "tools": 0.5,
+            "land": 10
         }
     }
 
@@ -309,7 +327,8 @@ def test_to_dict():
         "wood": 22,
         "stone": 23,
         "iron": 24,
-        "tools": 25
+        "tools": 25,
+        "land": 0
     }
     nobles = Nobles(state, population, resources)
 
@@ -319,7 +338,8 @@ def test_to_dict():
         "wood": 32,
         "stone": 33,
         "iron": 34,
-        "tools": 35
+        "tools": 35,
+        "land": 0
     }
     artisans = Artisans(state, population, resources)
 
@@ -329,7 +349,8 @@ def test_to_dict():
         "wood": 42,
         "stone": 43,
         "iron": 44,
-        "tools": 45
+        "tools": 45,
+        "land": 0
     }
     peasants = Peasants(state, population, resources)
 
@@ -339,7 +360,8 @@ def test_to_dict():
         "wood": 52,
         "stone": 53,
         "iron": 54,
-        "tools": 55
+        "tools": 55,
+        "land": 0
     }
     others = Others(state, population, resources)
 
@@ -351,7 +373,8 @@ def test_to_dict():
         "wood": 0.2,
         "stone": 0.3,
         "iron": 1.4,
-        "tools": 0.5
+        "tools": 0.5,
+        "land": 10
     }
 
     assert state.to_dict() == data
@@ -370,7 +393,8 @@ def test_get_available_employees():
                     "wood": 22,
                     "stone": 23,
                     "iron": 24,
-                    "tools": 25
+                    "tools": 25,
+                    "land": 0
                 }
             },
             "artisans": {
@@ -380,7 +404,8 @@ def test_get_available_employees():
                     "wood": 32,
                     "stone": 33,
                     "iron": 34,
-                    "tools": 35
+                    "tools": 35,
+                    "land": 0
                 }
             },
             "peasants": {
@@ -390,7 +415,8 @@ def test_get_available_employees():
                     "wood": 42,
                     "stone": 43,
                     "iron": 44,
-                    "tools": 45
+                    "tools": 45,
+                    "land": 0
                 }
             },
             "others": {
@@ -400,7 +426,8 @@ def test_get_available_employees():
                     "wood": 52,
                     "stone": 53,
                     "iron": 54,
-                    "tools": 55
+                    "tools": 55,
+                    "land": 0
                 }
             }
         },
@@ -409,7 +436,8 @@ def test_get_available_employees():
             "wood": 0.2,
             "stone": 0.3,
             "iron": 1.4,
-            "tools": 0.5
+            "tools": 0.5,
+            "land": 10
         }
     }
     state = State_Data.from_dict(data)
@@ -502,7 +530,8 @@ def test_do_starvation():
                     "wood": 0,
                     "stone": 0,
                     "iron": 0,
-                    "tools": 0
+                    "tools": 0,
+                    "land": 0
                 }
             },
             "artisans": {
@@ -512,7 +541,8 @@ def test_do_starvation():
                     "wood": 0,
                     "stone": 0,
                     "iron": 0,
-                    "tools": 0
+                    "tools": 0,
+                    "land": 0
                 }
             },
             "peasants": {
@@ -522,7 +552,8 @@ def test_do_starvation():
                     "wood": -18,
                     "stone": 0,
                     "iron": 0,
-                    "tools": 0
+                    "tools": 0,
+                    "land": 0
                 }
             },
             "others": {
@@ -532,7 +563,8 @@ def test_do_starvation():
                     "wood": -30,
                     "stone": 0,
                     "iron": 0,
-                    "tools": 0
+                    "tools": 0,
+                    "land": 0
                 }
             }
         },
@@ -541,7 +573,8 @@ def test_do_starvation():
             "wood": 0.2,
             "stone": 0.3,
             "iron": 1.4,
-            "tools": 0.5
+            "tools": 0.5,
+            "land": 10
         }
     }
     state = State_Data.from_dict(data)
@@ -556,7 +589,8 @@ def test_do_starvation():
         "wood": 20 * INBUILT_RESOURCES["nobles"]["wood"],
         "stone": 20 * INBUILT_RESOURCES["nobles"]["stone"],
         "iron": 20 * INBUILT_RESOURCES["nobles"]["iron"],
-        "tools": 20 * INBUILT_RESOURCES["nobles"]["tools"]
+        "tools": 20 * INBUILT_RESOURCES["nobles"]["tools"],
+        "land": 0
     }
     assert state.classes[0].population == 20
     assert state.classes[0].resources == {
@@ -564,7 +598,8 @@ def test_do_starvation():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
 
     dead_artisans = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION
@@ -574,7 +609,8 @@ def test_do_starvation():
         "wood": dead_artisans * INBUILT_RESOURCES["artisans"]["wood"],
         "stone": dead_artisans * INBUILT_RESOURCES["artisans"]["stone"],
         "iron": dead_artisans * INBUILT_RESOURCES["artisans"]["iron"],
-        "tools": dead_artisans * INBUILT_RESOURCES["artisans"]["tools"]
+        "tools": dead_artisans * INBUILT_RESOURCES["artisans"]["tools"],
+        "land": 0
     }
     assert state.classes[1].population == 50
     assert state.classes[1].resources == {
@@ -582,7 +618,8 @@ def test_do_starvation():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
 
     dead_peasants = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION + \
@@ -593,7 +630,8 @@ def test_do_starvation():
         "wood": dead_peasants * INBUILT_RESOURCES["peasants"]["wood"],
         "stone": dead_peasants * INBUILT_RESOURCES["peasants"]["stone"],
         "iron": dead_peasants * INBUILT_RESOURCES["peasants"]["iron"],
-        "tools": dead_peasants * INBUILT_RESOURCES["peasants"]["tools"]
+        "tools": dead_peasants * INBUILT_RESOURCES["peasants"]["tools"],
+        "land": 0
     }
     assert state.classes[2].population == 100
     assert state.classes[2].resources == {
@@ -601,7 +639,8 @@ def test_do_starvation():
         "wood": -18,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
 
     assert state.classes[3].new_population == \
@@ -613,7 +652,8 @@ def test_do_starvation():
         "wood": -30,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
 
 
@@ -633,6 +673,7 @@ def test_do_payments():
         "stone": 3,
         "iron": 4,
         "tools": 5,
+        "land": 0
     }
     state.payments += payments
     state._do_payments()
@@ -651,7 +692,8 @@ class Fake_Class_3:
             "wood": 100,
             "stone": 100,
             "iron": 100,
-            "tools": 100
+            "tools": 100,
+            "land": 0
         })
         self.population = 50
         self.new_population = 50
@@ -679,7 +721,8 @@ def test_do_demotions():
         "wood": 100,
         "stone": 100,
         "iron": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
 
     assert nobles.new_population == 40

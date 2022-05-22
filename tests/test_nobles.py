@@ -6,7 +6,6 @@ from ..sources.auxiliaries.constants import (
     INBUILT_RESOURCES,
     IRON_PRODUCTION,
     MINER_TOOL_USAGE,
-    OPTIMAL_RESOURCES,
     OTHERS_WAGE,
     PEASANT_TOOL_USAGE,
     RESOURCES,
@@ -27,7 +26,8 @@ def test_constructor():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -42,6 +42,7 @@ def test_constructor():
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 0
     assert nobles.resources["tools"] == 100
+    assert nobles.resources["land"] == 0
 
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
@@ -68,6 +69,7 @@ def test_default_constructor():
     assert nobles.resources["iron"] == 0
     assert nobles.resources["stone"] == 0
     assert nobles.resources["tools"] == 0
+    assert nobles.resources["land"] == 0
 
     assert nobles.missing_resources["food"] == 0
     assert nobles.missing_resources["wood"] == 0
@@ -92,7 +94,8 @@ def test_population_1():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 80, resources)
     nobles.new_population += 20
@@ -109,7 +112,8 @@ def test_population_2():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 80, resources)
     nobles.new_population -= 20
@@ -126,14 +130,16 @@ def test_resources():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     resources2 = Arithmetic_Dict({
         "food": 150,
         "wood": 10,
         "iron": 11,
         "stone": 12,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 80, resources1)
     nobles.new_resources = resources2
@@ -148,7 +154,8 @@ def test_grow_population_1():
         "wood": 200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -165,7 +172,8 @@ def test_grow_population_2():
         "wood": 20000,
         "iron": 0,
         "stone": 120,
-        "tools": 1000
+        "tools": 1000,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -182,12 +190,13 @@ def test_optimal_resources_january():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
     opt_res = nobles.optimal_resources
     added_tools = Arithmetic_Dict({"tools": 400})
-    assert opt_res == OPTIMAL_RESOURCES["nobles"] * 80 + added_tools
+    assert opt_res == state.sm.optimal_resources["nobles"] * 80 + added_tools
 
 
 def test_optimal_resources_july():
@@ -197,12 +206,13 @@ def test_optimal_resources_july():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
     opt_res = nobles.optimal_resources
     added_tools = Arithmetic_Dict({"tools": 2000})
-    assert opt_res == OPTIMAL_RESOURCES["nobles"] * 80 + added_tools
+    assert opt_res == state.sm.optimal_resources["nobles"] * 80 + added_tools
 
 
 def test_missing_resources_1():
@@ -212,14 +222,16 @@ def test_missing_resources_1():
         "wood": 500,
         "stone": -20,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing = {
         "food": 200,
         "wood": 0,
         "stone": 20,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
     assert nobles.missing_resources == missing
@@ -232,14 +244,16 @@ def test_missing_resources_2():
         "wood": 500,
         "stone": 20,
         "iron": -1,
-        "tools": -300
+        "tools": -300,
+        "land": 0
     }
     missing = {
         "food": 0,
         "wood": 0,
         "stone": 0,
         "iron": 1,
-        "tools": 300
+        "tools": 300,
+        "land": 0
     }
     nobles = Nobles(state, 80)
     nobles.new_resources = resources
@@ -258,7 +272,8 @@ def test_class_overpopulation_1():
         "wood": -500,
         "stone": -20,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing_wood = 500
     missing_stone = 20
@@ -284,7 +299,8 @@ def test_class_overpopulation_2():
         "wood": -50,
         "stone": -200,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     missing_wood = 50
     missing_stone = 200
@@ -310,7 +326,8 @@ def test_class_overpopulation_3():
         "wood": 500,
         "stone": 20,
         "iron": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
 
     nobles = Nobles(state, 80, resources)
@@ -331,7 +348,8 @@ class Fake_State_Data(State_Data):
             "wood": 0,
             "iron": 0,
             "stone": 0,
-            "tools": 0
+            "tools": 0,
+            "land": 0
         })
         self.prices = Arithmetic_Dict(prices.copy())
         self.sm = State_Modifiers()
@@ -347,7 +365,8 @@ def test_get_employees_from_resources():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 900
+        "tools": 900,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -361,7 +380,8 @@ def test_get_employees_from_state():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -429,7 +449,8 @@ def test_get_ratioed_employees():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -454,7 +475,8 @@ def test_get_tools_used():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -478,7 +500,8 @@ def test_produce_february():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -487,7 +510,8 @@ def test_produce_february():
         "wood": WOOD_PRODUCTION * 35.7,
         "stone": STONE_PRODUCTION * 14.3,
         "iron": IRON_PRODUCTION * 21.4,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     })
     payments = final_res * OTHERS_WAGE
     final_res -= payments
@@ -517,7 +541,8 @@ def test_produce_august():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 1200
+        "tools": 1200,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
 
@@ -526,7 +551,8 @@ def test_produce_august():
         "wood": WOOD_PRODUCTION * 35.7,
         "stone": STONE_PRODUCTION * 14.3,
         "iron": IRON_PRODUCTION * 21.4,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     })
     payments = final_res * OTHERS_WAGE
     final_res -= payments
@@ -549,7 +575,8 @@ def test_consume():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     nobles = Nobles(state, 80, resources)
     nobles.consume()
@@ -570,7 +597,8 @@ def test_to_dict():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 80, resources)
     nobles.new_population += 20
@@ -587,7 +615,8 @@ def test_from_dict():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     dicted = {
         "population": 80,
@@ -609,7 +638,8 @@ def test_handle_empty_class_emptying():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 0.3, resources)
 
@@ -632,7 +662,8 @@ def test_handle_empty_class_unemptying():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 0, EMPTY_RESOURCES)
 
@@ -655,7 +686,8 @@ def test_handle_empty_class_adding_to_temp():
         "wood": 200,
         "iron": 0,
         "stone": 0,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles = Nobles(state, 0, EMPTY_RESOURCES)
 
@@ -681,7 +713,8 @@ def test_handle_negative_resources():
         "wood": -100,
         "stone": -0.0001,
         "iron": -0.00099999,
-        "tools": 0.0001
+        "tools": 0.0001,
+        "land": 0
     })
 
     nobles.handle_negative_resources()
@@ -690,7 +723,8 @@ def test_handle_negative_resources():
         "wood": -100,
         "stone": 0,
         "iron": 0,
-        "tools": 0.0001
+        "tools": 0.0001,
+        "land": 0
     }
 
 
@@ -701,7 +735,8 @@ def test_flush_typical():
         "wood": 200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     new_res = resources - INBUILT_RESOURCES["nobles"] * 20
     nobles = Nobles(state, 80, resources)
@@ -722,7 +757,8 @@ def test_flush_exception():
         "wood": -200,
         "iron": 0,
         "stone": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     })
     nobles.new_resources = resources
     with raises(Exception):

@@ -59,14 +59,16 @@ def test_get_available_and_needed_resources():
         "wood": 100,
         "stone": 100,
         "iron": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
 
@@ -75,14 +77,16 @@ def test_get_available_and_needed_resources():
         "wood": 200,
         "stone": 200,
         "iron": 200,
-        "tools": 200
+        "tools": 200,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
 
@@ -91,14 +95,16 @@ def test_get_available_and_needed_resources():
         "wood": 20,
         "stone": 30,
         "iron": 40,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
 
@@ -111,14 +117,16 @@ def test_get_available_and_needed_resources():
         "wood": 320,
         "stone": 330,
         "iron": 340,
-        "tools": 350
+        "tools": 350,
+        "land": 0
     }
     assert market.needed_resources == {
         "food": 150,
         "wood": 150,
         "stone": 150,
         "iron": 0,
-        "tools": 150
+        "tools": 150,
+        "land": 0
     }
 
 
@@ -128,14 +136,16 @@ def test_set_prices():
         "wood": 100,
         "stone": 100,
         "iron": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
 
@@ -144,14 +154,16 @@ def test_set_prices():
         "wood": 200,
         "stone": 200,
         "iron": 200,
-        "tools": 200
+        "tools": 200,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
 
@@ -160,14 +172,16 @@ def test_set_prices():
         "wood": 20,
         "stone": 30,
         "iron": 40,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
 
@@ -181,7 +195,8 @@ def test_set_prices():
         "wood": approx(0.469 * DEFAULT_PRICES["wood"], abs=1e-2),
         "stone": approx(0.455 * DEFAULT_PRICES["stone"], abs=1e-2),
         "iron": DEFAULT_PRICES["iron"],
-        "tools": approx(0.429 * DEFAULT_PRICES["tools"], abs=1e-2)
+        "tools": approx(0.429 * DEFAULT_PRICES["tools"], abs=1e-2),
+        "land": DEFAULT_PRICES["land"]
     }
 
 
@@ -191,14 +206,16 @@ def test_buy_needed_resources():
         "wood": 100,
         "stone": 100,
         "iron": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
 
@@ -207,14 +224,16 @@ def test_buy_needed_resources():
         "wood": 200,
         "stone": 200,
         "iron": 200,
-        "tools": 200
+        "tools": 200,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
 
@@ -223,14 +242,16 @@ def test_buy_needed_resources():
         "wood": 20,
         "stone": 30,
         "iron": 40,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
 
@@ -243,7 +264,8 @@ def test_buy_needed_resources():
         "wood": 0.469,
         "stone": 0.455,
         "iron": 0,
-        "tools": 0.429
+        "tools": 0.429,
+        "land": DEFAULT_PRICES["land"]
     })
     market._full_prices = market.prices
     market._buy_needed_resources()
@@ -254,7 +276,8 @@ def test_buy_needed_resources():
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     assert class2.money == approx(275.4, abs=0.1)
     assert class2.market_res == {
@@ -262,7 +285,8 @@ def test_buy_needed_resources():
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     assert class3.money == 0
     assert class3.market_res == {
@@ -270,7 +294,8 @@ def test_buy_needed_resources():
         "wood": approx(26.9, abs=0.1),
         "stone": approx(26.9, abs=0.1),
         "iron": 0,
-        "tools": approx(26.9, abs=0.1)
+        "tools": approx(26.9, abs=0.1),
+        "land": 0
     }
 
     assert market.available_resources == {
@@ -278,7 +303,8 @@ def test_buy_needed_resources():
         "wood": approx(193.1, abs=0.1),
         "stone": approx(203.1, abs=0.1),
         "iron": approx(340, abs=0.1),
-        "tools": approx(223.1, abs=0.1)
+        "tools": approx(223.1, abs=0.1),
+        "land": 0
     }
 
 
@@ -288,21 +314,24 @@ def test_buy_other_resources():
         "wood": 100,
         "stone": 100,
         "iron": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     market_res = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
     class1.money = 91.8
@@ -313,21 +342,24 @@ def test_buy_other_resources():
         "wood": 200,
         "stone": 200,
         "iron": 200,
-        "tools": 200
+        "tools": 200,
+        "land": 0
     }
     market_res = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
     class2.money = 275.4
@@ -338,21 +370,24 @@ def test_buy_other_resources():
         "wood": 20,
         "stone": 30,
         "iron": 40,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     market_res = {
         "food": 26.9,
         "wood": 26.9,
         "stone": 26.9,
         "iron": 0,
-        "tools": 26.9
+        "tools": 26.9,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
     class3.money = 0
@@ -366,21 +401,24 @@ def test_buy_other_resources():
         "wood": 193.1,
         "stone": 203.1,
         "iron": 340,
-        "tools": 223.1
+        "tools": 223.1,
+        "land": 0
     })
     market.needed_resources = Arithmetic_Dict({
         "food": 150,
         "wood": 150,
         "stone": 150,
         "iron": 0,
-        "tools": 150
+        "tools": 150,
+        "land": 0
     })
     market.prices = Arithmetic_Dict({
         "food": 0.483,
         "wood": 0.469,
         "stone": 0.455,
         "iron": 0,
-        "tools": 0.429
+        "tools": 0.429,
+        "land": DEFAULT_PRICES["land"]
     })
     market._buy_other_resources()
 
@@ -390,7 +428,8 @@ def test_buy_other_resources():
         "wood": approx(98.3, abs=0.1),
         "stone": approx(100.8, abs=0.1),
         "iron": approx(85.0, abs=0.1),
-        "tools": approx(105.8, abs=0.1)
+        "tools": approx(105.8, abs=0.1),
+        "land": 0
     }
     assert class2.money == 0
     assert class2.market_res == {
@@ -398,7 +437,8 @@ def test_buy_other_resources():
         "wood": approx(194.8, abs=0.1),
         "stone": approx(202.3, abs=0.1),
         "iron": approx(255.0, abs=0.1),
-        "tools": approx(217.3, abs=0.1)
+        "tools": approx(217.3, abs=0.1),
+        "land": 0
     }
     assert class3.money == 0
     assert class3.market_res == {
@@ -406,7 +446,8 @@ def test_buy_other_resources():
         "wood": approx(26.9, abs=0.1),
         "stone": approx(26.9, abs=0.1),
         "iron": 0,
-        "tools": approx(26.9, abs=0.1)
+        "tools": approx(26.9, abs=0.1),
+        "land": 0
     }
 
     assert market.available_resources == {
@@ -414,7 +455,8 @@ def test_buy_other_resources():
         "wood": 0,
         "stone": 0,
         "iron": 0,
-        "tools": 0
+        "tools": 0,
+        "land": 0
     }
 
 
@@ -481,14 +523,16 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "wood": 100,
         "stone": 100,
         "iron": 100,
-        "tools": 100
+        "tools": 100,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
 
@@ -497,14 +541,16 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "wood": 200,
         "stone": 200,
         "iron": 200,
-        "tools": 200
+        "tools": 200,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 0,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class2 = Fake_Social_Class(resources, optimal_resources)
 
@@ -513,14 +559,16 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "wood": 20,
         "stone": 30,
         "iron": 40,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     optimal_resources = {
         "food": 50,
         "wood": 50,
         "stone": 50,
         "iron": 1,
-        "tools": 50
+        "tools": 50,
+        "land": 0
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
 
@@ -534,19 +582,22 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "wood": approx(96.7, abs=0.1),
         "stone": approx(99.2, abs=0.1),
         "iron": approx(84.9, abs=0.1),
-        "tools": approx(104.2, abs=0.1)
+        "tools": approx(104.2, abs=0.1),
+        "land": 0
     }
     assert class2.resources == {
         "food": approx(182.3, abs=0.1),
         "wood": approx(189.8, abs=0.1),
         "stone": approx(197.3, abs=0.1),
         "iron": approx(254.4, abs=0.1),
-        "tools": approx(212.3, abs=0.1)
+        "tools": approx(212.3, abs=0.1),
+        "land": 0
     }
     assert class3.resources == {
         "food": approx(33.6, abs=0.1),
         "wood": approx(33.6, abs=0.1),
         "stone": approx(33.6, abs=0.1),
         "iron": approx(0.7, abs=0.1),
-        "tools": approx(33.6, abs=0.1)
+        "tools": approx(33.6, abs=0.1),
+        "land": 0
     }
