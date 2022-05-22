@@ -36,6 +36,7 @@ class Class:
     resources - dictionary containing info on the resources the class owns
     optimal_resources - how much resources the class wants to own
     missing_resources - how much resources the class needs to own to not die
+                        or get demoted
     class_overpopulation - how many of the class need to be demoted because of
                            no resources
     """

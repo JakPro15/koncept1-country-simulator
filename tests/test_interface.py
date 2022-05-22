@@ -4,7 +4,7 @@ from ..sources.state.state_data import State_Data
 
 
 def test_next_month_first():
-    def fake_do_month(self):
+    def fake_do_month(self, debug=False):
         self.did_month += 1
 
     old_do_month = State_Data.do_month
@@ -28,7 +28,7 @@ def test_next_month_first():
 
 
 def test_next_month_next():
-    def fake_do_month(self):
+    def fake_do_month(self, debug=False):
         self.did_month += 1
 
     old_do_month = State_Data.do_month

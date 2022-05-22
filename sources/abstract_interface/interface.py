@@ -1,3 +1,4 @@
+from sources.auxiliaries.constants import DEBUG_MODE
 from ..state.state_data import State_Data
 from .history import History
 import json
@@ -50,13 +51,5 @@ class Interface:
         """
         Advances the month by one and saves it in history.
         """
-        self.state.do_month()
-        if len(self.history.history_lines) == 0:
-            self.history.history_lines.append('next 1')
-        else:
-            if self.history.history_lines[-1].split(' ')[0] != "next":
-                self.history.history_lines.append('next 1')
-            else:
-                command = self.history.history_lines[-1].split(' ')
-                command[1] = str(int(command[1]) + 1)
-                self.history.history_lines[-1] = ' '.join(command)
+        self.state.do_month(DEBUG_MODE)
+        self.history.add_history_line("next")

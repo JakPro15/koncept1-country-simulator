@@ -1,12 +1,5 @@
 from ...auxiliaries.constants import (
     DEFAULT_PRICES,
-    OTHERS_WAGE,
-    PEASANT_TOOL_USAGE,
-    FOOD_PRODUCTION,
-    WOOD_PRODUCTION,
-    STONE_PRODUCTION,
-    IRON_PRODUCTION,
-    MINER_TOOL_USAGE,
     CLASSES
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
@@ -67,9 +60,9 @@ class Nobles(Class):
         """
         Returns the amount of tools that will be used in production this month.
         """
-        peasant_tools_used = PEASANT_TOOL_USAGE * \
+        peasant_tools_used = self.parent.sm.peasant_tool_usage * \
             (employees["food"] + employees["wood"])
-        miner_tools_used = MINER_TOOL_USAGE * \
+        miner_tools_used = self.parent.sm.miner_tool_usage * \
             (employees["stone"] + employees["iron"])
 
         return peasant_tools_used + miner_tools_used
@@ -79,14 +72,14 @@ class Nobles(Class):
         Adds resources the class' employees produced in the current month.
         """
         per_capita = Arithmetic_Dict({
-            "food": FOOD_PRODUCTION[self._parent.month],
-            "wood": WOOD_PRODUCTION,
-            "stone": STONE_PRODUCTION,
-            "iron": IRON_PRODUCTION
+            "food": self.parent.sm.food_production[self._parent.month],
+            "wood": self.parent.sm.wood_production,
+            "stone": self.parent.sm.stone_production,
+            "iron": self.parent.sm.iron_production
         })
         ratioed_emps = self._get_ratioed_employees()
         produced = per_capita * ratioed_emps
 
         self._new_resources["tools"] -= self._get_tools_used(ratioed_emps)
-        self.new_resources += produced * (1 - OTHERS_WAGE)
-        self.parent.payments += produced * OTHERS_WAGE
+        self.new_resources += produced * (1 - self.parent.sm.others_wage)
+        self.parent.payments += produced * self.parent.sm.others_wage

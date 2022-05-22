@@ -1,9 +1,5 @@
 from ...auxiliaries.constants import (
-    CLASSES,
-    ARTISAN_IRON_USAGE,
-    ARTISAN_TOOL_USAGE,
-    ARTISAN_WOOD_USAGE,
-    TOOLS_PRODUCTION
+    CLASSES
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .class_file import Class
@@ -26,12 +22,12 @@ class Artisans(Class):
         Adds resources the class produced in the current month.
         """
         produced = Arithmetic_Dict({
-            "tools": TOOLS_PRODUCTION * self.population
+            "tools": self.parent.sm.tools_production * self.population
         })
         used = Arithmetic_Dict({
-            "wood": ARTISAN_WOOD_USAGE * self.population,
-            "iron": ARTISAN_IRON_USAGE * self.population,
-            "tools": ARTISAN_TOOL_USAGE * self.population
+            "wood": self.parent.sm.artisan_wood_usage * self.population,
+            "iron": self.parent.sm.artisan_iron_usage * self.population,
+            "tools": self.parent.sm.artisan_tool_usage * self.population
         })
 
         self.new_resources -= used

@@ -16,7 +16,7 @@ def test_constructor():
     artisans = Artisans(state, 100)
     others = Others(state, 200)
     social_classes = [nobles, artisans, peasants, others]
-    market = Market(social_classes)
+    market = Market(social_classes, state)
 
     assert market.classes[0] == nobles
     assert market.classes[1] == artisans
@@ -103,7 +103,8 @@ def test_get_available_and_needed_resources():
     class3 = Fake_Social_Class(resources, optimal_resources)
 
     social_classes = [class1, class2, class3]
-    market = Market(social_classes)
+    state = State_Data()
+    market = Market(social_classes, state)
     market._get_available_and_needed_resources()
     assert market.available_resources == {
         "food": 310,
@@ -171,7 +172,8 @@ def test_set_prices():
     class3 = Fake_Social_Class(resources, optimal_resources)
 
     social_classes = [class1, class2, class3]
-    market = Market(social_classes)
+    state = State_Data()
+    market = Market(social_classes, state)
     market._get_available_and_needed_resources()
     market._set_prices()
     assert market.prices == {
@@ -233,7 +235,8 @@ def test_buy_needed_resources():
     class3 = Fake_Social_Class(resources, optimal_resources)
 
     social_classes = [class1, class2, class3]
-    market = Market(social_classes)
+    state = State_Data()
+    market = Market(social_classes, state)
     market._get_available_and_needed_resources()
     market.prices = Arithmetic_Dict({
         "food": 0.483,
@@ -242,6 +245,7 @@ def test_buy_needed_resources():
         "iron": 0,
         "tools": 0.429
     })
+    market._full_prices = market.prices
     market._buy_needed_resources()
 
     assert class1.money == approx(91.8, abs=0.1)
@@ -355,7 +359,8 @@ def test_buy_other_resources():
     class3.market_res = Arithmetic_Dict(market_res)
 
     social_classes = [class1, class2, class3]
-    market = Market(social_classes)
+    state = State_Data()
+    market = Market(social_classes, state)
     market.available_resources = Arithmetic_Dict({
         "food": 183.1,
         "wood": 193.1,
@@ -447,9 +452,11 @@ def test_delete_trade_attributes():
     class2 = Fake_Social_Class(resources, optimal_resources)
 
     social_classes = [class1, class2]
-    market = Market(social_classes)
+    state = State_Data()
+    market = Market(social_classes, state)
     market._get_available_and_needed_resources()
     market.prices = DEFAULT_PRICES
+    market._full_prices = DEFAULT_PRICES
     market._buy_needed_resources()
     market._delete_trade_attributes()
 
@@ -518,7 +525,8 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
     class3 = Fake_Social_Class(resources, optimal_resources)
 
     social_classes = [class1, class2, class3]
-    market = Market(social_classes)
+    state = State_Data()
+    market = Market(social_classes, state)
     market.do_trade()
 
     assert class1.resources == {

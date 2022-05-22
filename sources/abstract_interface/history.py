@@ -97,3 +97,17 @@ class History:
 
     def total_resources(self):
         return self.obtain_data("total_resources", False, 1)
+
+    def add_history_line(self, command):
+        """
+        Adds the given command to the history lines.
+        """
+        if len(self.history_lines) == 0:
+            self.history_lines.append(f'{command} 1')
+        else:
+            if self.history_lines[-1].split(' ')[0] != command:
+                self.history_lines.append(f'{command} 1')
+            else:
+                line = self.history_lines[-1].split(' ')
+                line[1] = str(int(line[1]) + 1)
+                self.history_lines[-1] = ' '.join(line)

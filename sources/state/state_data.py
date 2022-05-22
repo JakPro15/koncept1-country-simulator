@@ -1,6 +1,9 @@
 from ..auxiliaries.constants import (
+    AVG_FOOD_PRODUCTION,
+    FOOD_RATIOS,
+    MAX_PRICES,
+    MINER_TOOL_USAGE,
     NOBLES_CAP,
-    debug,
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
@@ -10,7 +13,16 @@ from ..auxiliaries.constants import (
     INCREASE_PRICE_FACTOR,
     MONTHS,
     STARVATION_MORTALITY,
-    WOOD_CONSUMPTION
+    WOOD_CONSUMPTION,
+    IRON_PRODUCTION,
+    STONE_PRODUCTION,
+    OTHERS_WAGE,
+    ARTISAN_IRON_USAGE,
+    ARTISAN_TOOL_USAGE,
+    ARTISAN_WOOD_USAGE,
+    TOOLS_PRODUCTION,
+    PEASANT_TOOL_USAGE,
+    WOOD_PRODUCTION
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -38,6 +50,42 @@ class MathTmFailure(Exception):
     pass
 
 
+class State_Modifiers:
+    """
+    Stores the modifiers defining how the State works. Can be changed
+    mid-game by the player's actions.
+    They start out as constants from auxiliaries/constants.py.
+    """
+    def __init__(self):
+        self.miner_tool_usage = MINER_TOOL_USAGE
+        self.iron_production = IRON_PRODUCTION
+        self.stone_production = STONE_PRODUCTION
+        self.others_wage = OTHERS_WAGE
+
+        self.artisan_wood_usage = ARTISAN_WOOD_USAGE
+        self.artisan_iron_usage = ARTISAN_IRON_USAGE
+        self.artisan_tool_usage = ARTISAN_TOOL_USAGE
+        self.tools_production = TOOLS_PRODUCTION
+
+        self.peasant_tool_usage = PEASANT_TOOL_USAGE
+        self.avg_food_production = AVG_FOOD_PRODUCTION
+
+        self.wood_production = WOOD_PRODUCTION
+
+        self.increase_price_factor = INCREASE_PRICE_FACTOR
+        self.nobles_cap = NOBLES_CAP
+
+        self.default_growth_factor = DEFAULT_GROWTH_FACTOR
+        self.starvation_mortality = STARVATION_MORTALITY
+        self.freezing_mortality = FREEZING_MORTALITY
+
+        self.max_prices = MAX_PRICES
+
+    @property
+    def food_production(self):
+        return FOOD_RATIOS * self.avg_food_production
+
+
 class State_Data:
     """
     Represents the data of an entire state, including all its classes.
@@ -61,6 +109,7 @@ class State_Data:
             "tools": 0
         })
         self.prices = DEFAULT_PRICES.copy()
+        self.sm = State_Modifiers()
 
     @property
     def month(self):
@@ -108,7 +157,7 @@ class State_Data:
             self.year += 1
 
     def _create_market(self):
-        self._market = Market(self.classes)
+        self._market = Market(self.classes, self)
 
     def get_available_employees(self):
         employees = 0
@@ -146,24 +195,30 @@ class State_Data:
         }
         return data
 
-    def _do_growth(self):
+    def _do_growth(self, debug=False):
         """
         Does the natural population growth for all classes.
         """
-        factor = DEFAULT_GROWTH_FACTOR / 12
+        factor = self.sm.default_growth_factor / 12
         for social_class in self.classes:
+            old_pop = social_class.new_population
             social_class.grow_population(factor)
+            if debug:
+                print(f"Grown {social_class.new_population - old_pop} "
+                      f"{social_class.class_name}")
 
-    def _do_starvation(self):
+    def _do_starvation(self, debug=False):
         """
         Does starvation and freezing to fix negative food and wood.
         Starving or freezing is marked with a bool attribute of the class.
         """
         for social_class in self.classes:
+            old_pop = social_class.new_population
+
             missing_food = social_class.missing_resources["food"]
             starving_number = 0
             if missing_food > 0:
-                starving_number = STARVATION_MORTALITY * missing_food \
+                starving_number = self.sm.starvation_mortality * missing_food \
                     / FOOD_CONSUMPTION
 
                 food_zerofier = {
@@ -181,7 +236,7 @@ class State_Data:
             missing_wood = social_class.missing_resources["wood"]
             freezing_number = 0
             if missing_wood > 0:
-                freezing_number = FREEZING_MORTALITY * missing_wood \
+                freezing_number = self.sm.freezing_mortality * missing_wood \
                     / WOOD_CONSUMPTION[self.month]
 
                 wood_zerofier = {
@@ -203,6 +258,10 @@ class State_Data:
             else:
                 social_class.new_population = 0
 
+            if debug:
+                print(f"Starved {old_pop - social_class.new_population} "
+                      f"{social_class.class_name}")
+
     def _do_payments(self):
         """
         Moves the payments into Others' pockets.
@@ -210,7 +269,7 @@ class State_Data:
         self.classes[3].new_resources += self.payments
         self.payments = EMPTY_RESOURCES.copy()
 
-    def _do_demotions(self):
+    def _do_demotions(self, debug=False):
         """
         Does demotions to fix as many negative resources as possible.
         """
@@ -228,13 +287,17 @@ class State_Data:
             social_class.new_population -= moved_pop
             lower_class.new_population += moved_pop
 
-    def _secure_classes(self):
+            if debug:
+                print(f"Demoted {moved_pop} {social_class.class_name}")
+
+    def _secure_classes(self, flush=True):
         """
         Secures and flushes all classes.
         """
         for social_class in self.classes:
             social_class.handle_negative_resources()
-            social_class.handle_empty_class()
+            if flush:
+                social_class.handle_empty_class()
 
     @staticmethod
     def _promotion_math(from_wealth, from_pop, increase_price):
@@ -260,7 +323,7 @@ class State_Data:
         return part_paid, transferred
 
     def _do_one_promotion(
-        self, class_from: Class, class_to: Class, increase_price
+        self, class_from: Class, class_to: Class, increase_price, debug=False
     ):
         """
         Does one promotion on the given classes.
@@ -276,14 +339,13 @@ class State_Data:
         class_to.new_population += transferred
         class_from.new_population -= transferred
 
-        if transferred > 0:
-            debug(f"{self.month} {self.year}")
-            debug(f"Promoted {transferred} {class_from.class_name} to "
+        if debug:
+            print(f"Promoted {transferred} {class_from.class_name} to "
                   f"{class_to.class_name}")
 
     def _do_double_promotion(
         self, class_from: Class, class_to_1: Class, increase_price_1,
-        class_to_2: Class, increase_price_2
+        class_to_2: Class, increase_price_2, debug=False
     ):
         """
         Does one promotion on the given classes.
@@ -308,12 +370,11 @@ class State_Data:
         class_to_2.new_population += transferred / 2
         class_from.new_population -= transferred
 
-        if transferred > 0:
-            debug(f"{self.month} {self.year}")
-            debug(f"Double promoted {transferred} {class_from.class_name} to "
+        if debug:
+            print(f"Double promoted {transferred} {class_from.class_name} to "
                   f"{class_to_1.class_name} and {class_to_2.class_name}")
 
-    def _do_promotions(self):
+    def _do_promotions(self, debug=False):
         """
         Does all the promotions of one month end.
         """
@@ -325,38 +386,41 @@ class State_Data:
         if others.population > 0:
             if not(others.starving) and (not others.freezing):
                 # Peasants and artisans (from others):
-                increase_price_1 = INCREASE_PRICE_FACTOR * \
+                increase_price_1 = self.sm.increase_price_factor * \
                     sum((INBUILT_RESOURCES["peasants"] * self.prices).values())
-                increase_price_2 = INCREASE_PRICE_FACTOR * \
+                increase_price_2 = self.sm.increase_price_factor * \
                     sum((INBUILT_RESOURCES["artisans"] * self.prices).values())
                 self._do_double_promotion(others, peasants, increase_price_1,
-                                          artisans, increase_price_2)
+                                          artisans, increase_price_2, debug)
 
         # Check the nobles' cap
-        if nobles.population < NOBLES_CAP * self.get_available_employees():
+        if nobles.population < self.sm.nobles_cap * \
+                self.get_available_employees():
             # Increase price for nobles
-            increase_price = INCREASE_PRICE_FACTOR * \
+            increase_price = self.sm.increase_price_factor * \
                 sum((INBUILT_RESOURCES["nobles"] * self.prices).values())
 
             if peasants.population > 0:
                 if not(peasants.starving) and (not peasants.freezing):
                     # Nobles (from peasants):
                     self._do_one_promotion(
-                        peasants, nobles, increase_price
+                        peasants, nobles, increase_price, debug
                     )
 
             if artisans.population > 0:
                 if not(artisans.starving) and (not artisans.freezing):
                     # Nobles (from artisans):
                     self._do_one_promotion(
-                        artisans, nobles, increase_price
+                        artisans, nobles, increase_price, debug
                     )
 
-    def do_month(self):
+    def do_month(self, debug=False):
         """
         Does all the needed calculations and changes to end the month and move
         on to the next. Returns a dict with data from the month.
         """
+        if debug:
+            print(f"Ending month {self.month} {self.year}")
         # Check for game over
         someone_alive = False
         for social_class in self.classes:
@@ -386,7 +450,7 @@ class State_Data:
         }
 
         # First: growth - resources might become negative
-        self._do_growth()
+        self._do_growth(debug)
 
         # Second: production
         for social_class in self.classes:
@@ -398,17 +462,18 @@ class State_Data:
             social_class.consume()
 
         # Fourth: demotions - should fix all except food and some wood
-        self._do_demotions()
+        self._do_demotions(debug)
+        self._secure_classes(flush=False)
 
         # Fifth: starvation - should fix all remaining resources
-        self._do_starvation()
+        self._do_starvation(debug)
 
         # Sixth: security and flushing
         self._secure_classes()
 
         # Seventh: promotions
-        self._do_promotions()  # Might make resources negative
-        self._do_demotions()  # Fix resources again
+        self._do_promotions(debug)  # Might make resources negative
+        self._do_demotions(debug)  # Fix resources again
 
         # Eighth: trade
         self._market.do_trade()

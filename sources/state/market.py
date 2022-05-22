@@ -10,12 +10,13 @@ class Market:
     classes - objects between which trade is done
     prices - prices of resources in the last done trade
     """
-    def __init__(self, classes: "list[Class]"):
+    def __init__(self, classes: "list[Class]", parent):
         """
         Instead of Class, can accept any object that has properties:
         resources, optimal_resources
         """
         self.classes = classes.copy()
+        self.parent = parent
 
     def _get_available_and_needed_resources(self):
         """
@@ -33,11 +34,17 @@ class Market:
         """
         # If one of the available res is 0, arithmetic dict will make the
         # resulting price be float positive infinity
-        self.prices = self.needed_resources / self.available_resources
-        self.prices *= DEFAULT_PRICES
-        for resource in self.prices:
-            if self.prices[resource] == 0.0:
-                self.prices[resource] = DEFAULT_PRICES[resource]
+        self._full_prices = self.needed_resources / self.available_resources
+        self._full_prices *= DEFAULT_PRICES
+        for resource in self._full_prices:
+            if self._full_prices[resource] == 0.0:
+                self._full_prices[resource] = DEFAULT_PRICES[resource]
+
+        self.prices = self._full_prices.copy()
+        if self.parent.sm.max_prices is not None:
+            for resource in self.prices:
+                if self.prices[resource] > self.parent.sm.max_prices[resource]:
+                    self.prices[resource] = self.parent.sm.max_prices[resource]
 
     def _buy_needed_resources(self):
         """
@@ -46,7 +53,7 @@ class Market:
         for social_class in self.classes:
             if social_class.population > 0:
                 corrected_optimal_resources = Arithmetic_Dict({})
-                rel_prices = self.prices / DEFAULT_PRICES
+                rel_prices = self._full_prices / DEFAULT_PRICES
                 price_adjusted = {
                     resource: amount / (rel_prices[resource]
                                         if rel_prices[resource] > 0.1

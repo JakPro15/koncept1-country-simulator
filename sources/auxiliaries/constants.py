@@ -1,12 +1,7 @@
 from .arithmetic_dict import Arithmetic_Dict
 
+
 DEBUG_MODE = True
-
-
-def debug(text: str):
-    if DEBUG_MODE:
-        print(text)
-
 
 # NAME CONSTANTS
 RESOURCES = [
@@ -148,4 +143,5 @@ DEFAULT_PRICES = Arithmetic_Dict({
     "iron": 2.5,
     "tools": 3.5
 })
-MAX_PRICES = DEFAULT_PRICES * 10
+# MAX_PRICES being None signifies there being no max prices.
+MAX_PRICES = DEFAULT_PRICES * 3

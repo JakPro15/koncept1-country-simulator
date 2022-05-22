@@ -14,7 +14,7 @@ from ..sources.auxiliaries.constants import (
     WOOD_CONSUMPTION,
     WOOD_PRODUCTION
 )
-from ..sources.state.state_data import State_Data
+from ..sources.state.state_data import State_Data, State_Modifiers
 from ..sources.state.social_classes.nobles import Nobles
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from pytest import approx, raises
@@ -334,6 +334,7 @@ class Fake_State_Data(State_Data):
             "tools": 0
         })
         self.prices = Arithmetic_Dict(prices.copy())
+        self.sm = State_Modifiers()
 
     def get_available_employees(self):
         return self.available_employees

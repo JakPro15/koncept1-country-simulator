@@ -1,9 +1,6 @@
 from ...auxiliaries.constants import (
     CLASSES,
-    DEFAULT_PRICES,
-    PEASANT_TOOL_USAGE,
-    FOOD_PRODUCTION,
-    WOOD_PRODUCTION
+    DEFAULT_PRICES
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .class_file import Class
@@ -33,9 +30,9 @@ class Peasants(Class):
         wood_peasants = self.population * relative_prices["wood"] / total_price
 
         changes = Arithmetic_Dict({
-            "food": FOOD_PRODUCTION[month] * food_peasants,
-            "wood": WOOD_PRODUCTION * wood_peasants,
-            "tools": -PEASANT_TOOL_USAGE * self.population
+            "food": self.parent.sm.food_production[month] * food_peasants,
+            "wood": self.parent.sm.wood_production * wood_peasants,
+            "tools": -self.parent.sm.peasant_tool_usage * self.population
         })
 
         self.new_resources += changes

@@ -440,6 +440,7 @@ def test_get_available_employees_multiple_employable_classes():
 class Fake_Class_2:
     def __init__(self, population, missing_resources):
         self.population = population
+        self.new_population = population
         self.missing_resources = missing_resources.copy()
         self.resources = {}
 
