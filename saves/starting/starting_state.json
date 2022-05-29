@@ -9,13 +9,8 @@
                 "wood": 150,
                 "stone": 150,
                 "iron": 0,
-                "tools": 400
-            },
-            "land": {
-                "fields": 4000,
-                "woods": 2000,
-                "stone_mines": 1,
-                "iron_mines": 1
+                "tools": 400,
+                "land": 2000
             }
         },
         "artisans": {
@@ -24,14 +19,9 @@
                 "food": 100,
                 "wood": 100,
                 "stone": 0,
-                "iron": 50,
-                "tools": 40
-            },
-            "land": {
-                "fields": 0,
-                "woods": 0,
-                "stone_mines": 0,
-                "iron_mines": 0
+                "iron": 100,
+                "tools": 40,
+                "land": 0
             }
         },
         "peasants": {
@@ -41,13 +31,8 @@
                 "wood": 200,
                 "stone": 0,
                 "iron": 0,
-                "tools": 100
-            },
-            "land": {
-                "fields": 1200,
-                "woods": 300,
-                "stone_mines": 0,
-                "iron_mines": 0
+                "tools": 100,
+                "land": 1000
             }
         },
         "others": {
@@ -57,13 +42,8 @@
                 "wood": 200,
                 "stone": 0,
                 "iron": 0,
-                "tools": 0
-            },
-            "land": {
-                "fields": 0,
-                "woods": 0,
-                "stone_mines": 0,
-                "iron_mines": 0
+                "tools": 0,
+                "land": 0
             }
         }
     },
@@ -72,6 +52,7 @@
         "wood": 1.2,
         "stone": 2.334545,
         "iron": 2.334545,
-        "tools": 2.672727
+        "tools": 2.672727,
+        "land": 10
     }
 }

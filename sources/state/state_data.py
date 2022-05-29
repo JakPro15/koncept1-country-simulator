@@ -22,7 +22,8 @@ from ..auxiliaries.constants import (
     ARTISAN_WOOD_USAGE,
     TOOLS_PRODUCTION,
     PEASANT_TOOL_USAGE,
-    WOOD_PRODUCTION
+    WOOD_PRODUCTION,
+    WORKER_LAND_USAGE
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -56,7 +57,9 @@ class State_Modifiers:
     mid-game by the player's actions.
     They start out as constants from auxiliaries/constants.py.
     """
-    def __init__(self):
+    def __init__(self, parent: "State_Data"):
+        self.parent = parent
+
         self.miner_tool_usage = MINER_TOOL_USAGE
         self.iron_production = IRON_PRODUCTION
         self.stone_production = STONE_PRODUCTION
@@ -81,6 +84,8 @@ class State_Modifiers:
 
         self.max_prices = MAX_PRICES
 
+        self.worker_land_usage = WORKER_LAND_USAGE
+
     @property
     def food_production(self):
         return FOOD_RATIOS * self.avg_food_production
@@ -93,29 +98,38 @@ class State_Modifiers:
                 "wood": sum(WOOD_CONSUMPTION.values()),
                 "stone": 2 * INBUILT_RESOURCES["nobles"]["stone"],
                 "iron": 0,
-                "tools": 4,  # Possibly more, depending on number of employees
+                "tools": 4 + (4 * self.parent.get_available_employees() /
+                              self.parent.classes[0].population)
+                if self.parent.classes[0].population > 0 else 4,
+                "land": (self.worker_land_usage *
+                         self.parent.get_available_employees() /
+                         self.parent.classes[0].population)
+                if self.parent.classes[0].population > 0 else 0,
             }),
             "artisans": Arithmetic_Dict({
                 "food": 4 * FOOD_CONSUMPTION,
-                "wood": sum(WOOD_CONSUMPTION.values()) / 3 + \
+                "wood": sum(WOOD_CONSUMPTION.values()) / 3 +
                 4 * self.artisan_wood_usage,
                 "stone": 0,
                 "iron": 20 * self.artisan_iron_usage,
-                "tools": 4 * self.artisan_tool_usage
+                "tools": 4 * self.artisan_tool_usage,
+                "land": 0
             }),
             "peasants": Arithmetic_Dict({
                 "food": 4 * FOOD_CONSUMPTION,
                 "wood": sum(WOOD_CONSUMPTION.values()) / 3,
                 "stone": 0,
                 "iron": 0,
-                "tools": 4 * self.peasant_tool_usage
+                "tools": 4 * self.peasant_tool_usage,
+                "land": 0.5 * self.worker_land_usage
             }),
             "others": Arithmetic_Dict({
                 "food": 4 * FOOD_CONSUMPTION,
                 "wood": sum(WOOD_CONSUMPTION.values()) / 3,
                 "stone": 0,
                 "iron": 0,
-                "tools": 0
+                "tools": 0,
+                "land": 0
             }),
         }
 
@@ -143,7 +157,7 @@ class State_Data:
             "land": 0
         })
         self.prices = DEFAULT_PRICES.copy()
-        self.sm = State_Modifiers()
+        self.sm = State_Modifiers(self)
 
     @property
     def month(self):
@@ -260,7 +274,8 @@ class State_Data:
                     "wood": 1,
                     "stone": 1,
                     "iron": 1,
-                    "tools": 1
+                    "tools": 1,
+                    "land": 1
                 }
                 social_class.new_resources *= food_zerofier
                 social_class.starving = True
@@ -278,7 +293,8 @@ class State_Data:
                     "wood": 0,
                     "stone": 1,
                     "iron": 1,
-                    "tools": 1
+                    "tools": 1,
+                    "land": 1
                 }
                 social_class.new_resources *= wood_zerofier
                 social_class.freezing = True
@@ -342,7 +358,9 @@ class State_Data:
             avg_wealth = from_wealth / from_pop
             # Average relative to increase price
             avger_wealth = avg_wealth / increase_price
-            part_promoted = max(min(log(avger_wealth + 0.6666, 100), 1), 0)
+            part_promoted = max(min(log(
+                avger_wealth - 1 if avger_wealth > 1 else 1, 100
+            ), 1), 0)
             part_paid = (part_promoted - 1) ** 3 + 1
 
             transferred = part_promoted * from_pop
@@ -520,10 +538,14 @@ class State_Data:
 
         # Tenth: return the necessary data
         month_data["resources_after"] = {
-            "nobles": self.classes[0].resources,
-            "artisans": self.classes[1].resources,
-            "peasants": self.classes[2].resources,
-            "others": self.classes[3].resources
+            "nobles": self.classes[0].resources +
+            (INBUILT_RESOURCES["nobles"] * self.classes[0].population),
+            "artisans": self.classes[1].resources +
+            (INBUILT_RESOURCES["artisans"] * self.classes[1].population),
+            "peasants": self.classes[2].resources +
+            (INBUILT_RESOURCES["peasants"] * self.classes[2].population),
+            "others": self.classes[3].resources +
+            (INBUILT_RESOURCES["others"] * self.classes[3].population),
         }
         month_data["population_after"] = {
             "nobles": self.classes[0].population,

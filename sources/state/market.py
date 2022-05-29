@@ -27,6 +27,8 @@ class Market:
         for social_class in self.classes:
             self.needed_resources += social_class.optimal_resources
             self.available_resources += social_class.resources
+        if not hasattr(self, "old_avail_res"):
+            self.old_avail_res = self.available_resources.copy()
 
     def _set_prices(self):
         """
@@ -41,6 +43,19 @@ class Market:
                 self._full_prices[resource] = DEFAULT_PRICES[resource]
 
         self.prices = self._full_prices.copy()
+        # Obtain the derivative price:
+        # diff_price = d(needed_res)/dt, (-inf, inf)
+        diff_prices = self.available_resources - self.old_avail_res
+        # diff_price = -d(needed_res)/dt, (-inf, inf)
+        diff_prices = EMPTY_RESOURCES - diff_prices
+        # diff_price = e^(-d(needed_res)/dt), (0, inf)
+        diff_prices = diff_prices.exp()
+        diff_prices *= DEFAULT_PRICES
+
+        # real_prices = avg of prices and diff_prices
+        DERIVATION = 0.5
+        self.prices = self.prices * (1 - DERIVATION) + diff_prices * DERIVATION
+
         if self.parent.sm.max_prices is not None:
             for resource in self.prices:
                 if self.prices[resource] > self.parent.sm.max_prices[resource]:
@@ -118,6 +133,7 @@ class Market:
                 social_class.flush()
                 del social_class.market_res
 
+        self.old_avail_res = self.available_resources.copy()
         del self.available_resources
         del self.needed_resources
 

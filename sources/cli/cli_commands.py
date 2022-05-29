@@ -142,14 +142,15 @@ def history(args: list[str], interface: Interface):
             data = interface.history.prices()
             begin_month, data = set_months_of_history(args, interface, data)
             print("Prices stats:")
-            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools")
+            print(" " * 14 + "  Food    Wood   Stone    Iron   Tools    Land")
             for index, month_data in enumerate(data):
                 print(f"{get_month_string(index + begin_month)}"
                       f" {price_to_str(month_data['food']): >7}"
                       f" {price_to_str(month_data['wood']): >7}"
                       f" {price_to_str(month_data['stone']): >7}"
                       f" {price_to_str(month_data['iron']): >7}"
-                      f" {price_to_str(month_data['tools']): >7}")
+                      f" {price_to_str(month_data['tools']): >7}"
+                      f" {price_to_str(month_data['land']): >7}")
         if args[1] in {"population_change", "pc"}:
             data = interface.history.population_change()
             begin_month, data = set_months_of_history(args, interface, data)

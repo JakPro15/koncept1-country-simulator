@@ -141,10 +141,6 @@ class Class:
         opt_res = \
             self.parent.sm.optimal_resources[self.class_name] * self.population
 
-        # Special case for nobles (optimal resources per capita not constant):
-        if self.class_name == "nobles":
-            opt_res["tools"] += 4 * self.parent.get_available_employees()
-
         return Arithmetic_Dict(opt_res)
 
     @property

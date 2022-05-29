@@ -1,6 +1,7 @@
 from ...auxiliaries.constants import (
     DEFAULT_PRICES,
-    CLASSES
+    CLASSES,
+    INBUILT_RESOURCES
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .class_file import Class
@@ -25,6 +26,8 @@ class Nobles(Class):
         """
         return min(
             self.resources["tools"] / 3,
+            (self.resources["land"] + INBUILT_RESOURCES["nobles"]["land"] *
+             self.population) / self.parent.sm.worker_land_usage,
             self.parent.get_available_employees()
         )
 

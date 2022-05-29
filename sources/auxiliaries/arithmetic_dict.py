@@ -1,4 +1,4 @@
-from math import inf, isnan
+from math import inf, isnan, exp
 
 
 class Arithmetic_Dict(dict):
@@ -129,3 +129,8 @@ class Arithmetic_Dict(dict):
 
     def copy(self):
         return Arithmetic_Dict(super().copy())
+
+    def exp(self):
+        return Arithmetic_Dict(
+            {element: exp(value) for element, value in self.items()}
+        )

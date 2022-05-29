@@ -55,6 +55,8 @@ ARTISAN_IRON_USAGE = 0.5
 ARTISAN_TOOL_USAGE = 0.2
 TOOLS_PRODUCTION = 0.9
 
+WORKER_LAND_USAGE = 20
+
 PEASANT_TOOL_USAGE = 0.1
 FOOD_RATIOS = Arithmetic_Dict({
     'January': 0, 'February': 0, 'March': 0.5,
@@ -67,7 +69,7 @@ WOOD_PRODUCTION = 1.4
 
 # PROMOTIONS CONSTANTS
 INCREASE_PRICE_FACTOR = 5
-NOBLES_CAP = 0.25  # max ratio of nobles to employees
+NOBLES_CAP = 1  # max ratio of nobles to employees
 
 # POPULATION CONSTANTS
 DEFAULT_GROWTH_FACTOR = 0.1  # monthly is 1/12 of that
@@ -82,7 +84,7 @@ INBUILT_RESOURCES = {
         "stone": 4,
         "iron": 0,
         "tools": 5,
-        "land": 0
+        "land": 60
     }),
     "artisans": Arithmetic_Dict({
         "food": 0,
@@ -98,7 +100,7 @@ INBUILT_RESOURCES = {
         "stone": 0,
         "iron": 0,
         "tools": 3,
-        "land": 0
+        "land": 20
     }),
     "others": Arithmetic_Dict({
         "food": 0,
@@ -120,4 +122,4 @@ DEFAULT_PRICES = Arithmetic_Dict({
     "land": 10
 })
 # MAX_PRICES being None signifies there being no max prices.
-MAX_PRICES = DEFAULT_PRICES * 3
+MAX_PRICES = None
