@@ -43,7 +43,7 @@ class Class:
                  resources: dict = None):
         """
         Creates an object of type Class or a derived class.
-        Parent is the State_Data object this class belongs to.
+        Parent is the State_Data object this belongs to.
         """
         self.parent = parent
         if population < 0:

@@ -82,7 +82,7 @@ class State_Modifiers:
         self.starvation_mortality = STARVATION_MORTALITY
         self.freezing_mortality = FREEZING_MORTALITY
 
-        self.max_prices = MAX_PRICES
+        self.max_prices = DEFAULT_PRICES * MAX_PRICES
 
         self.worker_land_usage = WORKER_LAND_USAGE
 
@@ -158,6 +158,11 @@ class State_Data:
         })
         self.prices = DEFAULT_PRICES.copy()
         self.sm = State_Modifiers(self)
+
+        class Fake_Nobles:
+            def __init__(self):
+                self.population = 0
+        self._classes = [Fake_Nobles()]
 
     @property
     def month(self):

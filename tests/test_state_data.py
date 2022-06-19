@@ -590,7 +590,7 @@ def test_do_starvation():
         "stone": 20 * INBUILT_RESOURCES["nobles"]["stone"],
         "iron": 20 * INBUILT_RESOURCES["nobles"]["iron"],
         "tools": 20 * INBUILT_RESOURCES["nobles"]["tools"],
-        "land": 0
+        "land": 20 * INBUILT_RESOURCES["nobles"]["land"],
     }
     assert state.classes[0].population == 20
     assert state.classes[0].resources == {
@@ -610,7 +610,7 @@ def test_do_starvation():
         "stone": dead_artisans * INBUILT_RESOURCES["artisans"]["stone"],
         "iron": dead_artisans * INBUILT_RESOURCES["artisans"]["iron"],
         "tools": dead_artisans * INBUILT_RESOURCES["artisans"]["tools"],
-        "land": 0
+        "land": dead_artisans * INBUILT_RESOURCES["artisans"]["land"],
     }
     assert state.classes[1].population == 50
     assert state.classes[1].resources == {
@@ -631,7 +631,7 @@ def test_do_starvation():
         "stone": dead_peasants * INBUILT_RESOURCES["peasants"]["stone"],
         "iron": dead_peasants * INBUILT_RESOURCES["peasants"]["iron"],
         "tools": dead_peasants * INBUILT_RESOURCES["peasants"]["tools"],
-        "land": 0
+        "land": dead_peasants * INBUILT_RESOURCES["peasants"]["land"],
     }
     assert state.classes[2].population == 100
     assert state.classes[2].resources == {

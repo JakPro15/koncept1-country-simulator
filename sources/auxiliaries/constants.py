@@ -1,3 +1,4 @@
+from math import inf
 from .arithmetic_dict import Arithmetic_Dict
 
 
@@ -121,5 +122,5 @@ DEFAULT_PRICES = Arithmetic_Dict({
     "tools": 3.5,
     "land": 10
 })
-# MAX_PRICES being None signifies there being no max prices.
-MAX_PRICES = None
+
+MAX_PRICES = inf

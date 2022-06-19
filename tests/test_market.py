@@ -130,14 +130,14 @@ def test_get_available_and_needed_resources():
     }
 
 
-def test_set_prices():
+def test_set_prices():  # EXCEL CALCULATIONS USED
     resources = {
         "food": 100,
         "wood": 100,
         "stone": 100,
         "iron": 100,
         "tools": 100,
-        "land": 0
+        "land": 100
     }
     optimal_resources = {
         "food": 50,
@@ -145,7 +145,7 @@ def test_set_prices():
         "stone": 50,
         "iron": 0,
         "tools": 50,
-        "land": 0
+        "land": 50
     }
     class1 = Fake_Social_Class(resources, optimal_resources)
 
@@ -155,7 +155,7 @@ def test_set_prices():
         "stone": 200,
         "iron": 200,
         "tools": 200,
-        "land": 0
+        "land": 200
     }
     optimal_resources = {
         "food": 50,
@@ -168,20 +168,20 @@ def test_set_prices():
     class2 = Fake_Social_Class(resources, optimal_resources)
 
     resources = {
-        "food": 10,
-        "wood": 20,
-        "stone": 30,
-        "iron": 40,
-        "tools": 50,
-        "land": 0
+        "food": 1,
+        "wood": 2,
+        "stone": 3,
+        "iron": 4,
+        "tools": 5,
+        "land": 6
     }
     optimal_resources = {
-        "food": 50,
+        "food": 10,
         "wood": 50,
         "stone": 50,
         "iron": 0,
         "tools": 50,
-        "land": 0
+        "land": 50
     }
     class3 = Fake_Social_Class(resources, optimal_resources)
 
@@ -189,14 +189,22 @@ def test_set_prices():
     state = State_Data()
     market = Market(social_classes, state)
     market._get_available_and_needed_resources()
+    market.old_avail_res = Arithmetic_Dict({
+        "food": 300,
+        "wood": 300,
+        "stone": 305,
+        "iron": 305,
+        "tools": 300,
+        "land": 300,
+    })
     market._set_prices()
     assert market.prices == {
-        "food": approx(0.483 * DEFAULT_PRICES["food"], abs=1e-2),
-        "wood": approx(0.469 * DEFAULT_PRICES["wood"], abs=1e-2),
-        "stone": approx(0.455 * DEFAULT_PRICES["stone"], abs=1e-2),
-        "iron": DEFAULT_PRICES["iron"],
-        "tools": approx(0.429 * DEFAULT_PRICES["tools"], abs=1e-2),
-        "land": DEFAULT_PRICES["land"]
+        "food": approx(0.367 * DEFAULT_PRICES["food"], abs=1e-2),
+        "wood": approx(0.316 * DEFAULT_PRICES["wood"], abs=1e-2),
+        "stone": approx(3.942 * DEFAULT_PRICES["stone"], abs=1e-2),
+        "iron": approx(1.859 * DEFAULT_PRICES["iron"], abs=1e-2),
+        "tools": approx(0.249 * DEFAULT_PRICES["tools"], abs=1e-2),
+        "land": approx(0.165 * DEFAULT_PRICES["land"], abs=1e-2),
     }
 
 
@@ -527,7 +535,7 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "land": 0
     }
     optimal_resources = {
-        "food": 50,
+        "food": 150,
         "wood": 50,
         "stone": 50,
         "iron": 0,
@@ -545,7 +553,7 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
         "land": 0
     }
     optimal_resources = {
-        "food": 50,
+        "food": 150,
         "wood": 50,
         "stone": 50,
         "iron": 0,
@@ -575,29 +583,37 @@ def test_do_trade():  # EXCEL CALCULATIONS USED
     social_classes = [class1, class2, class3]
     state = State_Data()
     market = Market(social_classes, state)
+    market.old_avail_res = Arithmetic_Dict({
+        "food": 310,
+        "wood": 320,
+        "stone": 335,
+        "iron": 345,
+        "tools": 345,
+        "land": 0,
+    })
     market.do_trade()
 
     assert class1.resources == {
-        "food": approx(94.2, abs=0.1),
-        "wood": approx(96.7, abs=0.1),
-        "stone": approx(99.2, abs=0.1),
-        "iron": approx(84.9, abs=0.1),
-        "tools": approx(104.2, abs=0.1),
+        "food": approx(132.8, abs=0.15),
+        "wood": approx(99.0, abs=0.15),
+        "stone": approx(101.9, abs=0.15),
+        "iron": approx(97.8, abs=0.15),
+        "tools": approx(107.7, abs=0.15),
         "land": 0
     }
     assert class2.resources == {
-        "food": approx(182.3, abs=0.1),
-        "wood": approx(189.8, abs=0.1),
-        "stone": approx(197.3, abs=0.1),
-        "iron": approx(254.4, abs=0.1),
-        "tools": approx(212.3, abs=0.1),
+        "food": approx(132.9, abs=0.15),
+        "wood": approx(164.9, abs=0.15),
+        "stone": approx(171.7, abs=0.15),
+        "iron": approx(229.2, abs=0.15),
+        "tools": approx(185.2, abs=0.15),
         "land": 0
     }
     assert class3.resources == {
-        "food": approx(33.6, abs=0.1),
-        "wood": approx(33.6, abs=0.1),
-        "stone": approx(33.6, abs=0.1),
-        "iron": approx(0.7, abs=0.1),
-        "tools": approx(33.6, abs=0.1),
+        "food": approx(44.3, abs=0.15),
+        "wood": approx(56.0, abs=0.15),
+        "stone": approx(56.4, abs=0.15),
+        "iron": approx(13.0, abs=0.15),
+        "tools": approx(57.1, abs=0.15),
         "land": 0
     }

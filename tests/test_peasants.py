@@ -567,7 +567,7 @@ def test_flush_typical():
         "iron": 0,
         "stone": 100,
         "tools": 100,
-        "land": 0
+        "land": 500
     })
     new_res = resources - INBUILT_RESOURCES["peasants"] * 20
     peasants = Peasants(state, 80, resources)

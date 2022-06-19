@@ -11,7 +11,8 @@ from ..sources.auxiliaries.constants import (
     RESOURCES,
     STONE_PRODUCTION,
     WOOD_CONSUMPTION,
-    WOOD_PRODUCTION
+    WOOD_PRODUCTION,
+    WORKER_LAND_USAGE
 )
 from ..sources.state.state_data import State_Data, State_Modifiers
 from ..sources.state.social_classes.nobles import Nobles
@@ -193,10 +194,10 @@ def test_optimal_resources_january():
         "tools": 1200,
         "land": 0
     }
-    nobles = Nobles(state, 80, resources)
+    nobles = Nobles(state, 100, resources)
+    state._classes = [nobles]
     opt_res = nobles.optimal_resources
-    added_tools = Arithmetic_Dict({"tools": 400})
-    assert opt_res == state.sm.optimal_resources["nobles"] * 80 + added_tools
+    assert opt_res == state.sm.optimal_resources["nobles"] * 100
 
 
 def test_optimal_resources_july():
@@ -210,9 +211,9 @@ def test_optimal_resources_july():
         "land": 0
     }
     nobles = Nobles(state, 80, resources)
+    state._classes = [nobles]
     opt_res = nobles.optimal_resources
-    added_tools = Arithmetic_Dict({"tools": 2000})
-    assert opt_res == state.sm.optimal_resources["nobles"] * 80 + added_tools
+    assert opt_res == state.sm.optimal_resources["nobles"] * 80
 
 
 def test_missing_resources_1():
@@ -352,7 +353,7 @@ class Fake_State_Data(State_Data):
             "land": 0
         })
         self.prices = Arithmetic_Dict(prices.copy())
-        self.sm = State_Modifiers()
+        self.sm = State_Modifiers(self)
 
     def get_available_employees(self):
         return self.available_employees
@@ -366,14 +367,14 @@ def test_get_employees_from_resources():
         "stone": 0,
         "iron": 0,
         "tools": 900,
-        "land": 0
+        "land": 10000
     }
     nobles = Nobles(state, 80, resources)
 
     assert nobles._get_employees() == 300
 
 
-def test_get_employees_from_state():
+def test_get_employees_from_land():
     state = Fake_State_Data(250)
     resources = {
         "food": 0,
@@ -381,11 +382,12 @@ def test_get_employees_from_state():
         "stone": 0,
         "iron": 0,
         "tools": 1200,
-        "land": 0
+        "land": 100
     }
     nobles = Nobles(state, 80, resources)
 
-    assert nobles._get_employees() == 250
+    assert nobles._get_employees() == \
+        (100 + INBUILT_RESOURCES["nobles"]["land"] * 80) / WORKER_LAND_USAGE
 
 
 def test_get_ratios_default_prices():
@@ -731,12 +733,12 @@ def test_handle_negative_resources():
 def test_flush_typical():
     state = State_Data()
     resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
+        "food": 1000,
+        "wood": 2000,
         "iron": 0,
-        "stone": 100,
-        "tools": 100,
-        "land": 0
+        "stone": 1000,
+        "tools": 1000,
+        "land": 10000
     })
     new_res = resources - INBUILT_RESOURCES["nobles"] * 20
     nobles = Nobles(state, 80, resources)

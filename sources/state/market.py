@@ -43,23 +43,21 @@ class Market:
                 self._full_prices[resource] = DEFAULT_PRICES[resource]
 
         self.prices = self._full_prices.copy()
-        # Obtain the derivative price:
-        # diff_price = d(needed_res)/dt, (-inf, inf)
-        diff_prices = self.available_resources - self.old_avail_res
-        # diff_price = -d(needed_res)/dt, (-inf, inf)
-        diff_prices = EMPTY_RESOURCES - diff_prices
-        # diff_price = e^(-d(needed_res)/dt), (0, inf)
+        # Obtain the differential price:
+        # diff_price = -d(ava_res), (-inf, inf)
+        diff_prices = self.old_avail_res - self.available_resources
+        # diff_price = e^(-d(ava_res)), (0, inf)
+        # when price hasn't changed in last month, diff_price = 1
         diff_prices = diff_prices.exp()
         diff_prices *= DEFAULT_PRICES
 
         # real_prices = avg of prices and diff_prices
-        DERIVATION = 0.5
+        DERIVATION = 0.5  # 0.5 means arithmetic mean
         self.prices = self.prices * (1 - DERIVATION) + diff_prices * DERIVATION
 
-        if self.parent.sm.max_prices is not None:
-            for resource in self.prices:
-                if self.prices[resource] > self.parent.sm.max_prices[resource]:
-                    self.prices[resource] = self.parent.sm.max_prices[resource]
+        for resource in self.prices:
+            if self.prices[resource] > self.parent.sm.max_prices[resource]:
+                self.prices[resource] = self.parent.sm.max_prices[resource]
 
     def _buy_needed_resources(self):
         """
