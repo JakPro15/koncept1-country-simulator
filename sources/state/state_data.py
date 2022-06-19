@@ -31,6 +31,7 @@ from .social_classes.nobles import Nobles
 from .social_classes.artisans import Artisans
 from .social_classes.peasants import Peasants
 from .social_classes.others import Others
+from .government import Government
 from .market import Market
 from math import isinf, log
 
@@ -140,12 +141,18 @@ class State_Data:
     Properties:
     month - the current month
     classes - social classes of the country
-    _market - Market of the country
+    government - government of the country's object
+    _market - object executing trade within the country
     payments - employee payments from the last produce
     prices - last month's resource prices on the market
     """
     def __init__(self, starting_month: str = "January",
                  starting_year: int = 0):
+        """
+        Creates a State_Data object. Note that classes and government remain
+        uninitialized and need to be manually set after the creation of the
+        state.
+        """
         self._year = starting_year
         self._month = starting_month
         self.payments = Arithmetic_Dict({
@@ -163,6 +170,7 @@ class State_Data:
             def __init__(self):
                 self.population = 0
         self._classes = [Fake_Nobles()]
+        self._government = None
 
     @property
     def month(self):
@@ -184,20 +192,29 @@ class State_Data:
 
     @classes.setter
     def classes(self, new_classes_list: "list[Class]"):
-        if not (isinstance(new_classes_list[0], Nobles) and
-                isinstance(new_classes_list[1], Artisans) and
-                isinstance(new_classes_list[2], Peasants) and
-                isinstance(new_classes_list[3], Others)):
+        if len(new_classes_list) != 4:
             raise InvalidClassesListError
 
         self._classes = new_classes_list.copy()
-        self._create_market()
+        if self.government is not None:
+            self._create_market()
 
         # These are used for demotions
         self._classes[0].lower_class = self._classes[2]
         self._classes[1].lower_class = self._classes[3]
         self._classes[2].lower_class = self._classes[3]
         self._classes[3].lower_class = self._classes[3]
+
+    @property
+    def government(self):
+        return self._government
+
+    @government.setter
+    def government(self, new_government: Government):
+
+        self._government = new_government
+        if len(self.classes) == 4:
+            self._create_market()
 
     def _advance_month(self):
         months_moved = MONTHS[1:] + [MONTHS[0]]
@@ -210,9 +227,18 @@ class State_Data:
             self.year += 1
 
     def _create_market(self):
-        self._market = Market(self.classes, self)
+        """
+        Creates a market for the object. Needs classes and government to be
+        initialized.
+        """
+        trading_objects = self.classes.copy()
+        trading_objects.append(self.government)
+        self._market = Market(trading_objects, self)
 
     def get_available_employees(self):
+        """
+        Returns the number of employees available to be hired this month.
+        """
         employees = 0
         for social_class in self.classes:
             if social_class.employable:
@@ -221,20 +247,29 @@ class State_Data:
 
     @classmethod
     def from_dict(cls, data: dict):
+        """
+        Creates a State_Data object from the given dict.
+        """
         state = cls(data["month"], data["year"])
 
         nobles = Nobles.from_dict(state, data["classes"]["nobles"])
         artisans = Artisans.from_dict(state, data["classes"]["artisans"])
         peasants = Peasants.from_dict(state, data["classes"]["peasants"])
         others = Others.from_dict(state, data["classes"]["others"])
+        government = Government.from_dict(state, data["government"])
         classes_list = [nobles, artisans, peasants, others]
 
         state.classes = classes_list
+        state.government = government
         state.prices = Arithmetic_Dict(data["prices"])
 
         return state
 
     def to_dict(self):
+        """
+        Returns a dict with the object's data. It's valid for from_dict
+        function.
+        """
         data = {
             "year": self.year,
             "month": self.month,
@@ -244,6 +279,7 @@ class State_Data:
                 "peasants": self.classes[2].to_dict(),
                 "others": self.classes[3].to_dict()
             },
+            "government": self.government.to_dict(),
             "prices": self.prices
         }
         return data
@@ -347,12 +383,14 @@ class State_Data:
 
     def _secure_classes(self, flush=True):
         """
-        Secures and flushes all classes.
+        Secures and flushes (if needed) all classes.
         """
         for social_class in self.classes:
             social_class.handle_negative_resources()
             if flush:
                 social_class.handle_empty_class()
+        self.government.handle_negative_resources()
+        self.government.flush()
 
     @staticmethod
     def _promotion_math(from_wealth, from_pop, increase_price):

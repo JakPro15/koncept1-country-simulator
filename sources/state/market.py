@@ -64,38 +64,41 @@ class Market:
         Executes the classes purchasing resources they need.
         """
         for social_class in self.classes:
-            if social_class.population > 0:
-                corrected_optimal_resources = Arithmetic_Dict({})
-                rel_prices = self._full_prices / DEFAULT_PRICES
-                price_adjusted = {
-                    resource: amount / (rel_prices[resource]
-                                        if rel_prices[resource] > 0.1
-                                        else 0.1)
-                    for resource, amount
-                    in social_class.optimal_resources.items()
-                }
-                for key in social_class.optimal_resources:
-                    corrected_optimal_resources[key] = min(
-                        social_class.optimal_resources[key],
-                        price_adjusted[key]
-                    )
+            if hasattr(social_class, "population"):
+                if social_class.population == 0:
+                    continue
 
-                social_class.money = sum(
-                    (social_class.resources * self.prices).values()
+            corrected_optimal_resources = Arithmetic_Dict({})
+            rel_prices = self._full_prices / DEFAULT_PRICES
+            price_adjusted = {
+                resource: amount / (rel_prices[resource]
+                                    if rel_prices[resource] > 0.1
+                                    else 0.1)
+                for resource, amount
+                in social_class.optimal_resources.items()
+            }
+            for key in social_class.optimal_resources:
+                corrected_optimal_resources[key] = min(
+                    social_class.optimal_resources[key],
+                    price_adjusted[key]
                 )
-                needed_money = sum(
-                    (corrected_optimal_resources * self.prices).values()
-                )
-                if needed_money > 0:
-                    part_bought = min(social_class.money / needed_money, 1)
-                    money_spent = min(social_class.money, needed_money)
-                    social_class.money -= money_spent
 
-                    social_class.market_res = \
-                        corrected_optimal_resources * part_bought
-                    self.available_resources -= social_class.market_res
-                else:
-                    social_class.market_res = EMPTY_RESOURCES.copy()
+            social_class.money = sum(
+                (social_class.resources * self.prices).values()
+            )
+            needed_money = sum(
+                (corrected_optimal_resources * self.prices).values()
+            )
+            if needed_money > 0:
+                part_bought = min(social_class.money / needed_money, 1)
+                money_spent = min(social_class.money, needed_money)
+                social_class.money -= money_spent
+
+                social_class.market_res = \
+                    corrected_optimal_resources * part_bought
+                self.available_resources -= social_class.market_res
+            else:
+                social_class.market_res = EMPTY_RESOURCES.copy()
 
     def _buy_other_resources(self):
         """
@@ -104,20 +107,27 @@ class Market:
         total_price = sum((self.available_resources * self.prices).values())
         if total_price > 0:
             for social_class in self.classes:
-                if social_class.population > 0:
-                    part_bought = social_class.money / total_price
-                    social_class.market_res += \
-                        self.available_resources * part_bought
-                    social_class.money = 0
+                if hasattr(social_class, "population"):
+                    if social_class.population == 0:
+                        continue
+
+                part_bought = social_class.money / total_price
+                social_class.market_res += \
+                    self.available_resources * part_bought
+                social_class.money = 0
         else:
             classes_count = 0
             for social_class in self.classes:
-                if social_class.population > 0:
-                    classes_count += 1
+                if hasattr(social_class, "population"):
+                    if social_class.population == 0:
+                        continue
+                classes_count += 1
             for social_class in self.classes:
-                if social_class.population > 0:
-                    social_class.market_res += \
-                        self.available_resources / classes_count
+                if hasattr(social_class, "population"):
+                    if social_class.population == 0:
+                        continue
+                social_class.market_res += \
+                    self.available_resources / classes_count
         self.available_resources = EMPTY_RESOURCES.copy()
 
     def _delete_trade_attributes(self):
@@ -125,11 +135,13 @@ class Market:
         Finalizes trade and deletes attributes used during trade calculations.
         """
         for social_class in self.classes:
-            if social_class.population > 0:
-                del social_class.money
-                social_class.new_resources = social_class.market_res
-                social_class.flush()
-                del social_class.market_res
+            if hasattr(social_class, "population"):
+                if social_class.population == 0:
+                    continue
+            del social_class.money
+            social_class.new_resources = social_class.market_res
+            social_class.flush()
+            del social_class.market_res
 
         self.old_avail_res = self.available_resources.copy()
         del self.available_resources
