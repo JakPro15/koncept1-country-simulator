@@ -70,6 +70,10 @@ class Class:
 
         self.starving = False
         self.freezing = False
+        self.demoted_from = False
+        self.demoted_to = False
+        self.promoted_from = False
+        self.promoted_to = False
 
     @property
     def parent(self):

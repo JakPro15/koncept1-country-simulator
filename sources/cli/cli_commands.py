@@ -98,6 +98,7 @@ def help_command(command: str):
         print("        resources (r)")
         print("        total_resources (tr)")
         print("        prices (pr)")
+        print("        modifiers (m)")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
         print("Transfers <AMOUNT> of <RESOURCE> from the government to "
@@ -346,12 +347,23 @@ def next(args: list[str], interface: Interface):
         raise ShutDownCommand
 
 
+def get_modifiers_string(social_class):
+    modifiers_string = f"{social_class.class_name: >8}: "
+    modifiers_string += "S" if social_class.starving else " "
+    modifiers_string += "F" if social_class.freezing else " "
+    modifiers_string += "P" if social_class.promoted_from else " "
+    modifiers_string += "D" if social_class.demoted_from else " "
+    modifiers_string += "p" if social_class.promoted_to else " "
+    modifiers_string += "d" if social_class.demoted_to else " "
+    return modifiers_string
+
+
 def state(args: list[str], interface: Interface):
     try:
         assert len(args) in {2, 3}
         assert args[1] in {
             "population", "resources", "prices", "total_resources",
-            "p", "r", "pr", "tr"
+            "modifiers", "p", "r", "pr", "tr", "m"
         }
         if len(args) == 3:
             assert args[2].isdigit()
@@ -403,6 +415,12 @@ def state(args: list[str], interface: Interface):
             print("Current total resources:")
             for resource, value in data.items():
                 print(f"{resource: >5}: {res_to_str(value)}")
+        elif args[1] in {"modifiers", "m"}:
+            print("Current growth modifiers (S - starving, F - freezing, "
+                  "P - promoted from, D - demoted from, p - promoted to, "
+                  "d - demoted to):")
+            for social_class in interface.state.classes:
+                print(get_modifiers_string(social_class))
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
 

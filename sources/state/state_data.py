@@ -379,6 +379,12 @@ class State_Data:
             lower_class.new_resources += moved_res
             social_class.new_population -= moved_pop
             lower_class.new_population += moved_pop
+            if moved_pop > 0:
+                social_class.demoted_from = True
+                lower_class.demoted_to = True
+            else:
+                social_class.demoted_from = False
+                lower_class.demoted_to = False
 
             if debug:
                 print(f"Demoted {moved_pop} {social_class.class_name}")
@@ -437,6 +443,10 @@ class State_Data:
         class_to.new_population += transferred
         class_from.new_population -= transferred
 
+        if transferred > 0:
+            class_from.promoted_from = True
+            class_to.promoted_to = True
+
         if debug:
             print(f"Promoted {transferred} {class_from.class_name} to "
                   f"{class_to.class_name}")
@@ -468,21 +478,33 @@ class State_Data:
         class_to_2.new_population += transferred / 2
         class_from.new_population -= transferred
 
+        if transferred > 0:
+            class_from.promoted_from = True
+            class_to_1.promoted_to = True
+            class_to_2.promoted_to = True
+
         if debug:
             print(f"Double promoted {transferred} {class_from.class_name} to "
                   f"{class_to_1.class_name} and {class_to_2.class_name}")
+
+    def _reset_promotion_flags(self):
+        for social_class in self.classes:
+            social_class.promoted_from = False
+            social_class.promoted_to = False
 
     def _do_promotions(self, debug=False):
         """
         Does all the promotions of one month end.
         """
+        self._reset_promotion_flags()
+
         nobles = self.classes[0]
         artisans = self.classes[1]
         peasants = self.classes[2]
         others = self.classes[3]
 
         if others.population > 0:
-            if not(others.starving) and (not others.freezing):
+            if (not others.starving) and (not others.freezing):
                 # Peasants and artisans (from others):
                 increase_price_1 = self.sm.increase_price_factor * \
                     sum((INBUILT_RESOURCES["peasants"] * self.prices).values())
@@ -499,14 +521,14 @@ class State_Data:
                 sum((INBUILT_RESOURCES["nobles"] * self.prices).values())
 
             if peasants.population > 0:
-                if not(peasants.starving) and (not peasants.freezing):
+                if (not peasants.starving) and (not peasants.freezing):
                     # Nobles (from peasants):
                     self._do_one_promotion(
                         peasants, nobles, increase_price, debug
                     )
 
             if artisans.population > 0:
-                if not(artisans.starving) and (not artisans.freezing):
+                if (not artisans.starving) and (not artisans.freezing):
                     # Nobles (from artisans):
                     self._do_one_promotion(
                         artisans, nobles, increase_price, debug
