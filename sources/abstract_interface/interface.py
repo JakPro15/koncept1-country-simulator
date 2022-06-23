@@ -1,7 +1,15 @@
-from sources.auxiliaries.constants import DEBUG_MODE
+from sources.auxiliaries.constants import CLASS_NAME_TO_INDEX, DEBUG_MODE
 from ..state.state_data import State_Data
 from .history import History
 import json
+
+
+class NotEnoughGovtResources(Exception):
+    pass
+
+
+class NotEnoughClassResources(Exception):
+    pass
 
 
 class Interface:
@@ -53,3 +61,24 @@ class Interface:
         """
         self.state.do_month(DEBUG_MODE)
         self.history.add_history_line("next")
+
+    def transfer_resources(self, class_name, resource, amount):
+        """
+        Transfers the given amount of a resource from government to the given
+        class. Negative amount signifies a reverse direction of the transfer.
+        """
+        class_index = CLASS_NAME_TO_INDEX[class_name]
+        if self.state.government.resources[resource] < amount:
+            raise NotEnoughGovtResources
+        if self.state.classes[class_index].resources[resource] < -amount:
+            raise NotEnoughClassResources
+
+        res = self.state.government.new_resources
+        res[resource] -= amount
+        self.state.government.new_resources = res
+
+        res = self.state.classes[class_index].new_resources
+        res[resource] += amount
+        self.state.classes[class_index].new_resources = res
+
+        self.state._secure_classes()

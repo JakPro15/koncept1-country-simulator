@@ -9,6 +9,9 @@ from .cli_commands import (
     state,
     delete_save
 )
+from .cli_game_commands import (
+    transfer
+)
 import os.path
 
 
@@ -32,7 +35,10 @@ def command_line_interface():
     interface = Interface()
     interface.load_data(dirname)
 
-    commands = {"help", "save", "exit", "history", "next", "state", "delete"}
+    commands = {
+        "help", "save", "exit", "history", "next", "state", "delete",
+        "transfer"
+    }
 
     while True:
         try:
@@ -63,6 +69,8 @@ def command_line_interface():
                     state(answer, interface)
                 elif answer[0] == "delete":
                     delete_save(answer)
+                elif answer[0] == "transfer":
+                    transfer(answer, interface)
                 else:
                     print("Invalid command. Enter help for a list of commands")
         except ShutDownCommand:

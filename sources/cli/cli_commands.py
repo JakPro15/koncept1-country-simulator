@@ -100,9 +100,9 @@ def help_command(command: str):
         print("        prices (pr)")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
-        print("Transfers <AMOUNT> of <RESOURCE> to <TARGET> social class."
-              " Negative <AMOUNT> signifies seizing resources from the social"
-              " class to the government.")
+        print("Transfers <AMOUNT> of <RESOURCE> from the government to "
+              "<TARGET> social class. Negative <AMOUNT> signifies seizing "
+              "resources from the social class to the government.")
         print("Valid values for <TARGET>:")
         print("    nobles (n)")
         print("    artisans (a)")

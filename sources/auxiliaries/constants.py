@@ -27,6 +27,12 @@ MODIFIERS = [
 CLASSES = [
     "nobles", "artisans", "peasants", "others"
 ]
+CLASS_NAME_TO_INDEX = {
+    "nobles": 0,
+    "artisans": 1,
+    "peasants": 2,
+    "others": 3
+}
 
 # CONSUMPTION CONSTANTS
 FOOD_CONSUMPTION = 1
