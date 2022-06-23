@@ -38,6 +38,8 @@ class Class:
                         or get demoted
     class_overpopulation - how many of the class need to be demoted because of
                            no resources
+    net_worth - monetary worth of the class' resources, based on the current
+                prices in parent
     """
     def __init__(self, parent, population: int,
                  resources: dict = None):
@@ -172,6 +174,19 @@ class Class:
             return max(overpops)
         else:
             return 0
+
+    @property
+    def net_worth(self):
+        """
+        Returns the monetary value of the class' resources, based on current
+        prices in parent.
+        """
+        prices = self.parent.prices
+        return sum([
+            prices[res] * amount
+            for res, amount
+            in self.resources.items()
+        ])
 
     def grow_population(self, modifier: float):
         """

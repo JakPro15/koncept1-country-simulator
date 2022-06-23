@@ -23,7 +23,8 @@ from ..auxiliaries.constants import (
     TOOLS_PRODUCTION,
     PEASANT_TOOL_USAGE,
     WOOD_PRODUCTION,
-    WORKER_LAND_USAGE
+    WORKER_LAND_USAGE,
+    TAX_RATES
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -86,6 +87,8 @@ class State_Modifiers:
         self.max_prices = DEFAULT_PRICES * MAX_PRICES
 
         self.worker_land_usage = WORKER_LAND_USAGE
+
+        self.tax_rates = TAX_RATES
 
     @property
     def food_production(self):
@@ -508,6 +511,47 @@ class State_Data:
                         artisans, nobles, increase_price, debug
                     )
 
+    def _do_personal_taxes(self, populations, net_worths):
+        """
+        Siphons part of the resources of each class into the government
+        based on its population, as defined by the tax_rates constant.
+        """
+        flat_taxes = self.sm.tax_rates["personal"] * populations
+        rel_taxes = flat_taxes / net_worths
+        self._do_tax(rel_taxes)
+
+    def _do_property_taxes(self):
+        """
+        Siphons part of the resources of each class into the government
+        based on its net worth, as defined by the tax_rates constant.
+        """
+        rel_taxes = self.sm.tax_rates["property"]
+        self._do_tax(rel_taxes)
+
+    def _do_income_taxes(self, net_worths_change, net_worths):
+        """
+        Siphons part of the resources of each class into the government
+        based on its net worth increase, as defined by the tax_rates constant.
+        """
+        flat_taxes = self.sm.tax_rates["income"] * net_worths_change
+        rel_taxes = flat_taxes / net_worths
+        self._do_tax(rel_taxes)
+
+    def _do_tax(self, rel_taxes):
+        """
+        Siphons the given parts of resources from classes to the government.
+        """
+        rel_taxes = {
+            class_name: min(tax, 1)
+            for class_name, tax
+            in rel_taxes.items()
+        }
+        for social_class in self.classes:
+            tax_rate = rel_taxes[social_class.class_name]
+            self.government.new_resources += \
+                social_class.new_resources * tax_rate
+            social_class.new_resources *= (1 - tax_rate)
+
     def do_month(self, debug=False):
         """
         Does all the needed calculations and changes to end the month and move
@@ -537,6 +581,12 @@ class State_Data:
             "peasants": self.classes[2].population,
             "others": self.classes[3].population
         }
+        old_net_worths = Arithmetic_Dict({
+            "nobles": self.classes[0].net_worth,
+            "artisans": self.classes[1].net_worth,
+            "peasants": self.classes[2].net_worth,
+            "others": self.classes[3].net_worth
+        })
 
         # Create returned dict
         month_data = {
@@ -575,11 +625,29 @@ class State_Data:
         self.prices = self._market.prices
         month_data["prices"] = self.prices
 
-        # Ninth: calculations done - advance to the next month
+        # Ninth: taxes
+        populations = {
+            "nobles": self.classes[0].population,
+            "artisans": self.classes[1].population,
+            "peasants": self.classes[2].population,
+            "others": self.classes[3].population
+        }
+        net_worths = Arithmetic_Dict({
+            "nobles": self.classes[0].net_worth,
+            "artisans": self.classes[1].net_worth,
+            "peasants": self.classes[2].net_worth,
+            "others": self.classes[3].net_worth
+        })
+        self._do_personal_taxes(populations, net_worths)
+        self._do_property_taxes()
+        net_worths_change = net_worths - old_net_worths
+        self._do_income_taxes(net_worths_change, net_worths)
+
+        # Tenth: calculations done - advance to the next month
         self._secure_classes()
         self._advance_month()
 
-        # Tenth: return the necessary data
+        # Eleventh: return the necessary data
         month_data["resources_after"] = {
             "nobles": self.classes[0].resources +
             (INBUILT_RESOURCES["nobles"] * self.classes[0].population),
@@ -611,7 +679,7 @@ class State_Data:
         """
         Executes the given commands.
         Format:
-        <command> <argument>
+        <command> <arguments>
         """
         for line in commands:
             command = line.split(' ')

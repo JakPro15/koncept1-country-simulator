@@ -359,6 +359,28 @@ class Fake_State_Data(State_Data):
         return self.available_employees
 
 
+def test_net_worth():
+    state = State_Data()
+    state.prices = {
+        "food": 2,
+        "wood": 3,
+        "stone": 4,
+        "iron": 5,
+        "tools": 6,
+        "land": 7
+    }
+    resources = {
+        "food": 100000,
+        "wood": 10000,
+        "stone": 1000,
+        "iron": 100,
+        "tools": 10,
+        "land": 1
+    }
+    nobles = Nobles(state, 20, resources)
+    assert nobles.net_worth == 234567
+
+
 def test_get_employees_from_resources():
     state = Fake_State_Data(1000)
     resources = {

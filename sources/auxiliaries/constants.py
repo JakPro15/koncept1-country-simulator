@@ -16,6 +16,7 @@ EMPTY_RESOURCES = Arithmetic_Dict({
     "tools": 0,
     "land": 0
 })
+
 MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -124,3 +125,24 @@ DEFAULT_PRICES = Arithmetic_Dict({
 })
 
 MAX_PRICES = inf
+
+TAX_RATES = {
+    "property": Arithmetic_Dict({
+        "nobles": 0.2,
+        "artisans": 0.2,
+        "peasants": 0.2,
+        "others": 0.2
+    }),
+    "income": Arithmetic_Dict({
+        "nobles": 0.2,
+        "artisans": 0.2,
+        "peasants": 0.2,
+        "others": 0.2
+    }),
+    "personal": Arithmetic_Dict({
+        "nobles": 0.2,
+        "artisans": 0.2,
+        "peasants": 0.2,
+        "others": 0.2
+    })
+}

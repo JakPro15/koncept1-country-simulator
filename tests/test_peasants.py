@@ -318,6 +318,28 @@ def test_class_overpopulation_3():
     assert peasants.class_overpopulation == 0
 
 
+def test_net_worth():
+    state = State_Data()
+    state.prices = {
+        "food": 2,
+        "wood": 3,
+        "stone": 4,
+        "iron": 5,
+        "tools": 6,
+        "land": 7
+    }
+    resources = {
+        "food": 100000,
+        "wood": 10000,
+        "stone": 1000,
+        "iron": 100,
+        "tools": 10,
+        "land": 1
+    }
+    peasants = Peasants(state, 20, resources)
+    assert peasants.net_worth == 234567
+
+
 def test_produce_january():
     state = State_Data()
     resources = Arithmetic_Dict({
