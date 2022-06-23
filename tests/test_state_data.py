@@ -1144,6 +1144,414 @@ def test_do_promotions_with_nobles_cap():
         a[key] = saved_defaults[key]
 
 
+def test_do_personal_taxes():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 40,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 10,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 10,
+                    "tools": 20,
+                    "land": 30
+                }
+            },
+            "others": {
+                "population": 80,
+                "resources": {
+                    "food": 100,
+                    "wood": 50,
+                    "stone": 0,
+                    "iron": 0,
+                    "tools": 0,
+                    "land": 0
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    populations = {
+        "nobles": state.classes[0].population,
+        "artisans": state.classes[1].population,
+        "peasants": state.classes[2].population,
+        "others": state.classes[3].population
+    }
+    net_worths = Arithmetic_Dict({
+        "nobles": state.classes[0].net_worth,
+        "artisans": state.classes[1].net_worth,
+        "peasants": state.classes[2].net_worth,
+        "others": state.classes[3].net_worth
+    })
+    state.sm.tax_rates["personal"] = Arithmetic_Dict({
+        "nobles": 0,
+        "artisans": 1,
+        "peasants": 1.5,
+        "others": 2
+    })
+    state._do_personal_taxes(populations, net_worths)
+    dict_eq(state.government.new_resources, {
+        "food": 93.5,
+        "wood": 55,
+        "stone": 15,
+        "iron": 13.5,
+        "tools": 15,
+        "land": 16.5
+    })
+
+    dict_eq(state.classes[0].new_resources, {
+        "food": 10,
+        "wood": 10,
+        "stone": 10,
+        "iron": 10,
+        "tools": 10,
+        "land": 10
+    })
+    dict_eq(state.classes[1].new_resources, {
+        "food": 18,
+        "wood": 18,
+        "stone": 18,
+        "iron": 18,
+        "tools": 18,
+        "land": 18
+    })
+    dict_eq(state.classes[2].new_resources, {
+        "food": 8.5,
+        "wood": 17,
+        "stone": 17,
+        "iron": 8.5,
+        "tools": 17,
+        "land": 25.5
+    })
+    dict_eq(state.classes[3].new_resources, {
+        "food": 20,
+        "wood": 10,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    })
+
+
+def test_do_property_taxes():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 40,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 10,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 10,
+                    "tools": 20,
+                    "land": 30
+                }
+            },
+            "others": {
+                "population": 80,
+                "resources": {
+                    "food": 100,
+                    "wood": 50,
+                    "stone": 0,
+                    "iron": 0,
+                    "tools": 0,
+                    "land": 0
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    state.sm.tax_rates["property"] = Arithmetic_Dict({
+        "nobles": 0,
+        "artisans": 0.1,
+        "peasants": 0.15,
+        "others": 0.8
+    })
+    state._do_property_taxes()
+    dict_eq(state.government.new_resources, {
+        "food": 93.5,
+        "wood": 55,
+        "stone": 15,
+        "iron": 13.5,
+        "tools": 15,
+        "land": 16.5
+    })
+
+    dict_eq(state.classes[0].new_resources, {
+        "food": 10,
+        "wood": 10,
+        "stone": 10,
+        "iron": 10,
+        "tools": 10,
+        "land": 10
+    })
+    dict_eq(state.classes[1].new_resources, {
+        "food": 18,
+        "wood": 18,
+        "stone": 18,
+        "iron": 18,
+        "tools": 18,
+        "land": 18
+    })
+    dict_eq(state.classes[2].new_resources, {
+        "food": 8.5,
+        "wood": 17,
+        "stone": 17,
+        "iron": 8.5,
+        "tools": 17,
+        "land": 25.5
+    })
+    dict_eq(state.classes[3].new_resources, {
+        "food": 20,
+        "wood": 10,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    })
+
+
+def test_do_income_taxes():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 40,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 10,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 10,
+                    "tools": 20,
+                    "land": 30
+                }
+            },
+            "others": {
+                "population": 80,
+                "resources": {
+                    "food": 100,
+                    "wood": 50,
+                    "stone": 0,
+                    "iron": 0,
+                    "tools": 0,
+                    "land": 0
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    state.sm.tax_rates["income"] = Arithmetic_Dict({
+        "nobles": 0.2,
+        "artisans": 0.5,
+        "peasants": 0.8,
+        "others": 1
+    })
+    net_worths_change = {
+        "nobles": 0,
+        "artisans": 80,
+        "peasants": 75,
+        "others": 160
+    }
+    net_worths = Arithmetic_Dict({
+        "nobles": state.classes[0].net_worth,
+        "artisans": state.classes[1].net_worth,
+        "peasants": state.classes[2].net_worth,
+        "others": state.classes[3].net_worth
+    })
+    state._do_income_taxes(net_worths_change, net_worths)
+    dict_eq(state.government.new_resources, {
+        "food": 93.5,
+        "wood": 55,
+        "stone": 15,
+        "iron": 13.5,
+        "tools": 15,
+        "land": 16.5
+    })
+
+    dict_eq(state.classes[0].new_resources, {
+        "food": 10,
+        "wood": 10,
+        "stone": 10,
+        "iron": 10,
+        "tools": 10,
+        "land": 10
+    })
+    dict_eq(state.classes[1].new_resources, {
+        "food": 18,
+        "wood": 18,
+        "stone": 18,
+        "iron": 18,
+        "tools": 18,
+        "land": 18
+    })
+    dict_eq(state.classes[2].new_resources, {
+        "food": 8.5,
+        "wood": 17,
+        "stone": 17,
+        "iron": 8.5,
+        "tools": 17,
+        "land": 25.5
+    })
+    dict_eq(state.classes[3].new_resources, {
+        "food": 20,
+        "wood": 10,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    })
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1

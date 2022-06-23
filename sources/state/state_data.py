@@ -403,6 +403,7 @@ class State_Data:
             avg_wealth = from_wealth / from_pop
             # Average relative to increase price
             avger_wealth = avg_wealth / increase_price
+            # Math™
             part_promoted = max(min(log(
                 avger_wealth - 1 if avger_wealth > 1 else 1, 100
             ), 1), 0)
