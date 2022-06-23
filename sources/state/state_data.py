@@ -211,7 +211,6 @@ class State_Data:
 
     @government.setter
     def government(self, new_government: Government):
-
         self._government = new_government
         if len(self.classes) == 4:
             self._create_market()
@@ -529,7 +528,8 @@ class State_Data:
             "nobles": self.classes[0].resources,
             "artisans": self.classes[1].resources,
             "peasants": self.classes[2].resources,
-            "others": self.classes[3].resources
+            "others": self.classes[3].resources,
+            "government": self.government.resources
         }
         old_population = {
             "nobles": self.classes[0].population,
@@ -589,6 +589,7 @@ class State_Data:
             (INBUILT_RESOURCES["peasants"] * self.classes[2].population),
             "others": self.classes[3].resources +
             (INBUILT_RESOURCES["others"] * self.classes[3].population),
+            "government": self.government.resources
         }
         month_data["population_after"] = {
             "nobles": self.classes[0].population,

@@ -1,5 +1,5 @@
 from ..sources.state.state_data import (
-    State_Data, Nobles, Artisans, Peasants, Others
+    State_Data, Nobles, Artisans, Peasants, Others, Government
 )
 from ..sources.auxiliaries.constants import (
     DEFAULT_GROWTH_FACTOR,
@@ -135,9 +135,12 @@ def test_year_setter():
 
 def test_create_market():
     state = State_Data()
+    govt = Government(state)
     classes = [1, 2, 3]
     state._classes = [1, 2, 3]
+    state._government = govt
     state._create_market()
+    classes.append(govt)
     assert state._market.classes == classes
     assert state._market.classes is not classes
 
@@ -155,7 +158,7 @@ def test_from_dict():
                     "stone": 23,
                     "iron": 24,
                     "tools": 25,
-                    "land": 0
+                    "land": 26
                 }
             },
             "artisans": {
@@ -166,7 +169,7 @@ def test_from_dict():
                     "stone": 33,
                     "iron": 34,
                     "tools": 35,
-                    "land": 0
+                    "land": 36
                 }
             },
             "peasants": {
@@ -177,7 +180,7 @@ def test_from_dict():
                     "stone": 43,
                     "iron": 44,
                     "tools": 45,
-                    "land": 0
+                    "land": 46
                 }
             },
             "others": {
@@ -188,8 +191,26 @@ def test_from_dict():
                     "stone": 53,
                     "iron": 54,
                     "tools": 55,
-                    "land": 0
+                    "land": 56
                 }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 61,
+                "wood": 62,
+                "stone": 63,
+                "iron": 64,
+                "tools": 65,
+                "land": 66
+            },
+            "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -198,7 +219,7 @@ def test_from_dict():
             "stone": 0.3,
             "iron": 1.4,
             "tools": 0.5,
-            "land": 10
+            "land": 2.6
         }
     }
     state = State_Data.from_dict(data)
@@ -213,7 +234,7 @@ def test_from_dict():
         "stone": 23,
         "iron": 24,
         "tools": 25,
-        "land": 0
+        "land": 26
     }
 
     assert isinstance(state.classes[1], Artisans)
@@ -224,7 +245,7 @@ def test_from_dict():
         "stone": 33,
         "iron": 34,
         "tools": 35,
-        "land": 0
+        "land": 36
     }
 
     assert isinstance(state.classes[2], Peasants)
@@ -235,7 +256,7 @@ def test_from_dict():
         "stone": 43,
         "iron": 44,
         "tools": 45,
-        "land": 0
+        "land": 46
     }
 
     assert isinstance(state.classes[3], Others)
@@ -246,7 +267,7 @@ def test_from_dict():
         "stone": 53,
         "iron": 54,
         "tools": 55,
-        "land": 0
+        "land": 56
     }
 
     assert isinstance(state.prices, Arithmetic_Dict)
@@ -256,7 +277,25 @@ def test_from_dict():
         "stone": 0.3,
         "iron": 1.4,
         "tools": 0.5,
-        "land": 10
+        "land": 2.6
+    }
+
+    assert isinstance(state.government, Government)
+    assert state.government.resources == {
+        "food": 61,
+        "wood": 62,
+        "stone": 63,
+        "iron": 64,
+        "tools": 65,
+        "land": 66
+    }
+    assert state.government.optimal_resources == {
+        "food": 71,
+        "wood": 72,
+        "stone": 73,
+        "iron": 74,
+        "tools": 75,
+        "land": 76
     }
 
 
@@ -309,6 +348,24 @@ def test_to_dict():
                     "tools": 55,
                     "land": 0
                 }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 61,
+                "wood": 62,
+                "stone": 63,
+                "iron": 64,
+                "tools": 65,
+                "land": 66
+            },
+            "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -367,6 +424,25 @@ def test_to_dict():
 
     classes = [nobles, artisans, peasants, others]
     state.classes = classes
+
+    resources = {
+        "food": 61,
+        "wood": 62,
+        "stone": 63,
+        "iron": 64,
+        "tools": 65,
+        "land": 66
+    }
+    opt_res = {
+        "food": 71,
+        "wood": 72,
+        "stone": 73,
+        "iron": 74,
+        "tools": 75,
+        "land": 76
+    }
+    govt = Government(state, resources, opt_res)
+    state.government = govt
 
     state.prices = {
         "food": 0.1,
@@ -429,6 +505,24 @@ def test_get_available_employees():
                     "tools": 55,
                     "land": 0
                 }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 61,
+                "wood": 62,
+                "stone": 63,
+                "iron": 64,
+                "tools": 65,
+                "land": 66
+            },
+            "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -566,6 +660,24 @@ def test_do_starvation():
                     "tools": 0,
                     "land": 0
                 }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 61,
+                "wood": 62,
+                "stone": 63,
+                "iron": 64,
+                "tools": 65,
+                "land": 66
+            },
+            "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -754,6 +866,7 @@ class Fake_Class_4:
 
 def test_secure_classes():
     state = State_Data()
+    govt = Government(state)
     nobles = Fake_Class_4()
     artisans = Fake_Class_4()
     peasants = Fake_Class_4()
@@ -761,6 +874,7 @@ def test_secure_classes():
 
     classes = [nobles, artisans, peasants, others]
     state._classes = classes
+    state._government = govt
 
     state._secure_classes()
     for social_class in classes:

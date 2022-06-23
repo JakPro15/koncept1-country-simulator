@@ -47,6 +47,24 @@
             }
         }
     },
+    "government": {
+        "resources": {
+            "food": 100,
+            "wood": 100,
+            "stone": 100,
+            "iron": 100,
+            "tools": 100,
+            "land": 500
+        },
+        "optimal_resources": {
+            "food": 100,
+            "wood": 100,
+            "stone": 100,
+            "iron": 100,
+            "tools": 100,
+            "land": 500
+        }
+    },
     "prices": {
         "food": 1,
         "wood": 1.2,
