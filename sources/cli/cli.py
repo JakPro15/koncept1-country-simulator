@@ -50,7 +50,7 @@ def command_line_interface():
             else:
                 answer[0] = answer[0][0]
                 if answer[0] == "help":
-                    help()
+                    help(answer, commands)
                 elif answer[0] == "save":
                     save(answer, interface)
                 elif answer[0] == "exit":

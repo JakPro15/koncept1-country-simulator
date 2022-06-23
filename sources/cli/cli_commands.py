@@ -1,3 +1,8 @@
+# Basic commands for the state.
+# These commands allow the program to function as a simulation
+# of a country.
+
+
 from sources.state.state_data import EveryoneDeadError
 from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
 from ..abstract_interface.history import History
@@ -12,6 +17,10 @@ class ShutDownCommand(Exception):
     pass
 
 
+class InvalidCommand(Exception):
+    pass
+
+
 def fill_command(string, commands):
     """
     Finds all commands fitting the given string. Returns a list of them.
@@ -23,42 +32,103 @@ def fill_command(string, commands):
     return results
 
 
-def help():
+def help_default():
     print("List of available commands:")
-    print("exit - shuts down the program")
-    print("save <DIR>- saves the game state into saves/<DIR>"
-          " directory")
-    print("delete <DIR> - deletes the game state from saves/<DIR>"
-          " directory")
-    print("next <AMOUNT> - ends the month and advances to the "
-          "next <AMOUNT> times - only once if <AMOUNT> not specified")
-    print("history <STAT> <CLASS> <MONTHS> - shows the history of "
-          "the country")
-    print("    <STAT> decides which statistic to show")
-    print("    Valid values:")
-    print("        population (p)")
-    print("        resources (r)")
-    print("        total_resources (tr)")
-    print("        population_change (pc)")
-    print("        resources_change (rc)")
-    print("        prices (pr)")
-    print("    <CLASS> decides which class' statistics to show - it's only "
-          "needed when <STAT> is resources")
-    print("    Valid values:")
-    print("        nobles (n)")
-    print("        artisans (a)")
-    print("        peasants (p)")
-    print("        others (o)")
-    print("        government (g)")
-    print("    <MONTHS> decides how many months of history should"
-          "be shown - left empty shows entire history")
-    print("state <STAT> - shows the current state of the country")
-    print("    <STAT> decides which statistic to show")
-    print("    Valid values:")
-    print("        population (p)")
-    print("        resources (r)")
-    print("        total_resources (tr)")
-    print("        prices (pr)")
+    print("help <COMMAND> - shows help about the program's commands")
+    print("exit - exit the program")
+    print("save <DIR> - save the game state")
+    print("delete <DIR> - delete the game save")
+    print("next <AMOUNT> - next month")
+    print("history <STAT> <CLASS> <MONTHS> - view the country's history")
+    print("state <STAT> - view the current state of the country")
+    print("transfer <TARGET> <RESOURCE> <AMOUNT> - transfers resources between"
+          " the government and a social class")
+
+
+def help_command(command: str):
+    if command == "help":
+        print("help [<COMMAND>]")
+        print("Shows information about the given <COMMAND>. If <COMMAND> is"
+              " omitted, prints a list of all available commands. Arguments"
+              " beyond the first are ignored.")
+    elif command == "exit":
+        print("exit")
+        print("Shuts down the program without saving - current state is "
+              "lost if not saved.")
+    elif command == "save":
+        print("save <DIR>")
+        print("Saves the current game state into saves/<DIR> directory.")
+    elif command == "delete":
+        print("delete <DIR>")
+        print("Deletes the game state from saves/<DIR> directory (deletes "
+              "entire directory - anything manually saved there will be "
+              "deleted as well).")
+    elif command == "next":
+        print("next [<AMOUNT>]")
+        print("Ends the month and advances to the next <AMOUNT> times - only"
+              " once if <AMOUNT> is omitted.")
+    elif command == "history":
+        print("history <STAT> [<CLASS>] [<MONTHS>]")
+        print("Shows the history (past statictics) of the country.")
+        print("    <STAT> decides which statistic to show")
+        print("    Valid values:")
+        print("        population (p)")
+        print("        resources (r)")
+        print("        total_resources (tr)")
+        print("        population_change (pc)")
+        print("        resources_change (rc)")
+        print("        prices (pr)")
+        print("    <CLASS> decides which class' statistics to show - it should"
+              " only be given when <STAT> == resources.")
+        print("    Valid values:")
+        print("        nobles (n)")
+        print("        artisans (a)")
+        print("        peasants (p)")
+        print("        others (o)")
+        print("        government (g)")
+        print("    <MONTHS> decides how many months of history, counting back "
+              "from the current month, should be shown - if omitted entire "
+              "history is shown.")
+    elif command == "state":
+        print("state <STAT>")
+        print("Shows the current state of the country.")
+        print("    <STAT> decides which statistic to show")
+        print("    Valid values:")
+        print("        population (p)")
+        print("        resources (r)")
+        print("        total_resources (tr)")
+        print("        prices (pr)")
+    elif command == "transfer":
+        print("transfer <TARGET> <RESOURCE> <AMOUNT>")
+        print("Transfers <AMOUNT> of <RESOURCE> to <TARGET> social class."
+              " Negative <AMOUNT> signifies seizing resources from the social"
+              " class to the government.")
+        print("Valid values for <TARGET>:")
+        print("    nobles (n)")
+        print("    artisans (a)")
+        print("    peasants (p)")
+        print("    others (o)")
+        print("Valid values for <RESOURCE>:")
+        print("    food (f)")
+        print("    wood (w)")
+        print("    stone (s)")
+        print("    iron (i)")
+        print("    tools (t)")
+        print("    land (l)")
+    else:
+        raise InvalidCommand
+
+
+def help(args: list[str], commands):
+    if len(args) > 1:
+        args[1] = fill_command(args[1], commands)
+        if len(args[1]) == 0:
+            help_default()
+        else:
+            for command in args[1]:
+                help_command(command)
+    else:
+        help_default()
 
 
 def set_months_of_history(months: int | None, interface: Interface, data):
