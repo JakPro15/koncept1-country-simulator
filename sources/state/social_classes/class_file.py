@@ -33,6 +33,10 @@ class Class:
     employable - whether the class can be hired as employees
     population - population of the class
     resources - dictionary containing info on the resources the class owns
+    new_resources - dictionary containing current (temporary) info on the
+                    resources the class owns
+    real_resources - dictionary containing info on the resources the class
+                     owns, including inbuilt resources
     optimal_resources - how much resources the class wants to own
     missing_resources - how much resources the class needs to own to not die
                         or get demoted
@@ -139,6 +143,12 @@ class Class:
         self._new_resources = Arithmetic_Dict(new_new_resources.copy())
 
     @property
+    def real_resources(self):
+        return self.resources + (
+            INBUILT_RESOURCES[self.class_name] * self.population
+        )
+
+    @property
     def optimal_resources(self):
         """
         Returns optimal resources dict for the given social class object, for
@@ -189,7 +199,7 @@ class Class:
         return sum([
             prices[res] * amount
             for res, amount
-            in self.resources.items()
+            in self.real_resources.items()
         ])
 
     def grow_population(self, modifier: float):

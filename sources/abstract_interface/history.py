@@ -16,6 +16,11 @@ class History:
         self.history_lines = history_lines.copy()
 
     def obtain_data(self, key: str, double_dict: bool, ndigits=0):
+        """
+        Returns the data about key from the whole history of the country.
+        double_dict specifies how should the data be rounded - None signifies
+        no rounding.
+        """
         result = []
 
         total = False
@@ -42,14 +47,15 @@ class History:
                         month_data = new_data
                         double_dict = False
 
-                    if double_dict:
-                        month_data = History.round_dict_of_dicts_values(
-                            month_data, ndigits
-                        )
-                    else:
-                        month_data = History.round_dict_values(
-                            month_data, ndigits
-                        )
+                    if double_dict is not None:
+                        if double_dict:
+                            month_data = History.round_dict_of_dicts_values(
+                                month_data, ndigits
+                            )
+                        else:
+                            month_data = History.round_dict_values(
+                                month_data, ndigits
+                            )
 
                     result.append(month_data)
         return result
@@ -97,6 +103,9 @@ class History:
 
     def total_resources(self):
         return self.obtain_data("total_resources", False, 1)
+
+    def growth_modifiers(self):
+        return self.obtain_data("growth_modifiers", None)
 
     def add_history_line(self, command):
         """

@@ -362,6 +362,13 @@ class State_Data:
         self.classes[3].new_resources += self.payments
         self.payments = EMPTY_RESOURCES.copy()
 
+    def _reset_flags(self):
+        for social_class in self.classes:
+            social_class.promoted_from = False
+            social_class.promoted_to = False
+            social_class.demoted_from = False
+            social_class.demoted_to = False
+
     def _do_demotions(self, debug=False):
         """
         Does demotions to fix as many negative resources as possible.
@@ -382,9 +389,6 @@ class State_Data:
             if moved_pop > 0:
                 social_class.demoted_from = True
                 lower_class.demoted_to = True
-            else:
-                social_class.demoted_from = False
-                lower_class.demoted_to = False
 
             if debug:
                 print(f"Demoted {moved_pop} {social_class.class_name}")
@@ -487,17 +491,10 @@ class State_Data:
             print(f"Double promoted {transferred} {class_from.class_name} to "
                   f"{class_to_1.class_name} and {class_to_2.class_name}")
 
-    def _reset_promotion_flags(self):
-        for social_class in self.classes:
-            social_class.promoted_from = False
-            social_class.promoted_to = False
-
     def _do_promotions(self, debug=False):
         """
         Does all the promotions of one month end.
         """
-        self._reset_promotion_flags()
-
         nobles = self.classes[0]
         artisans = self.classes[1]
         peasants = self.classes[2]
@@ -534,46 +531,64 @@ class State_Data:
                         artisans, nobles, increase_price, debug
                     )
 
-    def _do_personal_taxes(self, populations, net_worths):
+    def _get_personal_taxes(self, populations, net_worths):
         """
-        Siphons part of the resources of each class into the government
-        based on its population, as defined by the tax_rates constant.
+        Returns how much of the resources of each class is to be taxed
+        based on its population, as defined by the tax_rates modifier.
         """
         flat_taxes = self.sm.tax_rates["personal"] * populations
         rel_taxes = flat_taxes / net_worths
-        self._do_tax(rel_taxes)
+        return rel_taxes
 
-    def _do_property_taxes(self):
+    def _get_property_taxes(self):
         """
-        Siphons part of the resources of each class into the government
-        based on its net worth, as defined by the tax_rates constant.
+        Returns how much of the resources of each class is to be taxed
+        based on its net worth, as defined by the tax_rates modifier.
         """
         rel_taxes = self.sm.tax_rates["property"]
-        self._do_tax(rel_taxes)
+        return rel_taxes
 
-    def _do_income_taxes(self, net_worths_change, net_worths):
+    def _get_income_taxes(self, net_worths_change, net_worths):
         """
-        Siphons part of the resources of each class into the government
-        based on its net worth increase, as defined by the tax_rates constant.
+        Returns how much of the resources of each class is to be taxed
+        based on its net worth increase, as defined by the tax_rates modifier.
         """
         flat_taxes = self.sm.tax_rates["income"] * net_worths_change
         rel_taxes = flat_taxes / net_worths
-        self._do_tax(rel_taxes)
+        return rel_taxes
 
-    def _do_tax(self, rel_taxes):
+    def _do_taxes(self, old_net_worths):
         """
-        Siphons the given parts of resources from classes to the government.
+        Siphons part of the classes' resources into the government.
         """
+        populations = {
+            "nobles": self.classes[0].population,
+            "artisans": self.classes[1].population,
+            "peasants": self.classes[2].population,
+            "others": self.classes[3].population
+        }
+        net_worths = Arithmetic_Dict({
+            "nobles": self.classes[0].net_worth,
+            "artisans": self.classes[1].net_worth,
+            "peasants": self.classes[2].net_worth,
+            "others": self.classes[3].net_worth
+        })
+        net_worths_change = net_worths - old_net_worths
+
+        rel_taxes = self._get_personal_taxes(populations, net_worths)
+        rel_taxes += self._get_property_taxes()
+        rel_taxes += self._get_income_taxes(net_worths_change, net_worths)
+
         rel_taxes = {
             class_name: min(tax, 1)
             for class_name, tax
             in rel_taxes.items()
         }
         for social_class in self.classes:
-            tax_rate = rel_taxes[social_class.class_name]
-            self.government.new_resources += \
-                social_class.new_resources * tax_rate
-            social_class.new_resources *= (1 - tax_rate)
+            tax = social_class.real_resources * \
+                rel_taxes[social_class.class_name]
+            self.government.new_resources += tax
+            social_class.new_resources -= tax
 
     def do_month(self, debug=False):
         """
@@ -592,10 +607,10 @@ class State_Data:
 
         # Save old resources to calculate the changes
         old_resources = {
-            "nobles": self.classes[0].resources,
-            "artisans": self.classes[1].resources,
-            "peasants": self.classes[2].resources,
-            "others": self.classes[3].resources,
+            "nobles": self.classes[0].real_resources,
+            "artisans": self.classes[1].real_resources,
+            "peasants": self.classes[2].real_resources,
+            "others": self.classes[3].real_resources,
             "government": self.government.resources
         }
         old_population = {
@@ -629,42 +644,28 @@ class State_Data:
         for social_class in self.classes:
             social_class.consume()
 
-        # Fourth: demotions - should fix all except food and some wood
+        # Fourth: taxes
+        self._do_taxes(old_net_worths)
+
+        # Fifth: demotions - should fix all except food and some wood
+        self._reset_flags()
         self._do_demotions(debug)
         self._secure_classes(flush=False)
 
-        # Fifth: starvation - should fix all remaining resources
+        # Sixth: starvation - should fix all remaining resources
         self._do_starvation(debug)
 
-        # Sixth: security and flushing
+        # Seventh: security and flushing
         self._secure_classes()
 
-        # Seventh: promotions
+        # Eighth: promotions
         self._do_promotions(debug)  # Might make resources negative
         self._do_demotions(debug)  # Fix resources again
 
-        # Eighth: trade
+        # Ninth: trade
         self._market.do_trade()
         self.prices = self._market.prices
         month_data["prices"] = self.prices
-
-        # Ninth: taxes
-        populations = {
-            "nobles": self.classes[0].population,
-            "artisans": self.classes[1].population,
-            "peasants": self.classes[2].population,
-            "others": self.classes[3].population
-        }
-        net_worths = Arithmetic_Dict({
-            "nobles": self.classes[0].net_worth,
-            "artisans": self.classes[1].net_worth,
-            "peasants": self.classes[2].net_worth,
-            "others": self.classes[3].net_worth
-        })
-        self._do_personal_taxes(populations, net_worths)
-        self._do_property_taxes()
-        net_worths_change = net_worths - old_net_worths
-        self._do_income_taxes(net_worths_change, net_worths)
 
         # Tenth: calculations done - advance to the next month
         self._secure_classes()
@@ -672,14 +673,10 @@ class State_Data:
 
         # Eleventh: return the necessary data
         month_data["resources_after"] = {
-            "nobles": self.classes[0].resources +
-            (INBUILT_RESOURCES["nobles"] * self.classes[0].population),
-            "artisans": self.classes[1].resources +
-            (INBUILT_RESOURCES["artisans"] * self.classes[1].population),
-            "peasants": self.classes[2].resources +
-            (INBUILT_RESOURCES["peasants"] * self.classes[2].population),
-            "others": self.classes[3].resources +
-            (INBUILT_RESOURCES["others"] * self.classes[3].population),
+            "nobles": self.classes[0].real_resources,
+            "artisans": self.classes[1].real_resources,
+            "peasants": self.classes[2].real_resources,
+            "others": self.classes[3].real_resources,
             "government": self.government.resources
         }
         month_data["population_after"] = {
@@ -696,6 +693,40 @@ class State_Data:
         month_data["population_change"] = dict(
             Arithmetic_Dict(month_data["population_after"]) - old_population
         )
+        month_data["growth_modifiers"] = {
+            "nobles": {
+                "starving": self.classes[0].starving,
+                "freezing": self.classes[0].freezing,
+                "demoted_from": self.classes[0].demoted_from,
+                "demoted_to": self.classes[0].demoted_to,
+                "promoted_from": self.classes[0].promoted_from,
+                "promoted_to": self.classes[0].promoted_to
+            },
+            "artisans": {
+                "starving": self.classes[1].starving,
+                "freezing": self.classes[1].freezing,
+                "demoted_from": self.classes[1].demoted_from,
+                "demoted_to": self.classes[1].demoted_to,
+                "promoted_from": self.classes[1].promoted_from,
+                "promoted_to": self.classes[1].promoted_to
+            },
+            "peasants": {
+                "starving": self.classes[2].starving,
+                "freezing": self.classes[2].freezing,
+                "demoted_from": self.classes[2].demoted_from,
+                "demoted_to": self.classes[2].demoted_to,
+                "promoted_from": self.classes[2].promoted_from,
+                "promoted_to": self.classes[2].promoted_to
+            },
+            "others": {
+                "starving": self.classes[3].starving,
+                "freezing": self.classes[3].freezing,
+                "demoted_from": self.classes[3].demoted_from,
+                "demoted_to": self.classes[3].demoted_to,
+                "promoted_from": self.classes[3].promoted_from,
+                "promoted_to": self.classes[3].promoted_to
+            },
+        }
         return month_data
 
     def execute_commands(self, commands: list[str]):

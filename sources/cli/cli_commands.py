@@ -176,16 +176,27 @@ def price_to_str(amount):
     return string
 
 
+def get_modifiers_from_dict(data):
+    modifiers_string = ""
+    modifiers_string += "S" if data["starving"] else " "
+    modifiers_string += "F" if data["freezing"] else " "
+    modifiers_string += "P" if data["promoted_from"] else " "
+    modifiers_string += "D" if data["demoted_from"] else " "
+    modifiers_string += "p" if data["promoted_to"] else " "
+    modifiers_string += "d" if data["demoted_to"] else " "
+    return modifiers_string
+
+
 def history(args: list[str], interface: Interface):
     try:
         assert len(args) > 1
         assert args[1] in {
-            "population", "resources", "prices",
+            "population", "resources", "prices", "modifiers",
             "population_change", "resources_change", "total_resources",
-            "p", "r", "pr", "pc", "rc", "tr"
+            "p", "r", "pr", "pc", "rc", "tr", "m"
         }
 
-        if args[1] in {"resources", "r"}:
+        if args[1] in {"resources", "r", "resources_change", "rc"}:
             assert len(args) in {3, 4}
 
             options = {
@@ -203,17 +214,34 @@ def history(args: list[str], interface: Interface):
             else:
                 args.append(None)
 
-            data = interface.history.resources()
-            begin_month, data = set_months_of_history(args[3], interface, data)
-            print(f"{official_class} resources stats:")
-            print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
-                  f"{'iron': ^6} {'tools': ^6} {'land': ^6}")
-            for index, month_data in enumerate(data):
-                line = f"{get_month_string(index + begin_month)}"
-                for resource in RESOURCES:
-                    res = month_data[args[2]].get(resource, 0)
-                    line += f"{res_to_str(res): >7}"
-                print(line)
+            if args[1] in {"resources", "r"}:
+                data = interface.history.resources()
+                begin_month, data = set_months_of_history(
+                    args[3], interface, data
+                )
+                print(f"{official_class} resources stats:")
+                print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
+                      f"{'iron': ^6} {'tools': ^6} {'land': ^6}")
+                for index, month_data in enumerate(data):
+                    line = f"{get_month_string(index + begin_month)}"
+                    for resource in RESOURCES:
+                        res = month_data[args[2]].get(resource, 0)
+                        line += f"{res_to_str(res): >7}"
+                    print(line)
+            else:
+                data = interface.history.resources_change()
+                begin_month, data = set_months_of_history(
+                    args[3], interface, data
+                )
+                print(f"{official_class} resources changes stats:")
+                print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
+                      f"{'iron': ^6} {'tools': ^6} {'land': ^6}")
+                for index, month_data in enumerate(data):
+                    line = f"{get_month_string(index + begin_month)}"
+                    for resource in RESOURCES:
+                        res = month_data[args[2]].get(resource, 0)
+                        line += f"{res_to_str(res): >7}"
+                    print(line)
         else:
             assert len(args) in {2, 3}
 
@@ -266,23 +294,6 @@ def history(args: list[str], interface: Interface):
                           f"{month_data['artisans']: >9}"
                           f"{month_data['peasants']: >9}"
                           f"{month_data['others']: >9}")
-            elif args[1] in {"resources_change", "rc"}:
-                data = interface.history.resources_change()
-                begin_month, data = set_months_of_history(
-                    args[2], interface, data
-                )
-                print("Resources changes stats:")
-                print(" " * 14 + f"{'Nobles': ^42}{'Artisans': ^42}"
-                      f"{'Peasants': ^42}{'Others': ^42}")
-                print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
-                      f"{'iron': ^6} {'tools': ^6} {'land': ^6}" * 4)
-                for index, month_data in enumerate(data):
-                    line = f"{get_month_string(index + begin_month)}"
-                    for social_class in month_data:
-                        for resource in RESOURCES:
-                            res = month_data[social_class].get(resource, 0)
-                            line += f"{res_to_str(res): >7}"
-                    print(line)
             elif args[1] in {"total_resources", "tr"}:
                 data = interface.history.total_resources()
                 begin_month, data = set_months_of_history(
@@ -299,6 +310,23 @@ def history(args: list[str], interface: Interface):
                           f" {res_to_str(month_data['iron']): >7}"
                           f" {res_to_str(month_data['tools']): >7}"
                           f" {res_to_str(month_data['land']): >7}")
+            elif args[1] in {"modifiers", "m"}:
+                data = interface.history.growth_modifiers()
+                begin_month, data = set_months_of_history(
+                    args[2], interface, data
+                )
+                print("Growth modifiers over time (S - starving, F - freezing,"
+                      " P - promoted from, D - demoted from, p - promoted to, "
+                      "d - demoted to):")
+                print(" " * 14 + "  Nobles Artisans Peasants   Others")
+                for index, month_data in enumerate(data):
+                    print(
+                     f"{get_month_string(index + begin_month)}"
+                     f"{get_modifiers_from_dict(month_data['nobles']): >9}"
+                     f"{get_modifiers_from_dict(month_data['artisans']): >9}"
+                     f"{get_modifiers_from_dict(month_data['peasants']): >9}"
+                     f"{get_modifiers_from_dict(month_data['others']): >9}"
+                    )
     except AssertionError:
         print("Invalid syntax. See help for proper usage of history command")
 
