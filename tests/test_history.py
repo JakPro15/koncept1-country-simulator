@@ -59,6 +59,40 @@ class Fake_State_Data:
                 "a": 3.4635635,
                 "b": -13.4563544524,
                 "c": 4.45324
+            },
+            "growth_modifiers": {
+                "nobles": {
+                    "starving": False,
+                    "freezing": False,
+                    "demoted_from": True,
+                    "demoted_to": False,
+                    "promoted_from": False,
+                    "promoted_to": False
+                },
+                "artisans": {
+                    "starving": False,
+                    "freezing": True,
+                    "demoted_from": False,
+                    "demoted_to": False,
+                    "promoted_from": True,
+                    "promoted_to": False
+                },
+                "peasants": {
+                    "starving": True,
+                    "freezing": False,
+                    "demoted_from": True,
+                    "demoted_to": True,
+                    "promoted_from": False,
+                    "promoted_to": False
+                },
+                "others": {
+                    "starving": True,
+                    "freezing": False,
+                    "demoted_from": True,
+                    "demoted_to": False,
+                    "promoted_from": False,
+                    "promoted_to": True
+                },
             }
         }
 
@@ -342,3 +376,78 @@ def test_total_resources():
         }
 
     State_Data.from_dict = old_from_dict
+
+
+def test_growth_modifiers():
+    def fake_from_dict(dict):
+        return Fake_State_Data()
+
+    old_from_dict = State_Data.from_dict
+    State_Data.from_dict = fake_from_dict
+
+    a = {}
+    b = ["next 100"]
+    history = History(a, b)
+    data = history.growth_modifiers()
+
+    assert len(data) == 100
+    for month_data in data:
+        assert month_data == {
+            "nobles": {
+                "starving": False,
+                "freezing": False,
+                "demoted_from": True,
+                "demoted_to": False,
+                "promoted_from": False,
+                "promoted_to": False
+            },
+            "artisans": {
+                "starving": False,
+                "freezing": True,
+                "demoted_from": False,
+                "demoted_to": False,
+                "promoted_from": True,
+                "promoted_to": False
+            },
+            "peasants": {
+                "starving": True,
+                "freezing": False,
+                "demoted_from": True,
+                "demoted_to": True,
+                "promoted_from": False,
+                "promoted_to": False
+            },
+            "others": {
+                "starving": True,
+                "freezing": False,
+                "demoted_from": True,
+                "demoted_to": False,
+                "promoted_from": False,
+                "promoted_to": True
+            }
+        }
+
+    State_Data.from_dict = old_from_dict
+
+
+def test_add_history_line():
+    history = History({}, [])
+    history.add_history_line("next")
+    assert history.history_lines == [
+        "next 1"
+    ]
+    history.add_history_line("next")
+    assert history.history_lines == [
+        "next 2"
+    ]
+    history.add_history_line("transfer nobles food 100")
+    assert history.history_lines == [
+        "next 2",
+        "transfer nobles food 100"
+    ]
+    history.add_history_line("next")
+    assert history.history_lines == [
+        "next 2",
+        "transfer nobles food 100",
+        "next 1"
+    ]

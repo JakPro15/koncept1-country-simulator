@@ -62,7 +62,7 @@ class Interface:
         self.state.do_month(DEBUG_MODE)
         self.history.add_history_line("next")
 
-    def transfer_resources(self, class_name, resource, amount):
+    def transfer_resources(self, class_name: str, resource: str, amount: int):
         """
         Transfers the given amount of a resource from government to the given
         class. Negative amount signifies a reverse direction of the transfer.
@@ -72,6 +72,8 @@ class Interface:
             raise NotEnoughGovtResources
         if self.state.classes[class_index].resources[resource] < -amount:
             raise NotEnoughClassResources
+
+        self.state.do_transfer(class_name, resource, amount)
 
         self.history.add_history_line(
             f"transfer {class_name} {resource} {amount}"
