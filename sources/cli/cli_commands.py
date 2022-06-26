@@ -415,7 +415,7 @@ def state(args: list[str], interface: Interface):
                 in interface.state.classes
             }
             data["government"] = History.round_dict_values(
-                interface.state.government.resources, 1
+                interface.state.government.real_resources, 1
             )
             print("Current resources:")
             line = " " * 10

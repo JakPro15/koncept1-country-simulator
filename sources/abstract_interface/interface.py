@@ -68,9 +68,9 @@ class Interface:
         class. Negative amount signifies a reverse direction of the transfer.
         """
         class_index = CLASS_NAME_TO_INDEX[class_name]
-        if self.state.government.resources[resource] < amount:
+        if self.state.government.real_resources[resource] < amount:
             raise NotEnoughGovtResources
-        if self.state.classes[class_index].resources[resource] < -amount:
+        if self.state.classes[class_index].real_resources[resource] < -amount:
             raise NotEnoughClassResources
 
         self.state.do_transfer(class_name, resource, amount)

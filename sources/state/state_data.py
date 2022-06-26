@@ -1,6 +1,7 @@
 from ..auxiliaries.constants import (
     CLASS_NAME_TO_INDEX,
     AVG_FOOD_PRODUCTION,
+    DEBUG_MODE,
     FOOD_RATIOS,
     MAX_PRICES,
     MINER_TOOL_USAGE,
@@ -615,7 +616,7 @@ class State_Data:
             "artisans": self.classes[1].real_resources,
             "peasants": self.classes[2].real_resources,
             "others": self.classes[3].real_resources,
-            "government": self.government.resources
+            "government": self.government.real_resources
         }
         old_population = {
             "nobles": self.classes[0].population,
@@ -681,7 +682,7 @@ class State_Data:
             "artisans": self.classes[1].real_resources,
             "peasants": self.classes[2].real_resources,
             "others": self.classes[3].real_resources,
-            "government": self.government.resources
+            "government": self.government.real_resources
         }
         month_data["population_after"] = {
             "nobles": self.classes[0].population,
@@ -748,7 +749,7 @@ class State_Data:
         res[resource] += amount
         self.classes[class_index].new_resources = res
 
-        self._do_demotions()
+        self._do_demotions(DEBUG_MODE)
         self._secure_classes()
 
     def execute_commands(self, commands: list[str]):

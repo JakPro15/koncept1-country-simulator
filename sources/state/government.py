@@ -1,5 +1,6 @@
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from ..auxiliaries.constants import (
+    EMPTY_RESOURCES,
     RESOURCES,
     MONTHS
 )
@@ -19,32 +20,44 @@ class Government:
     resources - dictionary containing info on the resources the govt owns
     optimal_resources - how much resources the govt wants to own
     """
-    def __init__(self, parent, res: dict = None, optimal_res: dict = None):
+    def __init__(self, parent, res: dict = None, optimal_res: dict = None,
+                 secure_res: dict = None):
         """
         Creates an object of type Government.
         Parent is the State_Data object this belongs to.
         """
         self.parent = parent
         if res is None:
-            self._resources = Arithmetic_Dict({
-                resource: 0 for resource in RESOURCES
-            })
+            self._resources = EMPTY_RESOURCES
         else:
-            for resource in RESOURCES:
-                if resource not in res:
-                    raise InvalidResourcesDictError
+            if set(res.keys()) != set(RESOURCES):
+                raise InvalidResourcesDictError
+            for value in res.values():
+                if value < 0:
+                    raise NegativeResourcesError
             self._resources = Arithmetic_Dict(res)
 
         self._new_resources = self.resources.copy()
+
         if optimal_res is None:
-            self.optimal_resources = Arithmetic_Dict({
-                resource: 0 for resource in RESOURCES
-            })
+            self.optimal_resources = EMPTY_RESOURCES
         else:
-            for resource in RESOURCES:
-                if resource not in optimal_res:
-                    raise InvalidResourcesDictError
+            if set(optimal_res.keys()) != set(RESOURCES):
+                raise InvalidResourcesDictError
+            for value in optimal_res.values():
+                if value < 0:
+                    raise NegativeResourcesError
             self.optimal_resources = Arithmetic_Dict(optimal_res)
+
+        if secure_res is None:
+            self._secure_resources = EMPTY_RESOURCES
+        else:
+            if set(secure_res.keys()) != set(RESOURCES):
+                raise InvalidResourcesDictError
+            for value in secure_res.values():
+                if value < 0:
+                    raise NegativeResourcesError
+            self.optimal_resources = Arithmetic_Dict(secure_res)
 
     @property
     def parent(self):
@@ -72,10 +85,26 @@ class Government:
         Does not modify the actual resources, saves the changes in temporary
         _new_resources. Use flush() to confirm the changes.
         """
-        for resource in RESOURCES:
-            if resource not in new_new_resources:
-                raise InvalidResourcesDictError
+        if set(new_new_resources.keys()) != set(RESOURCES):
+            raise InvalidResourcesDictError
         self._new_resources = Arithmetic_Dict(new_new_resources.copy())
+
+    @property
+    def secure_resources(self):
+        return self._secure_resources.copy()
+
+    @secure_resources.setter
+    def secure_resources(self, new_secure_resources: dict | Arithmetic_Dict):
+        if set(new_secure_resources.keys()) != set(RESOURCES):
+            raise InvalidResourcesDictError
+        for value in new_secure_resources.values():
+            if value < 0:
+                raise NegativeResourcesError
+        self._secure_resources = Arithmetic_Dict(new_secure_resources.copy())
+
+    @property
+    def real_resources(self):
+        return self.resources + self.secure_resources
 
     def to_dict(self):
         """
@@ -114,8 +143,12 @@ class Government:
             raise InvalidResourcesDictError
 
         self.handle_negative_resources()
-        for value in self._new_resources.values():
+        for key, value in self._new_resources.items():
             if value < 0:
-                raise NegativeResourcesError
+                if self._secure_resources[key] > -value:
+                    self._secure_resources[key] += value
+                    self._new_resources[key] = 0
+                else:
+                    raise NegativeResourcesError
 
         self._resources = self._new_resources.copy()

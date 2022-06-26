@@ -61,9 +61,11 @@ class Class:
                 resource: 0 for resource in RESOURCES
             })
         else:
-            for resource in RESOURCES:
-                if resource not in resources:
-                    raise InvalidResourcesDictError
+            if set(resources.keys()) != set(RESOURCES):
+                raise InvalidResourcesDictError
+            for value in resources.values():
+                if value < 0:
+                    raise NegativeResourcesError
             self._resources = Arithmetic_Dict(resources)
 
         self._new_population = self.population
@@ -137,9 +139,8 @@ class Class:
         Does not modify the actual resources, saves the changes in temporary
         _new_resources. Use flush() to confirm the changes.
         """
-        for resource in RESOURCES:
-            if resource not in new_new_resources:
-                raise InvalidResourcesDictError
+        if set(new_new_resources.keys()) != set(RESOURCES):
+            raise InvalidResourcesDictError
         self._new_resources = Arithmetic_Dict(new_new_resources.copy())
 
     @property
