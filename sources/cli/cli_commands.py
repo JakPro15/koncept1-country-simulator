@@ -6,7 +6,7 @@
 from sources.state.state_data import EveryoneDeadError
 from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
 from ..abstract_interface.history import History
-from ..abstract_interface.interface import Interface
+from ..abstract_interface.interface import Interface, SaveAccessError
 from math import floor, inf, log10
 from os import mkdir
 from os.path import isdir
@@ -43,6 +43,8 @@ def help_default():
     print("state <STAT> - view the current state of the country")
     print("transfer <TARGET> <RESOURCE> <AMOUNT> - transfers resources between"
           " the government and a social class")
+    print("secure <RESOURCE> <AMOUNT> - makes government resources tradeable "
+          "or not tradeable")
 
 
 def help_command(command: str):
@@ -109,6 +111,18 @@ def help_command(command: str):
         print("    artisans (a)")
         print("    peasants (p)")
         print("    others (o)")
+        print("Valid values for <RESOURCE>:")
+        print("    food (f)")
+        print("    wood (w)")
+        print("    stone (s)")
+        print("    iron (i)")
+        print("    tools (t)")
+        print("    land (l)")
+    elif command == "secure":
+        print("secure <RESOURCE> <AMOUNT>")
+        print("Makes <AMOUNT> of tradeable <RESOURCE> from the government "
+              "untradeable. Negative value of <AMOUNT> signifies making "
+              "untradeable (secured) resources tradeable again.")
         print("Valid values for <RESOURCE>:")
         print("    food (f)")
         print("    wood (w)")
@@ -348,7 +362,12 @@ def save(args: list[str], interface: Interface):
                 ans = input("Enter 1 to overwrite, 0 to abort: ").strip()
             if ans == '0':
                 return
-        interface.save_data(f"{args[1]}")
+
+        try:
+            interface.save_data(f"{args[1]}")
+        except SaveAccessError:
+            print("Failed to open the save file.")
+            return
         print(f"Saved the game state into saves/{args[1]}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of save command")

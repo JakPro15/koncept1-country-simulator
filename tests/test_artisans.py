@@ -196,14 +196,6 @@ def test_optimal_resources():
 
 def test_missing_resources_1():
     state = State_Data("July")
-    resources = {
-        "food": -200,
-        "wood": 500,
-        "stone": -20,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
     missing = {
         "food": 200,
         "wood": 0,
@@ -212,7 +204,15 @@ def test_missing_resources_1():
         "tools": 0,
         "land": 0
     }
-    artisans = Artisans(state, 80, resources)
+    artisans = Artisans(state, 80)
+    artisans.new_resources = {
+        "food": -200,
+        "wood": 500,
+        "stone": -20,
+        "iron": 0,
+        "tools": 1200,
+        "land": 0
+    }
     assert artisans.missing_resources == missing
 
 
@@ -257,7 +257,8 @@ def test_class_overpopulation_1():
     missing_wood = 500
     missing_iron = 20
 
-    artisans = Artisans(state, 80, resources)
+    artisans = Artisans(state, 80)
+    artisans.new_resources = resources
     others = Fake_Class()
     artisans.lower_class = others
 
@@ -284,7 +285,8 @@ def test_class_overpopulation_2():
     missing_wood = 50
     missing_iron = 200
 
-    artisans = Artisans(state, 80, resources)
+    artisans = Artisans(state, 80)
+    artisans.new_resources = resources
     others = Fake_Class()
     artisans.lower_class = others
 

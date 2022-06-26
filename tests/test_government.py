@@ -32,6 +32,13 @@ def test_constructor():
     assert govt._new_resources["tools"] == 100
     assert govt._new_resources["land"] == 0
 
+    assert govt._secure_resources["food"] == 0
+    assert govt._secure_resources["wood"] == 0
+    assert govt._secure_resources["iron"] == 0
+    assert govt._secure_resources["stone"] == 0
+    assert govt._secure_resources["tools"] == 0
+    assert govt._secure_resources["land"] == 0
+
     assert govt.optimal_resources["food"] == 50
     assert govt.optimal_resources["wood"] == 100
     assert govt.optimal_resources["iron"] == 0
@@ -59,6 +66,13 @@ def test_default_constructor():
     assert govt._new_resources["stone"] == 0
     assert govt._new_resources["tools"] == 0
     assert govt._new_resources["land"] == 0
+
+    assert govt._secure_resources["food"] == 0
+    assert govt._secure_resources["wood"] == 0
+    assert govt._secure_resources["iron"] == 0
+    assert govt._secure_resources["stone"] == 0
+    assert govt._secure_resources["tools"] == 0
+    assert govt._secure_resources["land"] == 0
 
     assert govt.optimal_resources["food"] == 0
     assert govt.optimal_resources["wood"] == 0
@@ -90,6 +104,77 @@ def test_resources():
     govt.new_resources = resources2
     assert govt.resources == resources1
     assert govt.new_resources == resources2
+
+
+def test_secure_resources():
+    state = State_Data()
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100,
+        "land": 0
+    })
+    govt = Government(state, resources, resources / 2)
+    secure_res = {
+        "food": 1000,
+        "wood": 2000,
+        "iron": 3000,
+        "stone": 4000,
+        "tools": 5000,
+        "land": 6000
+    }
+    govt.secure_resources = secure_res
+    assert govt.real_resources == {
+        "food": 1100,
+        "wood": 2200,
+        "iron": 3000,
+        "stone": 4000,
+        "tools": 5100,
+        "land": 6000
+    }
+    assert govt.secure_resources == {
+        "food": 1000,
+        "wood": 2000,
+        "iron": 3000,
+        "stone": 4000,
+        "tools": 5000,
+        "land": 6000
+    }
+    govt.new_resources = {
+        "food": -100,
+        "wood": 0,
+        "iron": 300,
+        "stone": 400,
+        "tools": -5000,
+        "land": -5000
+    }
+    govt.flush()
+    assert govt.resources == {
+        "food": 0,
+        "wood": 0,
+        "iron": 300,
+        "stone": 400,
+        "tools": 0,
+        "land": 0
+    }
+    assert govt.secure_resources == {
+        "food": 900,
+        "wood": 2000,
+        "iron": 3000,
+        "stone": 4000,
+        "tools": 0,
+        "land": 1000
+    }
+    assert govt.real_resources == {
+        "food": 900,
+        "wood": 2000,
+        "iron": 3300,
+        "stone": 4400,
+        "tools": 0,
+        "land": 1000
+    }
 
 
 def test_to_dict():

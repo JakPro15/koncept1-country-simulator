@@ -208,7 +208,8 @@ def test_missing_resources_1():
         "tools": 0,
         "land": 0
     }
-    others = Others(state, 80, resources)
+    others = Others(state, 80)
+    others.new_resources = resources
     assert others.missing_resources == missing
 
 
@@ -251,7 +252,8 @@ def test_class_overpopulation_1():
         "land": 0
     }
 
-    others = Others(state, 80, resources)
+    others = Others(state, 80)
+    others.new_resources = resources
     others2 = Fake_Class()
     others.lower_class = others2
 

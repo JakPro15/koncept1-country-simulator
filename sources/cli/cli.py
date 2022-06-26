@@ -1,4 +1,8 @@
-from ..abstract_interface.interface import Interface
+from ..abstract_interface.interface import (
+    Interface,
+    MalformedSaveError,
+    SaveAccessError
+)
 from .cli_commands import (
     ShutDownCommand,
     fill_command,
@@ -10,7 +14,8 @@ from .cli_commands import (
     delete_save
 )
 from .cli_game_commands import (
-    transfer
+    transfer,
+    secure
 )
 import os.path
 
@@ -33,11 +38,19 @@ def command_line_interface():
             dirname = input("Enter the name of the save: ").strip()
     print("Loading saves/" + dirname)
     interface = Interface()
-    interface.load_data(dirname)
+    try:
+        interface.load_data(dirname)
+    except SaveAccessError:
+        print("Failed to open the save file. Shutting down.")
+        return
+    except MalformedSaveError:
+        print("The save file format is invalid, or the program encountered an "
+              "error while loading the save file. Shutting down.")
+        return
 
     commands = {
         "help", "save", "exit", "history", "next", "state", "delete",
-        "transfer"
+        "transfer", "secure"
     }
 
     while True:
@@ -71,8 +84,12 @@ def command_line_interface():
                     delete_save(answer)
                 elif answer[0] == "transfer":
                     transfer(answer, interface)
+                elif answer[0] == "secure":
+                    secure(answer, interface)
                 else:
-                    print("Invalid command. Enter help for a list of commands")
+                    print(
+                        "Invalid command. Enter help for a list of commands."
+                    )
         except ShutDownCommand:
-            print("Shutting down")
+            print("Shutting down.")
             return

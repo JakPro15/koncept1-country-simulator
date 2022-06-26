@@ -234,7 +234,8 @@ def test_missing_resources_1():
         "tools": 0,
         "land": 0
     }
-    nobles = Nobles(state, 80, resources)
+    nobles = Nobles(state, 80)
+    nobles.new_resources = resources
     assert nobles.missing_resources == missing
 
 
@@ -279,7 +280,8 @@ def test_class_overpopulation_1():
     missing_wood = 500
     missing_stone = 20
 
-    nobles = Nobles(state, 80, resources)
+    nobles = Nobles(state, 80)
+    nobles.new_resources = resources
     peasants = Fake_Class()
     nobles.lower_class = peasants
 
@@ -306,7 +308,8 @@ def test_class_overpopulation_2():
     missing_wood = 50
     missing_stone = 200
 
-    nobles = Nobles(state, 80, resources)
+    nobles = Nobles(state, 80)
+    nobles.new_resources = resources
     peasants = Fake_Class()
     nobles.lower_class = peasants
 

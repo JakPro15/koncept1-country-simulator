@@ -214,7 +214,8 @@ def test_missing_resources_1():
         "tools": 0,
         "land": 0
     }
-    peasants = Peasants(state, 80, resources)
+    peasants = Peasants(state, 80)
+    peasants.new_resources = resources
     assert peasants.missing_resources == missing
 
 
@@ -259,7 +260,8 @@ def test_class_overpopulation_1():
     missing_wood = 500
     missing_tools = 40
 
-    peasants = Peasants(state, 80, resources)
+    peasants = Peasants(state, 80)
+    peasants.new_resources = resources
     others = Fake_Class()
     peasants.lower_class = others
 
@@ -286,7 +288,8 @@ def test_class_overpopulation_2():
     missing_wood = 50
     missing_tools = 400
 
-    peasants = Peasants(state, 80, resources)
+    peasants = Peasants(state, 80)
+    peasants.new_resources = resources
     others = Fake_Class()
     peasants.lower_class = others
 

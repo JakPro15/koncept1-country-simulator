@@ -752,6 +752,22 @@ class State_Data:
         self._do_demotions(DEBUG_MODE)
         self._secure_classes()
 
+    def do_secure(self, resource: str, amount: int):
+        """
+        Makes the given amount of a resource owned by the government
+        untradeable (secured). Negative amount signifies making a resource
+        tradeable again.
+        """
+        res = self.government.new_resources
+        res[resource] -= amount
+        self.government.new_resources = res
+
+        res = self.government.secure_resources
+        res[resource] += amount
+        self.government.secure_resources = res
+
+        self.government.flush()
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
@@ -768,3 +784,5 @@ class State_Data:
                     self.do_month()
             elif command[0] == "transfer":
                 self.do_transfer(command[1], command[2], int(command[3]))
+            elif command[0] == "secure":
+                self.do_transfer(command[1], int(command[2]))

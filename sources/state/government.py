@@ -145,7 +145,7 @@ class Government:
         self.handle_negative_resources()
         for key, value in self._new_resources.items():
             if value < 0:
-                if self._secure_resources[key] > -value:
+                if self._secure_resources[key] >= -value:
                     self._secure_resources[key] += value
                     self._new_resources[key] = 0
                 else:

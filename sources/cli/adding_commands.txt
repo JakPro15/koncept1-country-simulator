@@ -1,0 +1,7 @@
+1) obtain the command in cli.py
+2) add an entry for it in help command
+3) add the command decoding in cli_commands.py or cli_game_commands.py
+4) add the command securing and history integration in interface.py
+5) add the command execution in state_data.py
+6) make sure History.obtain_data and add_history_line handle it properly
+7) make sure State_Data.execute_commands handles it properly

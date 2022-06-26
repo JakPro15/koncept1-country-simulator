@@ -58,7 +58,7 @@ class History:
                             )
 
                     result.append(month_data)
-            elif command[0] == "transfer":
+            else:
                 state.execute_commands([line])
         return result
 

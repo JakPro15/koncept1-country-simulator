@@ -620,7 +620,7 @@ def test_do_starvation():
             "nobles": {
                 "population": 20,
                 "resources": {
-                    "food": -2000,
+                    "food": 0,
                     "wood": 0,
                     "stone": 0,
                     "iron": 0,
@@ -631,7 +631,7 @@ def test_do_starvation():
             "artisans": {
                 "population": 50,
                 "resources": {
-                    "food": -20,
+                    "food": 0,
                     "wood": 0,
                     "stone": 0,
                     "iron": 0,
@@ -642,8 +642,8 @@ def test_do_starvation():
             "peasants": {
                 "population": 100,
                 "resources": {
-                    "food": -20,
-                    "wood": -18,
+                    "food": 20,
+                    "wood": 18,
                     "stone": 0,
                     "iron": 0,
                     "tools": 0,
@@ -654,7 +654,7 @@ def test_do_starvation():
                 "population": 50,
                 "resources": {
                     "food": 0,
-                    "wood": -30,
+                    "wood": 30,
                     "stone": 0,
                     "iron": 0,
                     "tools": 0,
@@ -690,6 +690,39 @@ def test_do_starvation():
         }
     }
     state = State_Data.from_dict(data)
+    state.classes[0].new_resources = {
+        "food": -2000,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    }
+    state.classes[1].new_resources = {
+        "food": -20,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    }
+    state.classes[2].new_resources = {
+        "food": -20,
+        "wood": -18,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    }
+    state.classes[3].new_resources = {
+        "food": 0,
+        "wood": -30,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    }
+
     state._do_starvation()
     for social_class in state.classes:
         for res in RESOURCES:
@@ -705,14 +738,8 @@ def test_do_starvation():
         "land": 20 * INBUILT_RESOURCES["nobles"]["land"],
     }
     assert state.classes[0].population == 20
-    assert state.classes[0].resources == {
-        "food": -2000,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
+    assert state.classes[0].starving
+    assert not state.classes[0].freezing
 
     dead_artisans = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION
     assert state.classes[1].new_population == 50 - dead_artisans
@@ -725,14 +752,8 @@ def test_do_starvation():
         "land": dead_artisans * INBUILT_RESOURCES["artisans"]["land"],
     }
     assert state.classes[1].population == 50
-    assert state.classes[1].resources == {
-        "food": -20,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
+    assert state.classes[1].starving
+    assert not state.classes[1].freezing
 
     dead_peasants = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION + \
         18 * FREEZING_MORTALITY / WOOD_CONSUMPTION["January"]
@@ -746,27 +767,15 @@ def test_do_starvation():
         "land": dead_peasants * INBUILT_RESOURCES["peasants"]["land"],
     }
     assert state.classes[2].population == 100
-    assert state.classes[2].resources == {
-        "food": -20,
-        "wood": -18,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
+    assert state.classes[2].starving
+    assert state.classes[2].freezing
 
     assert state.classes[3].new_population == \
         50 - 30 * FREEZING_MORTALITY / WOOD_CONSUMPTION["January"]
     assert state.classes[3].new_resources == EMPTY_RESOURCES
     assert state.classes[3].population == 50
-    assert state.classes[3].resources == {
-        "food": 0,
-        "wood": -30,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
+    assert not state.classes[3].starving
+    assert state.classes[3].freezing
 
 
 def test_do_payments():
