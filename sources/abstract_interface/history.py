@@ -58,6 +58,8 @@ class History:
                             )
 
                     result.append(month_data)
+            elif command[0] == "transfer":
+                state.execute_commands([line])
         return result
 
     @staticmethod
@@ -111,12 +113,15 @@ class History:
         """
         Adds the given command to the history lines.
         """
-        if len(self.history_lines) == 0:
-            self.history_lines.append(f'{command} 1')
-        else:
-            if self.history_lines[-1].split(' ')[0] != command:
+        if command == "next":
+            if len(self.history_lines) == 0:
                 self.history_lines.append(f'{command} 1')
             else:
-                line = self.history_lines[-1].split(' ')
-                line[1] = str(int(line[1]) + 1)
-                self.history_lines[-1] = ' '.join(line)
+                if self.history_lines[-1].split(' ')[0] != command:
+                    self.history_lines.append(f'{command} 1')
+                else:
+                    line = self.history_lines[-1].split(' ')
+                    line[1] = str(int(line[1]) + 1)
+                    self.history_lines[-1] = ' '.join(line)
+        else:
+            self.history_lines.append(command)

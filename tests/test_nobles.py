@@ -359,6 +359,22 @@ class Fake_State_Data(State_Data):
         return self.available_employees
 
 
+def test_real_resources():
+    state = State_Data()
+    resources1 = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100,
+        "land": 0
+    })
+    resources2 = resources1 + INBUILT_RESOURCES["nobles"] * 80
+    nobles = Nobles(state, 80, resources1)
+    assert nobles.resources == resources1
+    assert nobles.real_resources == resources2
+
+
 def test_net_worth():
     state = State_Data()
     state.prices = {
@@ -377,8 +393,11 @@ def test_net_worth():
         "tools": 10,
         "land": 1
     }
+    inbuilt_worth = sum(
+        (INBUILT_RESOURCES["nobles"] * state.prices * 20).values()
+    )
     nobles = Nobles(state, 20, resources)
-    assert nobles.net_worth == 234567
+    assert nobles.net_worth == 234567 + inbuilt_worth
 
 
 def test_get_employees_from_resources():

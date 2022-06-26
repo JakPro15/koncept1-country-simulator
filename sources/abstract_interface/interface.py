@@ -73,12 +73,6 @@ class Interface:
         if self.state.classes[class_index].resources[resource] < -amount:
             raise NotEnoughClassResources
 
-        res = self.state.government.new_resources
-        res[resource] -= amount
-        self.state.government.new_resources = res
-
-        res = self.state.classes[class_index].new_resources
-        res[resource] += amount
-        self.state.classes[class_index].new_resources = res
-
-        self.state._secure_classes()
+        self.history.add_history_line(
+            f"transfer {class_name} {resource} {amount}"
+        )

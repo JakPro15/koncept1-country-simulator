@@ -1,4 +1,5 @@
 from ..auxiliaries.constants import (
+    CLASS_NAME_TO_INDEX,
     AVG_FOOD_PRODUCTION,
     FOOD_RATIOS,
     MAX_PRICES,
@@ -363,6 +364,9 @@ class State_Data:
         self.payments = EMPTY_RESOURCES.copy()
 
     def _reset_flags(self):
+        """
+        Resets promotion and demotion flags on all classes to False.
+        """
         for social_class in self.classes:
             social_class.promoted_from = False
             social_class.promoted_to = False
@@ -729,11 +733,31 @@ class State_Data:
         }
         return month_data
 
+    def do_transfer(self, class_name: str, resource: str, amount: int):
+        """
+        Moves resources between the government and a social class. More info
+        in interface transfer command.
+        """
+        class_index = CLASS_NAME_TO_INDEX[class_name]
+
+        res = self.government.new_resources
+        res[resource] -= amount
+        self.government.new_resources = res
+
+        res = self.classes[class_index].new_resources
+        res[resource] += amount
+        self.classes[class_index].new_resources = res
+
+        self._do_demotions()
+        self._secure_classes()
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
         Format:
         <command> <arguments>
+        <command> <arguments>
+        and so on
         """
         for line in commands:
             command = line.split(' ')
@@ -741,3 +765,5 @@ class State_Data:
                 amount = int(command[1])
                 for _ in range(amount):
                     self.do_month()
+            elif command[0] == "transfer":
+                self.do_transfer(command[1], command[2], int(command[3]))

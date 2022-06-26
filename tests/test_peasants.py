@@ -318,6 +318,22 @@ def test_class_overpopulation_3():
     assert peasants.class_overpopulation == 0
 
 
+def test_real_resources():
+    state = State_Data()
+    resources1 = Arithmetic_Dict({
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 100,
+        "land": 0
+    })
+    resources2 = resources1 + INBUILT_RESOURCES["peasants"] * 80
+    peasants = Peasants(state, 80, resources1)
+    assert peasants.resources == resources1
+    assert peasants.real_resources == resources2
+
+
 def test_net_worth():
     state = State_Data()
     state.prices = {
@@ -336,8 +352,11 @@ def test_net_worth():
         "tools": 10,
         "land": 1
     }
+    inbuilt_worth = sum(
+        (INBUILT_RESOURCES["peasants"] * state.prices * 20).values()
+    )
     peasants = Peasants(state, 20, resources)
-    assert peasants.net_worth == 234567
+    assert peasants.net_worth == 234567 + inbuilt_worth
 
 
 def test_produce_january():

@@ -811,6 +811,48 @@ class Fake_Class_3:
         self.new_population = 50
 
 
+def test_reset_flags():
+    state = State_Data()
+    nobles = Fake_Class_3(10, "nobles")
+    nobles.demoted_to = True
+    artisans = Fake_Class_3(100, "artisans")
+    artisans.promoted_to = True
+    peasants = Fake_Class_3(10, "peasants")
+    peasants.demoted_from = True
+    others = Fake_Class_3(0, "others")
+    others.promoted_from = False
+
+    # normally done in classes setter
+    nobles.lower_class = peasants
+    artisans.lower_class = others
+    peasants.lower_class = others
+    others.lower_class = others
+
+    classes = [nobles, artisans, peasants, others]
+    state._classes = classes
+    state._reset_flags()
+
+    assert nobles.promoted_from is False
+    assert nobles.promoted_to is False
+    assert nobles.demoted_from is False
+    assert nobles.demoted_to is False
+
+    assert artisans.promoted_from is False
+    assert artisans.promoted_to is False
+    assert artisans.demoted_from is False
+    assert artisans.demoted_to is False
+
+    assert peasants.promoted_from is False
+    assert peasants.promoted_to is False
+    assert peasants.demoted_from is False
+    assert peasants.demoted_to is False
+
+    assert others.promoted_from is False
+    assert others.promoted_to is False
+    assert others.demoted_from is False
+    assert others.demoted_to is False
+
+
 def test_do_demotions():
     state = State_Data()
     nobles = Fake_Class_3(10, "nobles")
@@ -826,6 +868,7 @@ def test_do_demotions():
 
     classes = [nobles, artisans, peasants, others]
     state._classes = classes
+    state._reset_flags()
     state._do_demotions()
 
     HUNDREDS = Arithmetic_Dict({
@@ -840,16 +883,26 @@ def test_do_demotions():
     assert nobles.new_population == 40
     assert nobles.new_resources == \
         HUNDREDS - INBUILT_RESOURCES["peasants"] * 10
+    assert nobles.demoted_from
+    assert not nobles.demoted_to
 
     assert artisans.new_population == 0
+    # resources unchanged because new_population setter doesn't change them
+    # in Fake_Class_3
     assert artisans.new_resources == HUNDREDS
+    assert artisans.demoted_from
+    assert not artisans.demoted_to
 
     assert peasants.new_population == 50
     assert peasants.new_resources == \
         HUNDREDS + INBUILT_RESOURCES["peasants"] * 10
+    assert peasants.demoted_from
+    assert peasants.demoted_to
 
     assert others.new_population == 110
     assert others.new_resources == HUNDREDS
+    assert not others.demoted_from
+    assert others.demoted_to
 
 
 class Fake_Class_4:
@@ -924,13 +977,19 @@ def test_do_one_promotion():
         "iron": 4,
         "tools": 5
     }
+    state._reset_flags()
     state._do_one_promotion(class_from, class_to, 10)
     part_paid, transferred = state._promotion_math(15000, 100, 10)
 
     assert class_from.new_population == approx(100 - transferred)
     dict_eq(class_from.new_resources, resources * (1 - part_paid))
+    assert class_from.promoted_from
+    assert not class_from.promoted_to
+
     assert class_to.new_population == approx(100 + transferred)
     dict_eq(class_to.new_resources, resources * (1 + part_paid))
+    assert not class_to.promoted_from
+    assert class_to.promoted_to
 
 
 def test_do_double_promotion():
@@ -953,17 +1012,27 @@ def test_do_double_promotion():
         "iron": 4,
         "tools": 5
     }
+    state._reset_flags()
     state._do_double_promotion(class_from, class_to_1, 30, class_to_2, 10)
+
     part_paid, transferred = state._promotion_math(15000, 100, 20)
     part_paid_1 = 0.75 * part_paid
     part_paid_2 = 0.25 * part_paid
 
     assert class_from.new_population == approx(100 - transferred)
     dict_eq(class_from.new_resources, resources * (1 - part_paid))
+    assert class_from.promoted_from
+    assert not class_from.promoted_to
+
     assert class_to_1.new_population == approx(100 + transferred / 2)
     dict_eq(class_to_1.new_resources, resources * (1 + part_paid_1))
+    assert not class_to_1.promoted_from
+    assert class_to_1.promoted_to
+
     assert class_to_2.new_population == approx(100 + transferred / 2)
     dict_eq(class_to_2.new_resources, resources * (1 + part_paid_2))
+    assert not class_to_2.promoted_from
+    assert class_to_2.promoted_to
 
 
 def test_do_promotions_no_starvation():
@@ -991,6 +1060,7 @@ def test_do_promotions_no_starvation():
     others = Fake_Class_5(resources, True)
     state = State_Data()
     state._classes = [nobles, artisans, peasants, others]
+    state._reset_flags()
     state._do_promotions()
 
     increase_price_peasants = INCREASE_PRICE_FACTOR * \
@@ -1014,20 +1084,28 @@ def test_do_promotions_no_starvation():
     assert nobles.new_population == 10 + transferred_nobles * 2
     dict_eq(nobles.new_resources,
             resources * (1 + part_paid_nobles * 2))
+    assert not nobles.promoted_from
+    assert nobles.promoted_to == (transferred_nobles > 0)
 
     assert artisans.new_population == \
         100 + transferred_others / 2 - transferred_nobles
     dict_eq(artisans.new_resources,
             resources * (1 + part_paid_artisans - part_paid_nobles))
+    assert artisans.promoted_from == (transferred_nobles > 0)
+    assert artisans.promoted_to == (transferred_others > 0)
 
     assert peasants.new_population == \
         100 + transferred_others / 2 - transferred_nobles
     dict_eq(peasants.new_resources,
             resources * (1 + part_paid_peasants - part_paid_nobles))
+    assert peasants.promoted_from == (transferred_nobles > 0)
+    assert peasants.promoted_to == (transferred_others > 0)
 
     assert others.new_population == 100 - transferred_others
     dict_eq(others.new_resources,
             resources * (1 - part_paid_others))
+    assert others.promoted_from == (transferred_others > 0)
+    assert not others.promoted_to
 
     for key in saved_defaults:
         a[key] = saved_defaults[key]
@@ -1060,6 +1138,7 @@ def test_do_promotions_with_starvation():
     others.freezing = True
     state = State_Data()
     state._classes = [nobles, artisans, peasants, others]
+    state._reset_flags()
     state._do_promotions()
 
     increase_price_nobles = INCREASE_PRICE_FACTOR * \
@@ -1071,15 +1150,23 @@ def test_do_promotions_with_starvation():
 
     assert nobles.new_population == 10 + transferred_nobles
     dict_eq(nobles.new_resources, resources * (1 + part_paid_nobles))
+    assert not nobles.promoted_from
+    assert nobles.promoted_to == (transferred_nobles > 0)
 
     assert artisans.new_population == 100 - transferred_nobles
     dict_eq(artisans.new_resources, resources * (1 - part_paid_nobles))
+    assert artisans.promoted_from == (transferred_nobles > 0)
+    assert not artisans.promoted_to
 
     assert peasants.new_population == 100
     dict_eq(peasants.new_resources, resources)
+    assert not peasants.promoted_from
+    assert not peasants.promoted_to
 
     assert others.new_population == 100
     dict_eq(others.new_resources, resources)
+    assert not others.promoted_from
+    assert not others.promoted_to
 
     for key in saved_defaults:
         a[key] = saved_defaults[key]
@@ -1110,6 +1197,7 @@ def test_do_promotions_with_nobles_cap():
     others = Fake_Class_5(resources, True)
     state = State_Data()
     state._classes = [nobles, artisans, peasants, others]
+    state._reset_flags()
     state._do_promotions()
 
     increase_price_peasants = INCREASE_PRICE_FACTOR * \
@@ -1127,112 +1215,44 @@ def test_do_promotions_with_nobles_cap():
 
     assert nobles.new_population == 10000
     dict_eq(nobles.new_resources, resources)
+    assert not nobles.promoted_from
+    assert not nobles.promoted_to
 
     assert artisans.new_population == 100 + transferred_others / 2
     dict_eq(artisans.new_resources,
             resources * (1 + part_paid_artisans))
+    assert not artisans.promoted_from
+    assert artisans.promoted_to == (transferred_others > 0)
 
     assert peasants.new_population == 100 + transferred_others / 2
     dict_eq(peasants.new_resources,
             resources * (1 + part_paid_peasants))
+    assert not peasants.promoted_from
+    assert peasants.promoted_to == (transferred_others > 0)
 
     assert others.new_population == 100 - transferred_others
     dict_eq(others.new_resources,
             resources * (1 - part_paid_others))
+    assert others.promoted_from == (transferred_others > 0)
+    assert not others.promoted_to
 
     for key in saved_defaults:
         a[key] = saved_defaults[key]
 
 
-def test_do_personal_taxes():
-    data = {
-        "year": 3,
-        "month": "June",
-        "classes": {
-            "nobles": {
-                "population": 20,
-                "resources": {
-                    "food": 10,
-                    "wood": 10,
-                    "stone": 10,
-                    "iron": 10,
-                    "tools": 10,
-                    "land": 10
-                }
-            },
-            "artisans": {
-                "population": 40,
-                "resources": {
-                    "food": 20,
-                    "wood": 20,
-                    "stone": 20,
-                    "iron": 20,
-                    "tools": 20,
-                    "land": 20
-                }
-            },
-            "peasants": {
-                "population": 40,
-                "resources": {
-                    "food": 10,
-                    "wood": 20,
-                    "stone": 20,
-                    "iron": 10,
-                    "tools": 20,
-                    "land": 30
-                }
-            },
-            "others": {
-                "population": 80,
-                "resources": {
-                    "food": 100,
-                    "wood": 50,
-                    "stone": 0,
-                    "iron": 0,
-                    "tools": 0,
-                    "land": 0
-                }
-            }
-        },
-        "government": {
-            "resources": {
-                "food": 10,
-                "wood": 10,
-                "stone": 10,
-                "iron": 10,
-                "tools": 10,
-                "land": 10
-            },
-            "optimal_resources": {
-                "food": 0,
-                "wood": 0,
-                "stone": 0,
-                "iron": 0,
-                "tools": 0,
-                "land": 0
-            }
-        },
-        "prices": {
-            "food": 1,
-            "wood": 2,
-            "stone": 3,
-            "iron": 4,
-            "tools": 5,
-            "land": 5
-        }
-    }
-    state = State_Data.from_dict(data)
+def test_get_personal_taxes():
+    state = State_Data()
     populations = {
-        "nobles": state.classes[0].population,
-        "artisans": state.classes[1].population,
-        "peasants": state.classes[2].population,
-        "others": state.classes[3].population
+        "nobles": 10,
+        "artisans": 20,
+        "peasants": 30,
+        "others": 40
     }
     net_worths = Arithmetic_Dict({
-        "nobles": state.classes[0].net_worth,
-        "artisans": state.classes[1].net_worth,
-        "peasants": state.classes[2].net_worth,
-        "others": state.classes[3].net_worth
+        "nobles": 150,
+        "artisans": 200,
+        "peasants": 900,
+        "others": 100
     })
     state.sm.tax_rates["personal"] = Arithmetic_Dict({
         "nobles": 0,
@@ -1240,256 +1260,29 @@ def test_do_personal_taxes():
         "peasants": 1.5,
         "others": 2
     })
-    state._do_personal_taxes(populations, net_worths)
-    dict_eq(state.government.new_resources, {
-        "food": 93.5,
-        "wood": 55,
-        "stone": 15,
-        "iron": 13.5,
-        "tools": 15,
-        "land": 16.5
-    })
-
-    dict_eq(state.classes[0].new_resources, {
-        "food": 10,
-        "wood": 10,
-        "stone": 10,
-        "iron": 10,
-        "tools": 10,
-        "land": 10
-    })
-    dict_eq(state.classes[1].new_resources, {
-        "food": 18,
-        "wood": 18,
-        "stone": 18,
-        "iron": 18,
-        "tools": 18,
-        "land": 18
-    })
-    dict_eq(state.classes[2].new_resources, {
-        "food": 8.5,
-        "wood": 17,
-        "stone": 17,
-        "iron": 8.5,
-        "tools": 17,
-        "land": 25.5
-    })
-    dict_eq(state.classes[3].new_resources, {
-        "food": 20,
-        "wood": 10,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
+    rel_tax = state._get_personal_taxes(populations, net_worths)
+    dict_eq(rel_tax, {
+        "nobles": 0,
+        "artisans": 0.1,
+        "peasants": 0.05,
+        "others": 0.8
     })
 
 
-def test_do_property_taxes():
-    data = {
-        "year": 3,
-        "month": "June",
-        "classes": {
-            "nobles": {
-                "population": 20,
-                "resources": {
-                    "food": 10,
-                    "wood": 10,
-                    "stone": 10,
-                    "iron": 10,
-                    "tools": 10,
-                    "land": 10
-                }
-            },
-            "artisans": {
-                "population": 40,
-                "resources": {
-                    "food": 20,
-                    "wood": 20,
-                    "stone": 20,
-                    "iron": 20,
-                    "tools": 20,
-                    "land": 20
-                }
-            },
-            "peasants": {
-                "population": 40,
-                "resources": {
-                    "food": 10,
-                    "wood": 20,
-                    "stone": 20,
-                    "iron": 10,
-                    "tools": 20,
-                    "land": 30
-                }
-            },
-            "others": {
-                "population": 80,
-                "resources": {
-                    "food": 100,
-                    "wood": 50,
-                    "stone": 0,
-                    "iron": 0,
-                    "tools": 0,
-                    "land": 0
-                }
-            }
-        },
-        "government": {
-            "resources": {
-                "food": 10,
-                "wood": 10,
-                "stone": 10,
-                "iron": 10,
-                "tools": 10,
-                "land": 10
-            },
-            "optimal_resources": {
-                "food": 0,
-                "wood": 0,
-                "stone": 0,
-                "iron": 0,
-                "tools": 0,
-                "land": 0
-            }
-        },
-        "prices": {
-            "food": 1,
-            "wood": 2,
-            "stone": 3,
-            "iron": 4,
-            "tools": 5,
-            "land": 5
-        }
-    }
-    state = State_Data.from_dict(data)
+def test_get_property_taxes():
+    state = State_Data()
     state.sm.tax_rates["property"] = Arithmetic_Dict({
         "nobles": 0,
         "artisans": 0.1,
         "peasants": 0.15,
         "others": 0.8
     })
-    state._do_property_taxes()
-    dict_eq(state.government.new_resources, {
-        "food": 93.5,
-        "wood": 55,
-        "stone": 15,
-        "iron": 13.5,
-        "tools": 15,
-        "land": 16.5
-    })
-
-    dict_eq(state.classes[0].new_resources, {
-        "food": 10,
-        "wood": 10,
-        "stone": 10,
-        "iron": 10,
-        "tools": 10,
-        "land": 10
-    })
-    dict_eq(state.classes[1].new_resources, {
-        "food": 18,
-        "wood": 18,
-        "stone": 18,
-        "iron": 18,
-        "tools": 18,
-        "land": 18
-    })
-    dict_eq(state.classes[2].new_resources, {
-        "food": 8.5,
-        "wood": 17,
-        "stone": 17,
-        "iron": 8.5,
-        "tools": 17,
-        "land": 25.5
-    })
-    dict_eq(state.classes[3].new_resources, {
-        "food": 20,
-        "wood": 10,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    })
+    assert state._get_property_taxes() == \
+        state.sm.tax_rates["property"]
 
 
-def test_do_income_taxes():
-    data = {
-        "year": 3,
-        "month": "June",
-        "classes": {
-            "nobles": {
-                "population": 20,
-                "resources": {
-                    "food": 10,
-                    "wood": 10,
-                    "stone": 10,
-                    "iron": 10,
-                    "tools": 10,
-                    "land": 10
-                }
-            },
-            "artisans": {
-                "population": 40,
-                "resources": {
-                    "food": 20,
-                    "wood": 20,
-                    "stone": 20,
-                    "iron": 20,
-                    "tools": 20,
-                    "land": 20
-                }
-            },
-            "peasants": {
-                "population": 40,
-                "resources": {
-                    "food": 10,
-                    "wood": 20,
-                    "stone": 20,
-                    "iron": 10,
-                    "tools": 20,
-                    "land": 30
-                }
-            },
-            "others": {
-                "population": 80,
-                "resources": {
-                    "food": 100,
-                    "wood": 50,
-                    "stone": 0,
-                    "iron": 0,
-                    "tools": 0,
-                    "land": 0
-                }
-            }
-        },
-        "government": {
-            "resources": {
-                "food": 10,
-                "wood": 10,
-                "stone": 10,
-                "iron": 10,
-                "tools": 10,
-                "land": 10
-            },
-            "optimal_resources": {
-                "food": 0,
-                "wood": 0,
-                "stone": 0,
-                "iron": 0,
-                "tools": 0,
-                "land": 0
-            }
-        },
-        "prices": {
-            "food": 1,
-            "wood": 2,
-            "stone": 3,
-            "iron": 4,
-            "tools": 5,
-            "land": 5
-        }
-    }
-    state = State_Data.from_dict(data)
+def test_get_income_taxes():
+    state = State_Data()
     state.sm.tax_rates["income"] = Arithmetic_Dict({
         "nobles": 0.2,
         "artisans": 0.5,
@@ -1499,76 +1292,498 @@ def test_do_income_taxes():
     net_worths_change = {
         "nobles": 0,
         "artisans": 80,
-        "peasants": 75,
+        "peasants": 100,
         "others": 160
     }
     net_worths = Arithmetic_Dict({
-        "nobles": state.classes[0].net_worth,
-        "artisans": state.classes[1].net_worth,
-        "peasants": state.classes[2].net_worth,
-        "others": state.classes[3].net_worth
+        "nobles": 2000,
+        "artisans": 400,
+        "peasants": 400,
+        "others": 320
     })
-    state._do_income_taxes(net_worths_change, net_worths)
-    dict_eq(state.government.new_resources, {
-        "food": 93.5,
-        "wood": 55,
-        "stone": 15,
-        "iron": 13.5,
-        "tools": 15,
-        "land": 16.5
+    rel_tax = state._get_income_taxes(net_worths_change, net_worths)
+    dict_eq(rel_tax, {
+        "nobles": 0,
+        "artisans": 0.1,
+        "peasants": 0.2,
+        "others": 0.5
     })
 
-    dict_eq(state.classes[0].new_resources, {
-        "food": 10,
+
+def test_do_taxes():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 30,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 40,
+                    "wood": 40,
+                    "stone": 40,
+                    "iron": 40,
+                    "tools": 40,
+                    "land": 40
+                }
+            },
+            "others": {
+                "population": 50,
+                "resources": {
+                    "food": 50,
+                    "wood": 100,
+                    "stone": 50,
+                    "iron": 50,
+                    "tools": 100,
+                    "land": 50
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    state.sm.tax_rates = {
+        "property": Arithmetic_Dict({
+            "nobles": 0,
+            "artisans": 0.2,
+            "peasants": 0.3,
+            "others": 0.3
+        }),
+        "income": Arithmetic_Dict({
+            "nobles": 0.2,
+            "artisans": 0.1,
+            "peasants": 0.1,
+            "others": 0.2
+        }),
+        "personal": Arithmetic_Dict({
+            "nobles": 0.5,
+            "artisans": 2,
+            "peasants": 4,
+            "others": 1
+        })
+    }
+    net_worths = Arithmetic_Dict({
+        "nobles": 200 + sum(
+            (INBUILT_RESOURCES["nobles"] * 20 * state.prices).values()
+        ),
+        "artisans": 400 + sum(
+            (INBUILT_RESOURCES["artisans"] * 30 * state.prices).values()
+        ),
+        "peasants": 800 + sum(
+            (INBUILT_RESOURCES["peasants"] * 40 * state.prices).values()
+        ),
+        "others": 1350 + sum(
+            (INBUILT_RESOURCES["others"] * 50 * state.prices).values()
+        )
+    })
+    populations = Arithmetic_Dict({
+        "nobles": 20,
+        "artisans": 30,
+        "peasants": 40,
+        "others": 50
+    })
+    net_worths_change = Arithmetic_Dict({
+        "nobles": 60,
+        "artisans": 30000,
+        "peasants": 40,
+        "others": 60
+    })
+    rel_tax = state._get_personal_taxes(populations, net_worths) + \
+        state._get_property_taxes() + \
+        state._get_income_taxes(net_worths_change, net_worths)
+
+    noble_tax = state.classes[0].real_resources * rel_tax["nobles"]
+    artisan_tax = state.classes[1].real_resources
+    peasant_tax = state.classes[2].real_resources * rel_tax["peasants"]
+    other_tax = state.classes[3].real_resources * rel_tax["others"]
+
+    noble_after = state.classes[0].resources - noble_tax
+    artisan_after = state.classes[1].resources - artisan_tax
+    peasant_after = state.classes[2].resources - peasant_tax
+    other_after = state.classes[3].resources - other_tax
+    govt_after = state.government.resources + noble_tax + artisan_tax + \
+        peasant_tax + other_tax
+
+    state._do_taxes(net_worths - net_worths_change)
+
+    assert state.classes[0].new_resources == noble_after
+    assert state.classes[1].new_resources == artisan_after
+    assert state.classes[2].new_resources == peasant_after
+    assert state.classes[3].new_resources == other_after
+    assert state.government.new_resources == govt_after
+
+
+def test_do_transfer_from_government():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 30,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 40,
+                    "wood": 40,
+                    "stone": 40,
+                    "iron": 40,
+                    "tools": 40,
+                    "land": 40
+                }
+            },
+            "others": {
+                "population": 50,
+                "resources": {
+                    "food": 50,
+                    "wood": 100,
+                    "stone": 50,
+                    "iron": 50,
+                    "tools": 100,
+                    "land": 50
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    state.do_transfer("nobles", "food", 10)
+    assert state.classes[0].resources == {
+        "food": 20,
         "wood": 10,
         "stone": 10,
         "iron": 10,
         "tools": 10,
         "land": 10
-    })
-    dict_eq(state.classes[1].new_resources, {
-        "food": 18,
-        "wood": 18,
-        "stone": 18,
-        "iron": 18,
-        "tools": 18,
-        "land": 18
-    })
-    dict_eq(state.classes[2].new_resources, {
-        "food": 8.5,
-        "wood": 17,
-        "stone": 17,
-        "iron": 8.5,
-        "tools": 17,
-        "land": 25.5
-    })
-    dict_eq(state.classes[3].new_resources, {
-        "food": 20,
+    }
+    assert state.government.resources == {
+        "food": 0,
         "wood": 10,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    })
+        "stone": 10,
+        "iron": 10,
+        "tools": 10,
+        "land": 10
+    }
+
+
+def test_do_transfer_to_government():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 30,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 40,
+                    "wood": 40,
+                    "stone": 40,
+                    "iron": 40,
+                    "tools": 40,
+                    "land": 40
+                }
+            },
+            "others": {
+                "population": 50,
+                "resources": {
+                    "food": 50,
+                    "wood": 100,
+                    "stone": 50,
+                    "iron": 50,
+                    "tools": 100,
+                    "land": 50
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    state.do_transfer("artisans", "tools", -15)
+    assert state.classes[1].resources == {
+        "food": 20,
+        "wood": 20,
+        "stone": 20,
+        "iron": 20,
+        "tools": 5,
+        "land": 20
+    }
+    assert state.government.resources == {
+        "food": 10,
+        "wood": 10,
+        "stone": 10,
+        "iron": 10,
+        "tools": 25,
+        "land": 10
+    }
+
+
+def test_do_transfer_to_government_demotion():
+    data = {
+        "year": 3,
+        "month": "June",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 10,
+                    "wood": 10,
+                    "stone": 10,
+                    "iron": 10,
+                    "tools": 10,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 30,
+                "resources": {
+                    "food": 20,
+                    "wood": 20,
+                    "stone": 20,
+                    "iron": 20,
+                    "tools": 20,
+                    "land": 20
+                }
+            },
+            "peasants": {
+                "population": 40,
+                "resources": {
+                    "food": 40,
+                    "wood": 40,
+                    "stone": 40,
+                    "iron": 40,
+                    "tools": 40,
+                    "land": 40
+                }
+            },
+            "others": {
+                "population": 50,
+                "resources": {
+                    "food": 50,
+                    "wood": 100,
+                    "stone": 50,
+                    "iron": 50,
+                    "tools": 100,
+                    "land": 50
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 10,
+                "wood": 10,
+                "stone": 10,
+                "iron": 10,
+                "tools": 10,
+                "land": 10
+            },
+            "optimal_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
+            }
+        },
+        "prices": {
+            "food": 1,
+            "wood": 2,
+            "stone": 3,
+            "iron": 4,
+            "tools": 5,
+            "land": 5
+        }
+    }
+    state = State_Data.from_dict(data)
+    state.do_transfer("artisans", "tools", -25)
+    assert state.classes[1].demoted_from
+    assert state.classes[3].demoted_to
+    assert state.government.resources == {
+        "food": 10,
+        "wood": 10,
+        "stone": 10,
+        "iron": 10,
+        "tools": 35,
+        "land": 10
+    }
 
 
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
 
+    def fake_transfer(self, class_name, resource, amount):
+        self.transfers.append([class_name, resource, amount])
+
     old_do_month = State_Data.do_month
+    old_transfer = State_Data.do_transfer
     State_Data.do_month = fake_do_month
+    State_Data.do_transfer = fake_transfer
 
     state = State_Data()
     state.did_month = 0
+    state.transfers = []
 
     state.execute_commands(["next 2"])
     assert state.did_month == 2
+    assert state.transfers == []
 
-    state.execute_commands(["next 100"])
+    state.execute_commands(["next 100", "transfer nobles food 100"])
     assert state.did_month == 102
+    assert state.transfers == [
+        ["nobles", "food", 100]
+    ]
 
     state.execute_commands(["next 1", "next 1", "next 2"])
     assert state.did_month == 106
+    assert state.transfers == [
+        ["nobles", "food", 100]
+    ]
+
+    state.execute_commands(["transfer nobles food -100",
+                            "transfer artisans land 50"])
+    assert state.did_month == 106
+    assert state.transfers == [
+        ["nobles", "food", 100],
+        ["nobles", "food", -100],
+        ["artisans", "land", 50]
+    ]
 
     State_Data.do_month = old_do_month
+    State_Data.do_transfer = old_transfer
