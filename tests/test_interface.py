@@ -165,3 +165,57 @@ def test_secure():
     ]
 
     State_Data.do_secure = old_do_secure
+
+
+def test_optimal():
+    def fake_do_optimal(self, resource, amount):
+        self.optimals.append([resource, amount])
+
+    old_do_optimal = State_Data.do_optimal
+    State_Data.do_optimal = fake_do_optimal
+
+    state = State_Data()
+    state.optimals = []
+    state.government = Government(state)
+
+    history = History({}, ["next 6"])
+
+    interface = Interface()
+    interface.state = state
+    interface.history = history
+
+    interface.set_govt_optimal("food", 100)
+    with raises(AssertionError):
+        interface.set_govt_optimal("wood", -100)
+
+    assert state.optimals == [["food", 100]]
+    assert history.history_lines == [
+        "next 6",
+        "optimal food 100"
+    ]
+
+    interface.set_govt_optimal("iron", 50)
+    assert state.optimals == [
+        ["food", 100],
+        ["iron", 50]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "optimal food 100",
+        "optimal iron 50"
+    ]
+
+    interface.set_govt_optimal("land", 0)
+    assert state.optimals == [
+        ["food", 100],
+        ["iron", 50],
+        ["land", 0]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "optimal food 100",
+        "optimal iron 50",
+        "optimal land 0"
+    ]
+
+    State_Data.do_optimal = old_do_optimal

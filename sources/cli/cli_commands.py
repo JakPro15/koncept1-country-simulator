@@ -43,8 +43,10 @@ def help_default():
     print("state <STAT> - view the current state of the country")
     print("transfer <TARGET> <RESOURCE> <AMOUNT> - transfers resources between"
           " the government and a social class")
-    print("secure <RESOURCE> [<AMOUNT>] - makes government resources tradeable"
+    print("secure <RESOURCE> [<AMOUNT>] - make government resources tradeable"
           " or not tradeable")
+    print("optimal <RESOURCE> <AMOUNT> - set government optimal <RESOURCE> to"
+          " <AMOUNT>")
 
 
 def help_command(command: str):
@@ -132,6 +134,21 @@ def help_command(command: str):
         print("    iron (i)")
         print("    tools (t)")
         print("    land (l)")
+    elif command == "optimal":
+        print("optimal <RESOURCE> <AMOUNT>")
+        print("Sets the optimal amount of <RESOURCE> owned by the government"
+              " to <AMOUNT>. When trading, the government will try to obtain "
+              "this much of the resource. Secure resources do not count "
+              "towards this amount - the government will aim to purchase this"
+              " amount of tradeable resource.")
+        print("Valid values for <RESOURCE>:")
+        print("    food (f)")
+        print("    wood (w)")
+        print("    stone (s)")
+        print("    iron (i)")
+        print("    tools (t)")
+        print("    land (l)")
+        print("<AMOUNT> must be nonnegative.")
     else:
         raise InvalidCommand
 

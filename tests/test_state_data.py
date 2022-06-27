@@ -1863,6 +1863,52 @@ def test_do_secure_make_insecure():
     }
 
 
+def test_do_optimal():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 350,
+        "land": 100
+    }
+    opt_res = {
+        "food": 100,
+        "wood": 100,
+        "stone": 0,
+        "iron": 100,
+        "tools": 350,
+        "land": 0
+    }
+    state.government = Government(state, resources, opt_res)
+    assert state.government.resources == resources
+    assert state.government.optimal_resources == opt_res
+    assert state.government.optimal_resources is not opt_res
+
+    opt_res = {
+        "food": 100,
+        "wood": 150,
+        "stone": 0,
+        "iron": 100,
+        "tools": 350,
+        "land": 0
+    }
+    state.do_optimal("wood", 150)
+    assert state.government.optimal_resources == opt_res
+
+    opt_res = {
+        "food": 100,
+        "wood": 150,
+        "stone": 0,
+        "iron": 100,
+        "tools": 200,
+        "land": 0
+    }
+    state.do_optimal("tools", 200)
+    assert state.government.optimal_resources == opt_res
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
@@ -1870,39 +1916,87 @@ def test_execute_commands():
     def fake_transfer(self, class_name, resource, amount):
         self.transfers.append([class_name, resource, amount])
 
+    def fake_secure(self, resource, amount):
+        self.secures.append([resource, amount])
+
+    def fake_optimal(self, resource, amount):
+        self.optimals.append([resource, amount])
+
     old_do_month = State_Data.do_month
     old_transfer = State_Data.do_transfer
+    old_secure = State_Data.do_secure
+    old_optimal = State_Data.do_optimal
     State_Data.do_month = fake_do_month
     State_Data.do_transfer = fake_transfer
+    State_Data.do_secure = fake_secure
+    State_Data.do_optimal = fake_optimal
 
     state = State_Data()
     state.did_month = 0
     state.transfers = []
+    state.secures = []
+    state.optimals = []
 
     state.execute_commands(["next 2"])
     assert state.did_month == 2
     assert state.transfers == []
+    assert state.secures == []
+    assert state.optimals == []
 
     state.execute_commands(["next 100", "transfer nobles food 100"])
     assert state.did_month == 102
     assert state.transfers == [
         ["nobles", "food", 100]
     ]
+    assert state.secures == []
+    assert state.optimals == []
 
-    state.execute_commands(["next 1", "next 1", "next 2"])
+    state.execute_commands(["next 1", "next 1", "next 2",
+                            "secure food 200"])
     assert state.did_month == 106
     assert state.transfers == [
         ["nobles", "food", 100]
     ]
+    assert state.secures == [
+        ["food", 200]
+    ]
+    assert state.optimals == []
 
     state.execute_commands(["transfer nobles food -100",
-                            "transfer artisans land 50"])
+                            "transfer artisans land 50",
+                            "secure tools 340",
+                            "optimal wood 1000"])
     assert state.did_month == 106
     assert state.transfers == [
         ["nobles", "food", 100],
         ["nobles", "food", -100],
         ["artisans", "land", 50]
     ]
+    assert state.secures == [
+        ["food", 200],
+        ["tools", 340]
+    ]
+    assert state.optimals == [
+        ["wood", 1000]
+    ]
+
+    state.execute_commands(["optimal iron 0"])
+    assert state.did_month == 106
+    assert state.transfers == [
+        ["nobles", "food", 100],
+        ["nobles", "food", -100],
+        ["artisans", "land", 50]
+    ]
+    assert state.secures == [
+        ["food", 200],
+        ["tools", 340]
+    ]
+    assert state.optimals == [
+        ["wood", 1000],
+        ["iron", 0]
+    ]
 
     State_Data.do_month = old_do_month
     State_Data.do_transfer = old_transfer
+    State_Data.do_secure = old_secure
+    State_Data.do_optimal = old_optimal

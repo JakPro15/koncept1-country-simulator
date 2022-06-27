@@ -768,13 +768,20 @@ class State_Data:
 
         self.government.flush()
 
+    def do_optimal(self, resource: str, amount: int):
+        """
+        Sets government's optimal resource to the given value.
+        """
+        self.government.optimal_resources[resource] = amount
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
-        Format:
-        <command> <arguments>
-        <command> <arguments>
-        and so on
+        Format: [
+            "<command> <arguments> ...",
+            "<command> <arguments> ...",
+            and so on
+        ]
         """
         for line in commands:
             command = line.split(' ')
@@ -785,4 +792,6 @@ class State_Data:
             elif command[0] == "transfer":
                 self.do_transfer(command[1], command[2], int(command[3]))
             elif command[0] == "secure":
-                self.do_transfer(command[1], int(command[2]))
+                self.do_secure(command[1], int(command[2]))
+            elif command[0] == "optimal":
+                self.do_optimal(command[1], int(command[2]))

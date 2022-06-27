@@ -112,7 +112,7 @@ class History:
     def add_history_line(self, command):
         """
         Adds the given command to the history lines. The given command should
-        be a singular command ("next 3" won't work properly).
+        be a singular command (for example "next 3" won't work properly).
         """
         if command == "next":
             if len(self.history_lines) == 0:

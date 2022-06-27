@@ -73,3 +73,24 @@ def secure(args: list[str], interface: Interface):
                   " operation.")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of secure command")
+
+
+def optimal(args: list[str], interface: Interface):
+    """
+    Sets government optimal amount of resource to the given value.
+    """
+    try:
+        assert len(args) == 3
+
+        args[1] = fill_command(args[1], RESOURCES)
+        assert len(args[1]) == 1
+        args[1] = args[1][0]
+
+        try:
+            args[2] = int(args[2])
+        except ValueError:
+            raise AssertionError
+
+        interface.set_govt_optimal(args[1], args[2])
+    except AssertionError:
+        print("Invalid syntax. See help for proper usage of secure command")

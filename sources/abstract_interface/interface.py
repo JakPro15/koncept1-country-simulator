@@ -117,3 +117,15 @@ class Interface:
         self.history.add_history_line(
             f"secure {resource} {amount}"
         )
+
+    def set_govt_optimal(self, resource: str, amount: int):
+        """
+        Sets government's optimal resource to the given value.
+        """
+        assert amount >= 0
+
+        self.state.do_optimal(resource, amount)
+
+        self.history.add_history_line(
+            f"optimal {resource} {amount}"
+        )
