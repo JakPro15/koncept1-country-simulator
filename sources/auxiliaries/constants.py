@@ -2,8 +2,6 @@ from math import inf
 from .arithmetic_dict import Arithmetic_Dict
 
 
-DEBUG_MODE = True
-
 # NAME CONSTANTS
 RESOURCES = [
     "food", "wood", "stone", "iron", "tools", "land"

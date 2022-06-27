@@ -21,7 +21,7 @@ from .cli_game_commands import (
 import os.path
 
 
-def command_line_interface():
+def command_line_interface(debug=False):
     print("Do you want to start a new game, or continue a previous one?")
     print("0 - new game")
     print("1 - load a save file")
@@ -38,7 +38,7 @@ def command_line_interface():
             print("Invalid save name")
             dirname = input("Enter the name of the save: ").strip()
     print("Loading saves/" + dirname)
-    interface = Interface()
+    interface = Interface(debug=debug)
     try:
         interface.load_data(dirname)
     except SaveAccessError:

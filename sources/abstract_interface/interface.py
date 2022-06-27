@@ -1,4 +1,4 @@
-from sources.auxiliaries.constants import CLASS_NAME_TO_INDEX, DEBUG_MODE
+from sources.auxiliaries.constants import CLASS_NAME_TO_INDEX
 from ..state.state_data import State_Data
 from .history import History
 import json
@@ -27,9 +27,10 @@ class Interface:
     state - the State_Data object the interface handles
     history - History of the State_Data object
     """
-    def __init__(self, dirname=None):
+    def __init__(self, dirname=None, debug=False):
         if dirname is not None:
             self.load_data(dirname)
+        self.debug = debug
 
     def load_data(self, dirname):
         """
@@ -51,6 +52,7 @@ class Interface:
 
             self.history = History(starting_state, history_lines)
             self.state.execute_commands(history_lines)
+            self.state.debug = True
         except IOError:
             raise SaveAccessError
         except Exception:
@@ -79,7 +81,7 @@ class Interface:
         """
         Advances the month by one and saves it in history.
         """
-        self.state.do_month(DEBUG_MODE)
+        self.state.do_month()
         self.history.add_history_line("next")
 
     def transfer_resources(self, class_name: str, resource: str, amount: int):
