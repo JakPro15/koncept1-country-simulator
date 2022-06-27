@@ -101,6 +101,7 @@ def help_command(command: str):
         print("        total_resources (tr)")
         print("        prices (pr)")
         print("        modifiers (m)")
+        print("        government (g)")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
         print("Transfers <AMOUNT> of <RESOURCE> from the government to "
@@ -163,7 +164,10 @@ def get_month_string(month_int):
     return f"{month: >9} {year: >3}"
 
 
-def res_to_str(amount):
+def res_to_str(amount: float | int):
+    if isinstance(amount, float):
+        if amount.is_integer():
+            amount = int(amount)
     string = str(amount)
     if len(string) > 6:
         string = str(int(amount))
@@ -411,7 +415,7 @@ def state(args: list[str], interface: Interface):
         assert len(args) in {2, 3}
         assert args[1] in {
             "population", "resources", "prices", "total_resources",
-            "modifiers", "p", "r", "pr", "tr", "m"
+            "modifiers", "government", "p", "r", "pr", "tr", "m", "g"
         }
         if len(args) == 3:
             assert args[2].isdigit()
@@ -469,6 +473,46 @@ def state(args: list[str], interface: Interface):
                   "d - demoted to):")
             for social_class in interface.state.classes:
                 print(get_modifiers_string(social_class))
+        elif args[1] in {"government", "g"}:
+            print("Government overview:")
+            print("Tradeable resources:")
+            print("  Food    Wood   Stone    Iron   Tools    Land")
+            line = ""
+            govt_res = interface.state.government.resources
+            for res in RESOURCES:
+                line += f" {res_to_str(govt_res[res]): ^7}"
+            print(line)
+            print("Secure resources (not to be traded away):")
+            print("  Food    Wood   Stone    Iron   Tools    Land")
+            line = ""
+            govt_res = interface.state.government.secure_resources
+            for res in RESOURCES:
+                line += f" {res_to_str(govt_res[res]): ^7}"
+            print(line)
+            print("Optimal resources (to be purchased first when trading):")
+            print("  Food    Wood   Stone    Iron   Tools    Land")
+            line = ""
+            govt_res = interface.state.government.optimal_resources
+            for res in RESOURCES:
+                line += f" {res_to_str(govt_res[res]): ^7}"
+            print(line)
+            print("Current tax rates:")
+            print(" " * 10 + " Nobles  Artisans Peasants  Others")
+            line = "Personal:"
+            taxes = interface.state.sm.tax_rates['personal']
+            for class_name in CLASSES:
+                line += f"  {res_to_str(taxes[class_name]): ^7}"
+            print(line)
+            line = "Property:"
+            taxes = interface.state.sm.tax_rates['property']
+            for class_name in CLASSES:
+                line += f"  {res_to_str(taxes[class_name]): ^7}"
+            print(line)
+            line = "Income:  "
+            taxes = interface.state.sm.tax_rates['income']
+            for class_name in CLASSES:
+                line += f"  {res_to_str(taxes[class_name]): ^7}"
+            print(line)
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
 
