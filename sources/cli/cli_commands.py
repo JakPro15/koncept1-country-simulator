@@ -34,17 +34,17 @@ def fill_command(string, commands):
 
 def help_default():
     print("List of available commands:")
-    print("help <COMMAND> - shows help about the program's commands")
+    print("help [<COMMAND>] - shows help about the program's commands")
     print("exit - exit the program")
     print("save <DIR> - save the game state")
     print("delete <DIR> - delete the game save")
-    print("next <AMOUNT> - next month")
-    print("history <STAT> <CLASS> <MONTHS> - view the country's history")
+    print("next [<AMOUNT>] - next month")
+    print("history <STAT> [<CLASS>] [<MONTHS>] - view the country's history")
     print("state <STAT> - view the current state of the country")
     print("transfer <TARGET> <RESOURCE> <AMOUNT> - transfers resources between"
           " the government and a social class")
-    print("secure <RESOURCE> <AMOUNT> - makes government resources tradeable "
-          "or not tradeable")
+    print("secure <RESOURCE> [<AMOUNT>] - makes government resources tradeable"
+          " or not tradeable")
 
 
 def help_command(command: str):
@@ -81,7 +81,7 @@ def help_command(command: str):
         print("        resources_change (rc)")
         print("        prices (pr)")
         print("    <CLASS> decides which class' statistics to show - it should"
-              " only be given when <STAT> == resources.")
+              " only be given when <STAT> is resources or resources_change.")
         print("    Valid values:")
         print("        nobles (n)")
         print("        artisans (a)")
@@ -119,10 +119,11 @@ def help_command(command: str):
         print("    tools (t)")
         print("    land (l)")
     elif command == "secure":
-        print("secure <RESOURCE> <AMOUNT>")
+        print("secure <RESOURCE> [<AMOUNT>]")
         print("Makes <AMOUNT> of tradeable <RESOURCE> from the government "
               "untradeable. Negative value of <AMOUNT> signifies making "
-              "untradeable (secured) resources tradeable again.")
+              "untradeable (secured) resources tradeable again. If <AMOUNT> is"
+              " omitted, all of the resource will be made secure.")
         print("Valid values for <RESOURCE>:")
         print("    food (f)")
         print("    wood (w)")

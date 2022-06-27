@@ -1753,6 +1753,116 @@ def test_do_transfer_to_government_demotion():
     }
 
 
+def test_do_secure_make_secure():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 350,
+        "land": 100
+    }
+    state.government = Government(state, resources)
+    assert state.government.resources == resources
+    assert state.government.secure_resources == EMPTY_RESOURCES
+
+    state.do_secure("wood", 80)
+    assert state.government.resources == {
+        "food": 100,
+        "wood": 20,
+        "stone": 100,
+        "iron": 100,
+        "tools": 350,
+        "land": 100
+    }
+    assert state.government.secure_resources == {
+        "food": 0,
+        "wood": 80,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    }
+
+    state.do_secure("tools", 350)
+    assert state.government.resources == {
+        "food": 100,
+        "wood": 20,
+        "stone": 100,
+        "iron": 100,
+        "tools": 0,
+        "land": 100
+    }
+    assert state.government.secure_resources == {
+        "food": 0,
+        "wood": 80,
+        "stone": 0,
+        "iron": 0,
+        "tools": 350,
+        "land": 0
+    }
+
+
+def test_do_secure_make_insecure():
+    state = State_Data()
+    resources = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 350,
+        "land": 100
+    }
+    secure_res = {
+        "food": 100,
+        "wood": 100,
+        "stone": 0,
+        "iron": 100,
+        "tools": 350,
+        "land": 0
+    }
+    state.government = Government(state, resources, secure_res=secure_res)
+    assert state.government.resources == resources
+    assert state.government.secure_resources == secure_res
+
+    state.do_secure("wood", -80)
+    assert state.government.resources == {
+        "food": 100,
+        "wood": 180,
+        "stone": 100,
+        "iron": 100,
+        "tools": 350,
+        "land": 100
+    }
+    assert state.government.secure_resources == {
+        "food": 100,
+        "wood": 20,
+        "stone": 0,
+        "iron": 100,
+        "tools": 350,
+        "land": 0
+    }
+
+    state.do_secure("iron", -100)
+    assert state.government.resources == {
+        "food": 100,
+        "wood": 180,
+        "stone": 100,
+        "iron": 200,
+        "tools": 350,
+        "land": 100
+    }
+    assert state.government.secure_resources == {
+        "food": 100,
+        "wood": 20,
+        "stone": 0,
+        "iron": 0,
+        "tools": 350,
+        "land": 0
+    }
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1

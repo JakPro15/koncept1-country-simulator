@@ -52,16 +52,19 @@ def secure(args: list[str], interface: Interface):
     (secured). Negative amount signifies making a resource tradeable again.
     """
     try:
-        assert len(args) == 3
+        assert len(args) in {2, 3}
 
         args[1] = fill_command(args[1], RESOURCES)
         assert len(args[1]) == 1
         args[1] = args[1][0]
 
-        try:
-            args[2] = int(args[2])
-        except ValueError:
-            raise AssertionError
+        if len(args) == 3:
+            try:
+                args[2] = int(args[2])
+            except ValueError:
+                raise AssertionError
+        else:
+            args.append(None)
 
         try:
             interface.secure_resources(args[1], args[2])

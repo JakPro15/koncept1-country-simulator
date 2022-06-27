@@ -57,7 +57,7 @@ class Government:
             for value in secure_res.values():
                 if value < 0:
                     raise NegativeResourcesError
-            self.optimal_resources = Arithmetic_Dict(secure_res)
+            self._secure_resources = Arithmetic_Dict(secure_res)
 
     @property
     def parent(self):

@@ -1,6 +1,10 @@
-from sources.auxiliaries.constants import EMPTY_RESOURCES
+from pytest import raises
 from sources.state.government import Government
-from ..sources.abstract_interface.interface import Interface
+from ..sources.abstract_interface.interface import (
+    Interface,
+    NotEnoughClassResources,
+    NotEnoughGovtResources
+)
 from ..sources.abstract_interface.history import History
 from ..sources.state.state_data import State_Data
 from ..sources.state.social_classes.nobles import Nobles
@@ -71,8 +75,16 @@ def test_transfer():
         "tools": 300,
         "land": 300,
     }
+    resources2 = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100,
+    }
     state.government = Government(state, resources)
-    nobles = Nobles(state, 100, EMPTY_RESOURCES)
+    nobles = Nobles(state, 100, resources2)
     state._classes = [nobles]
 
     history = History({}, ["next 6"])
@@ -82,6 +94,10 @@ def test_transfer():
     interface.history = history
 
     interface.transfer_resources("nobles", "food", 100)
+    with raises(NotEnoughGovtResources):
+        interface.transfer_resources("nobles", "food", 350)
+    with raises(NotEnoughClassResources):
+        interface.transfer_resources("nobles", "food", -150)
 
     assert state.transfers == [["nobles", "food", 100]]
     assert history.history_lines == [
@@ -90,3 +106,62 @@ def test_transfer():
     ]
 
     State_Data.do_transfer = old_do_transfer
+
+
+def test_secure():
+    def fake_do_secure(self, resource, amount):
+        self.secures.append([resource, amount])
+
+    old_do_secure = State_Data.do_secure
+    State_Data.do_secure = fake_do_secure
+
+    state = State_Data()
+    state.secures = []
+    resources = {
+        "food": 300,
+        "wood": 300,
+        "stone": 300,
+        "iron": 300,
+        "tools": 300,
+        "land": 300,
+    }
+    resources2 = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100,
+    }
+    state.government = Government(state, resources, secure_res=resources2)
+
+    history = History({}, ["next 6"])
+
+    interface = Interface()
+    interface.state = state
+    interface.history = history
+
+    interface.secure_resources("food", 100)
+    with raises(NotEnoughGovtResources):
+        interface.secure_resources("food", 350)
+    with raises(NotEnoughGovtResources):
+        interface.secure_resources("food", -150)
+
+    assert state.secures == [["food", 100]]
+    assert history.history_lines == [
+        "next 6",
+        "secure food 100"
+    ]
+
+    interface.secure_resources("iron", None)
+    assert state.secures == [
+        ["food", 100],
+        ["iron", 300]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "secure food 100",
+        "secure iron 300"
+    ]
+
+    State_Data.do_secure = old_do_secure

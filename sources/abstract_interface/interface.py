@@ -99,12 +99,15 @@ class Interface:
             f"transfer {class_name} {resource} {amount}"
         )
 
-    def secure_resources(self, resource: str, amount: int):
+    def secure_resources(self, resource: str, amount: int | None):
         """
         Makes the given amount of a resource owned by the government
         untradeable (secured). Negative amount signifies making a resource
         tradeable again.
         """
+        if amount is None:
+            amount = self.state.government.new_resources[resource]
+
         if self.state.government.new_resources[resource] < amount or \
            self.state.government.secure_resources[resource] < -amount:
             raise NotEnoughGovtResources
