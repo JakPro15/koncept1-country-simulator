@@ -47,6 +47,8 @@ def help_default():
           " or not tradeable")
     print("optimal <RESOURCE> <AMOUNT> - set government optimal <RESOURCE> to"
           " <AMOUNT>")
+    print("laws view [<LAW>] - view laws of the country")
+    print("laws set <LAW> <VALUE> - set laws of the country")
 
 
 def help_command(command: str):
@@ -149,13 +151,46 @@ def help_command(command: str):
         print("    tools (t)")
         print("    land (l)")
         print("<AMOUNT> must be nonnegative.")
+    elif command == "laws view":
+        print("laws view [<LAW>]")
+        print("Prints the chosen laws' data.")
+        print("    If given, <LAW> specifies what data should be shown. If not"
+              " given, all laws' data is printed.")
+        print("Valid values for <LAW>:")
+        print("    tax_personal")
+        print("    tax_property")
+        print("    tax_income")
+        print("    wages")
+    elif command == "laws set":
+        print("laws set <LAW> [<CLASS>] <VALUE>")
+        print("Changes the chosen <LAW>'s value for the given <CLASS> to the"
+              " given <VALUE>.")
+        print("Valid values for <LAW> and their valid <VALUE>s:")
+        print("    tax_personal - <VALUE> above or equal 0, <CLASS> must be"
+              " given")
+        print("    tax_property - <VALUE> between 0 and 1 (including"
+              " endpoints), <CLASS> must be given")
+        print("    tax_income - <VALUE> between 0 and 1 (including"
+              " endpoints), <CLASS> must be given")
+        print("    wages - <VALUE> between 0 and 1 (including"
+              " endpoints), <CLASS> must not be given")
     else:
         raise InvalidCommand
 
 
-def help(args: list[str], commands):
-    if len(args) > 1:
+def help(args: list[str], commands: set):
+    if len(args) >= 2:
         args[1] = fill_command(args[1], commands)
+        if "laws" in args[1]:
+            if len(args) < 3:
+                args.append("")
+            args[2] = fill_command(args[2], {"view", "set"})
+            if args[2] == []:
+                args[2] = ["view", "set"]
+
+            args[1].remove("laws")
+            for arg in args[2]:
+                args[1].append(f"laws {arg}")
         if len(args[1]) == 0:
             help_default()
         else:

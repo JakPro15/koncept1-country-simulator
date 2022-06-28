@@ -54,6 +54,10 @@ class MathTmFailure(Exception):
     pass
 
 
+class InvalidCommandError(Exception):
+    pass
+
+
 class State_Modifiers:
     """
     Stores the modifiers defining how the State works. Can be changed
@@ -770,12 +774,30 @@ class State_Data:
         """
         self.government.optimal_resources[resource] = amount
 
+    def do_set_law(self, law: str, social_class: str | None, value: float):
+        """
+        Sets the given law to the given value.
+        """
+        try:
+            if law == "tax_personal":
+                self.sm.tax_rates['personal'][social_class] = value
+            elif law == "tax_property":
+                self.sm.tax_rates['property'][social_class] = value
+            elif law == "tax_income":
+                self.sm.tax_rates['income'][social_class] = value
+            elif law == "wages":
+                self.sm.others_wage = value
+            else:
+                raise InvalidCommandError
+        except KeyError:
+            raise InvalidCommandError
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
         Format: [
-            "<command> <arguments> ...",
-            "<command> <arguments> ...",
+            "<command> <argument> <argument>...",
+            "<command> <argument> <argument>...",
             and so on
         ]
         """
@@ -791,3 +813,9 @@ class State_Data:
                 self.do_secure(command[1], int(command[2]))
             elif command[0] == "optimal":
                 self.do_optimal(command[1], int(command[2]))
+            elif command[0] == "laws" and command[1] == "set":
+                if command[3] == "None":
+                    command[3] = None
+                self.do_set_law(command[2], command[3], float(command[4]))
+            else:
+                raise InvalidCommandError

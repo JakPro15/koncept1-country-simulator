@@ -1,6 +1,7 @@
-from sources.auxiliaries.constants import CLASS_NAME_TO_INDEX
+from sources.auxiliaries.constants import CLASS_NAME_TO_INDEX, CLASSES
 from ..state.state_data import State_Data
 from .history import History
+from math import inf
 import json
 
 
@@ -52,7 +53,7 @@ class Interface:
 
             self.history = History(starting_state, history_lines)
             self.state.execute_commands(history_lines)
-            self.state.debug = True
+            self.state.debug = self.debug
         except IOError:
             raise SaveAccessError
         except Exception:
@@ -130,4 +131,26 @@ class Interface:
 
         self.history.add_history_line(
             f"optimal {resource} {amount}"
+        )
+
+    def set_law(self, law: str, social_class: str | None, value: float):
+        """
+        Sets the given law to the given value.
+        """
+        laws = {
+            "tax_personal": ((0, inf), True),
+            "tax_property": ((0, 1), True),
+            "tax_income": ((0, 1), True),
+            "wages": ((0, 1), False)
+        }
+        assert laws[law][0][0] <= value <= laws[law][0][1]
+        if laws[law][1]:
+            assert social_class in CLASSES
+        else:
+            assert social_class is None
+
+        self.state.do_set_law(law, social_class, value)
+
+        self.history.add_history_line(
+            f"laws set {law} {social_class} {value}"
         )

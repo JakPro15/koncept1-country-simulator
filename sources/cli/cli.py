@@ -16,7 +16,8 @@ from .cli_commands import (
 from .cli_game_commands import (
     transfer,
     secure,
-    optimal
+    optimal,
+    laws
 )
 import os.path
 
@@ -51,7 +52,7 @@ def command_line_interface(debug=False):
 
     commands = {
         "help", "save", "exit", "history", "next", "state", "delete",
-        "transfer", "secure", "optimal"
+        "transfer", "secure", "optimal", "laws"
     }
 
     while True:
@@ -89,6 +90,8 @@ def command_line_interface(debug=False):
                     secure(answer, interface)
                 elif answer[0] == "optimal":
                     optimal(answer, interface)
+                elif answer[0] == "laws":
+                    laws(answer, interface)
                 else:
                     print(
                         "Invalid command. Enter help for a list of commands."

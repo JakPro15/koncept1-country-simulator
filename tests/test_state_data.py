@@ -10,6 +10,7 @@ from ..sources.auxiliaries.constants import (
     INBUILT_RESOURCES,
     RESOURCES,
     STARVATION_MORTALITY,
+    TAX_RATES,
     WOOD_CONSUMPTION,
     INCREASE_PRICE_FACTOR
 )
@@ -1909,6 +1910,11 @@ def test_do_optimal():
     assert state.government.optimal_resources == opt_res
 
 
+def test_do_set_law():
+    state = State_Data()
+    assert state.sm.tax_rates["property"] == TAX_RATES["property"]
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
@@ -1922,26 +1928,33 @@ def test_execute_commands():
     def fake_optimal(self, resource, amount):
         self.optimals.append([resource, amount])
 
+    def fake_set_law(self, law, value):
+        self.setlaws.append([law, value])
+
     old_do_month = State_Data.do_month
     old_transfer = State_Data.do_transfer
     old_secure = State_Data.do_secure
     old_optimal = State_Data.do_optimal
+    old_set_law = State_Data.do_set_law
     State_Data.do_month = fake_do_month
     State_Data.do_transfer = fake_transfer
     State_Data.do_secure = fake_secure
     State_Data.do_optimal = fake_optimal
+    State_Data.do_set_law = fake_set_law
 
     state = State_Data()
     state.did_month = 0
     state.transfers = []
     state.secures = []
     state.optimals = []
+    state.setlaws = []
 
     state.execute_commands(["next 2"])
     assert state.did_month == 2
     assert state.transfers == []
     assert state.secures == []
     assert state.optimals == []
+    assert state.setlaws == []
 
     state.execute_commands(["next 100", "transfer nobles food 100"])
     assert state.did_month == 102
@@ -1950,9 +1963,11 @@ def test_execute_commands():
     ]
     assert state.secures == []
     assert state.optimals == []
+    assert state.setlaws == []
 
     state.execute_commands(["next 1", "next 1", "next 2",
-                            "secure food 200"])
+                            "secure food 200",
+                            "laws set tax_property 0.4"])
     assert state.did_month == 106
     assert state.transfers == [
         ["nobles", "food", 100]
@@ -1961,6 +1976,9 @@ def test_execute_commands():
         ["food", 200]
     ]
     assert state.optimals == []
+    assert state.setlaws == [
+        ["tax_property", 0.4]
+    ]
 
     state.execute_commands(["transfer nobles food -100",
                             "transfer artisans land 50",
@@ -1979,8 +1997,13 @@ def test_execute_commands():
     assert state.optimals == [
         ["wood", 1000]
     ]
+    assert state.setlaws == [
+        ["tax_property", 0.4]
+    ]
 
-    state.execute_commands(["optimal iron 0"])
+    state.execute_commands(["optimal iron 0",
+                            "laws set wages 0",
+                            "laws set tax_income 0.9"])
     assert state.did_month == 106
     assert state.transfers == [
         ["nobles", "food", 100],
@@ -1995,8 +2018,14 @@ def test_execute_commands():
         ["wood", 1000],
         ["iron", 0]
     ]
+    assert state.setlaws == [
+        ["tax_property", 0.4],
+        ["wages", 0.0],
+        ["tax_income", 0.9]
+    ]
 
     State_Data.do_month = old_do_month
     State_Data.do_transfer = old_transfer
     State_Data.do_secure = old_secure
     State_Data.do_optimal = old_optimal
+    State_Data.do_set_law = old_set_law
