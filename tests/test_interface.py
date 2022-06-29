@@ -219,3 +219,61 @@ def test_optimal():
     ]
 
     State_Data.do_optimal = old_do_optimal
+
+
+def test_set_law():
+    def fake_do_set_law(self, resource, social_class, amount):
+        self.setlaws.append([resource, social_class, amount])
+
+    old_do_set_law = State_Data.do_set_law
+    State_Data.do_set_law = fake_do_set_law
+
+    state = State_Data()
+    state.setlaws = []
+    state.government = Government(state)
+
+    history = History({}, ["next 6"])
+
+    interface = Interface()
+    interface.state = state
+    interface.history = history
+
+    interface.set_law("tax_personal", "nobles", 100)
+    with raises(AssertionError):
+        interface.set_law("tax_property", "nobles", 2)
+    with raises(AssertionError):
+        interface.set_law("tax_income", "nobles", -0.1)
+    with raises(AssertionError):
+        interface.set_law("wages", None, 1.2)
+
+    assert state.setlaws == [["tax_personal", "nobles", 100]]
+    assert history.history_lines == [
+        "next 6",
+        "laws set tax_personal nobles 100"
+    ]
+
+    interface.set_law("wages", None, 0.99)
+    assert state.setlaws == [
+        ["tax_personal", "nobles", 100],
+        ["wages", None, 0.99]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "laws set tax_personal nobles 100",
+        "laws set wages None 0.99"
+    ]
+
+    interface.set_law("tax_income", "artisans", 0.01)
+    assert state.setlaws == [
+        ["tax_personal", "nobles", 100],
+        ["wages", None, 0.99],
+        ["tax_income", "artisans", 0.01]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "laws set tax_personal nobles 100",
+        "laws set wages None 0.99",
+        "laws set tax_income artisans 0.01"
+    ]
+
+    State_Data.do_set_law = old_do_set_law

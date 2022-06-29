@@ -175,7 +175,7 @@ def laws(args: list[str], interface: Interface):
                 interface.set_law(args[2], args[3], args[4])
             else:
                 assert len(args) == 4
-                interface.set_law(args[2], None, args[4])
+                interface.set_law(args[2], None, args[3])
         else:
             raise AssertionError
     except AssertionError:
