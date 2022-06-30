@@ -1932,6 +1932,246 @@ def test_do_set_law():
     assert state.sm.others_minimum_wage == 0.4
 
 
+def test_set_wages_and_employers():
+    class Fake_Class_6:
+        def __init__(self, resources, wage=None):
+            self.real_resources = resources
+            if wage:
+                self.wage = wage
+
+    res_land = {"land": 1}
+    res_no_land = {"land": 0}
+    state = State_Data()
+    state.sm.others_minimum_wage = 0.15
+    classes = [
+        Fake_Class_6(res_land, 0.8),
+        Fake_Class_6(res_no_land),
+        Fake_Class_6(res_land, 0.1),
+        Fake_Class_6(res_land),
+        Fake_Class_6(res_no_land, 0.2),
+    ]
+    state._classes = classes.copy()
+
+    govt = Fake_Class_6(res_land, 0.5)
+    state._government = govt
+
+    employers = state._set_wages_and_employers()
+    assert employers == [
+        classes[0],
+        classes[2],
+        classes[3],
+        govt
+    ]
+    assert classes[0].wage == 0.8
+    assert not hasattr(classes[1], "wage")
+    assert classes[2].wage == 0.15
+    assert classes[3].wage == 0.15
+    assert classes[4].wage == 0.2
+    assert govt.wage == 0.5
+
+
+def test_get_ratios():
+    dicti = Arithmetic_Dict({
+        "a": 3,
+        "b": 3,
+        "c": 3,
+        "d": 1
+    })
+    result = State_Data._get_ratios(dicti)
+    assert result == dicti / 10
+
+    del dicti["c"]
+    result = State_Data._get_ratios(dicti)
+    assert result == dicti / 7
+
+    dicti["nobles"] = 93
+    result = State_Data._get_ratios(dicti)
+    assert result == dicti / 100
+
+    dicti = Arithmetic_Dict({
+        "a": 0,
+        "b": 0,
+        "c": 0
+    })
+    result = State_Data._get_ratios(dicti)
+    assert result == dicti
+
+
+def test_get_tools_used():
+    state = State_Data()
+    state.sm.peasant_tool_usage = 0.5
+    state.sm.miner_tool_usage = 1.5
+    employees = {
+        "food": 20,
+        "wood": 30,
+        "stone": 40,
+        "iron": 60
+    }
+    assert state._get_tools_used(employees) == 175
+
+    state.sm.peasant_tool_usage = 1
+    state.sm.miner_tool_usage = 3
+    employees = {
+        "food": 2.5,
+        "wood": 3.5,
+        "stone": 4.5,
+        "iron": 6.5
+    }
+    assert state._get_tools_used(employees) == 39
+
+
+def test_add_employees():
+    class Empty_Class:
+        pass
+
+    employers = [
+        Empty_Class(),
+        Empty_Class(),
+        Empty_Class()
+    ]
+    employees = {
+        employers[0]: 20,
+        employers[1]: 30,
+        employers[2]: 65,
+    }
+    State_Data._add_employees(employees)
+
+    assert employers[0].employees == 20
+    assert employers[1].employees == 30
+    assert employers[2].employees == 65
+
+    employers.append(Empty_Class())
+    employees = {
+        employers[0]: 20,
+        employers[1]: 5,
+        employers[2]: 15,
+        employers[3]: 40
+    }
+    State_Data._add_employees(employees)
+
+    assert employers[0].employees == 40
+    assert employers[1].employees == 35
+    assert employers[2].employees == 80
+    assert employers[3].employees == 40
+
+
+class Employer_Class:
+    def __init__(self, wage, max_emps):
+        self.wage = wage
+        self.max_employees = max_emps
+
+
+def test_employers_employees_no_max():
+    employers = [
+        Employer_Class(2, 500),
+        Employer_Class(5, 500),
+        Employer_Class(3, 500)
+    ]
+    employees = 400
+    State_Data._set_employers_employees(employers, employees)
+
+    assert employers[0].employees == 80
+    assert employers[1].employees == 200
+    assert employers[2].employees == 120
+
+    employers = [
+        Employer_Class(2, 500),
+        Employer_Class(5, 500)
+    ]
+    employees = 700
+    State_Data._set_employers_employees(employers, employees)
+
+    assert employers[0].employees == 200
+    assert employers[1].employees == 500
+
+
+def test_employers_employees_with_max():
+    employers = [
+        Employer_Class(2, 50),
+        Employer_Class(5, 500),
+        Employer_Class(3, 500)
+    ]
+    employees = 850
+    State_Data._set_employers_employees(employers, employees)
+
+    assert employers[0].employees == 50
+    assert employers[1].employees == 500
+    assert employers[2].employees == 300
+
+    employers = [
+        Employer_Class(2, 50),
+        Employer_Class(5, 600),
+        Employer_Class(3, 250),
+        Employer_Class(0, 500)
+    ]
+    employees = 850
+    State_Data._set_employers_employees(employers, employees)
+
+    assert employers[0].employees == 50
+    assert employers[1].employees == 550
+    assert employers[2].employees == 250
+    assert employers[3].employees == 0
+
+
+def test_employers_employees_not_all_employed():
+    employers = [
+        Employer_Class(2, 50),
+        Employer_Class(5, 100),
+        Employer_Class(3, 150)
+    ]
+    employees = 850
+    State_Data._set_employers_employees(employers, employees)
+
+    assert employers[0].employees == 50
+    assert employers[1].employees == 100
+    assert employers[2].employees == 150
+
+    employers = [
+        Employer_Class(0, 50),
+        Employer_Class(0, 600),
+        Employer_Class(0, 250),
+        Employer_Class(0, 500)
+    ]
+    employees = 850
+    State_Data._set_employers_employees(employers, employees)
+
+    assert employers[0].employees == 0
+    assert employers[1].employees == 0
+    assert employers[2].employees == 0
+    assert employers[3].employees == 0
+
+
+class Employer_Class_2:
+    def __init__(self, employees):
+        self.employees = employees
+
+
+def test_employees_to_profit():
+    employers = [
+        Employer_Class_2(50),
+        Employer_Class_2(150),
+        Employer_Class_2(500),
+        Employer_Class_2(300)
+    ]
+    State_Data._employees_to_profit(employers)
+
+    assert employers[0].profit_share == 0.05
+    assert employers[1].profit_share == 0.15
+    assert employers[2].profit_share == 0.5
+    assert employers[3].profit_share == 0.3
+
+    employers = [
+        Employer_Class_2(50),
+        Employer_Class_2(150),
+        Employer_Class_2(50)
+    ]
+    State_Data._employees_to_profit(employers)
+
+    assert employers[0].profit_share == 0.2
+    assert employers[1].profit_share == 0.6
+    assert employers[2].profit_share == 0.2
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
