@@ -141,7 +141,8 @@ class Interface:
             "tax_personal": ((0, inf), True),
             "tax_property": ((0, 1), True),
             "tax_income": ((0, 1), True),
-            "wages": ((0, 1), False)
+            "wage_minimum": ((0, 1), False),
+            "wage_government": ((0, 1), False)
         }
         assert laws[law][0][0] <= value <= laws[law][0][1]
         if laws[law][1]:

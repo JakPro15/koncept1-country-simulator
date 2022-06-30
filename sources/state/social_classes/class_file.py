@@ -44,6 +44,7 @@ class Class:
                            no resources
     net_worth - monetary worth of the class' resources, based on the current
                 prices in parent
+    max_employees - how many employees can the class employ
     """
     def __init__(self, parent, population: int,
                  resources: dict = None):
@@ -202,6 +203,15 @@ class Class:
             for res, amount
             in self.real_resources.items()
         ])
+
+    @property
+    def max_employees(self):
+        land_owned = self.resources["land"] + \
+            INBUILT_RESOURCES[self.class_name]["land"] * self.population
+        return min(
+            self.resources["tools"] / 3,
+            land_owned / self.parent.sm.worker_land_usage,
+        )
 
     def grow_population(self, modifier: float):
         """

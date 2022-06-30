@@ -17,7 +17,7 @@ from ..auxiliaries.constants import (
     WOOD_CONSUMPTION,
     IRON_PRODUCTION,
     STONE_PRODUCTION,
-    OTHERS_WAGE,
+    OTHERS_MINIMUM_WAGE,
     ARTISAN_IRON_USAGE,
     ARTISAN_TOOL_USAGE,
     ARTISAN_WOOD_USAGE,
@@ -70,7 +70,7 @@ class State_Modifiers:
         self.miner_tool_usage = MINER_TOOL_USAGE
         self.iron_production = IRON_PRODUCTION
         self.stone_production = STONE_PRODUCTION
-        self.others_wage = OTHERS_WAGE
+        self.others_minimum_wage = OTHERS_MINIMUM_WAGE
 
         self.artisan_wood_usage = ARTISAN_WOOD_USAGE
         self.artisan_iron_usage = ARTISAN_IRON_USAGE
@@ -785,12 +785,148 @@ class State_Data:
                 self.sm.tax_rates['property'][social_class] = value
             elif law == "tax_income":
                 self.sm.tax_rates['income'][social_class] = value
-            elif law == "wages":
-                self.sm.others_wage = value
+            elif law == "wage_minimum":
+                self.sm.others_minimum_wage = value
+            elif law == "wage_government":
+                self.government.wage = value
             else:
                 raise InvalidCommandError
         except KeyError:
             raise InvalidCommandError
+
+    @staticmethod
+    def _get_ratios(dictionary):
+        """
+        Returns a dict of ratios:
+            key: value / sum of values.
+        """
+        total = sum(dictionary.values())
+        if total != 0:
+            ratios = dictionary / total
+        else:
+            ratios = Arithmetic_Dict({
+                key: 0
+                for key
+                in dictionary
+            })
+        return ratios
+
+    def _get_tools_used(self, employees: dict):
+        """
+        Returns the amount of tools that will be used in production this month.
+        """
+        peasant_tools_used = self.sm.peasant_tool_usage * \
+            (employees["food"] + employees["wood"])
+        miner_tools_used = self.sm.miner_tool_usage * \
+            (employees["stone"] + employees["iron"])
+
+        return peasant_tools_used + miner_tools_used
+
+    def _add_employees(employers_classes: dict, employees: dict):
+        """
+        Adds the given employees numbers to the given employers classes.
+        """
+        for employer in employers_classes:
+            if hasattr(employer, "employees"):
+                employer.employees += employees[employer]
+            else:
+                employer.employees = employees[employer]
+
+    def _set_employers_ratios(self, employers_classes: dict, employees: int):
+        """
+        Decides what part of produced and used resources will each employer
+        class be given.
+        """
+        total_employees = employees
+        wages = {social_class: social_class.wage
+                 for social_class
+                 in employers_classes}
+        ratios = State_Data._get_ratios(wages)
+        self._add_employees(ratios * employees)
+
+        checked = 0
+        while checked < len(employers_classes):
+            checked = 0
+            for social_class in employers_classes:
+                if social_class.employees > social_class.max_employees:
+                    employees = \
+                        social_class.employees - social_class.max_employees
+                    social_class.employees = social_class.max_employees
+                    del wages[social_class]
+                    ratios = self._get_ratios(wages)
+                    self._add_employees(ratios * employees)
+                else:
+                    checked += 1
+
+        for employer in employers_classes:
+            employer.profit_share = employer.employees / total_employees
+            del employer.employees
+
+    def _employ(self):
+        """
+        Executes employable classes' production.
+        """
+        employers_classes = []
+        for social_class in self.classes:
+            if social_class.real_resources["land"] > 0:
+                employers_classes.append(social_class)
+                if not hasattr(social_class, "wage"):
+                    social_class.wage = self.sm.others_minimum_wage
+                else:
+                    social_class.wage = max(
+                        social_class.wage, self.sm.others_minimum_wage
+                    )
+        if self.government.real_resources["land"] > 0:
+            employers_classes.append(self.government)
+            self.government.wage = max(
+                self.government.wage, self.sm.others_minimum_wage
+            )
+
+        employees_classes = []
+        employees = 0
+        for social_class in self.classes:
+            if social_class.employable > 0:
+                employees_classes.append(social_class)
+                employees += social_class.population
+        for social_class in employees_classes:
+            social_class.wage_share = social_class.population / employees
+
+        max_employees = sum([social_class.max_employees
+                             for social_class
+                             in employers_classes])
+        if max_employees > employees:
+            employees = max_employees
+
+        raw_prices = self.prices / DEFAULT_PRICES
+        del raw_prices["tools"]
+        del raw_prices["land"]
+        ratioed_employees = State_Data._get_ratios(raw_prices) * employees
+
+        per_capita = Arithmetic_Dict({
+            "food": self.parent.sm.food_production[self._parent.month],
+            "wood": self.parent.sm.wood_production,
+            "stone": self.parent.sm.stone_production,
+            "iron": self.parent.sm.iron_production
+        })
+
+        produced = per_capita * ratioed_employees
+        employers_share = EMPTY_RESOURCES.copy()
+        used = EMPTY_RESOURCES.copy()
+        used["tools"] = self._get_tools_used(ratioed_employees)
+
+        self._set_employers_ratios()
+        for employer in employers_classes:
+            share = produced * employer.profit_share * (1 - employer.wage)
+            employer.new_resources += share
+            employers_share += share
+            employer.new_resources -= used * employer.profit_share
+            produced -= \
+                produced * employer.profit_share * (1 - employer.wage)
+            del employer.profit_share
+
+        produced -= employers_share
+        for employee in employees_classes:
+            employee.new_resources += produced * employee.wage_share
 
     def execute_commands(self, commands: list[str]):
         """

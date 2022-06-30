@@ -101,6 +101,7 @@ def print_law(law: str, interface: Interface):
     """
     line = ""
     if law == "tax_personal":
+        print("tax_personal")
         print("Personal tax (monetary value taken each month from each"
               " person in the class):")
         print(" Nobles  Artisans Peasants  Others")
@@ -109,6 +110,7 @@ def print_law(law: str, interface: Interface):
             line += f" {res_to_str(taxes[class_name]): ^8}"
         print(line)
     elif law == "tax_property":
+        print("tax_property")
         print("Property tax rate (what part of the class' total resources will"
               " be taken each month):")
         print(" Nobles  Artisans Peasants  Others")
@@ -117,6 +119,7 @@ def print_law(law: str, interface: Interface):
             line += f" {res_to_str(taxes[class_name]): ^8}"
         print(line)
     elif law == "tax_income":
+        print("tax_income")
         print("Income tax rate (what part of the class' profits earned this"
               " month will be taken each month):")
         print(" Nobles  Artisans Peasants  Others")
@@ -124,10 +127,17 @@ def print_law(law: str, interface: Interface):
         for class_name in CLASSES:
             line += f" {res_to_str(taxes[class_name]): ^8}"
         print(line)
-    elif law == "wages":
-        print("Others' wages (what part of others' produced resources is "
+    elif law == "wage_minimum":
+        print("wage_minimum")
+        print("Minimum wages (what part of employees' produced resources is "
               "actually given to them; the employers take the rest):")
-        print(f"{interface.state.sm.others_wage}")
+        print(f"{interface.state.sm.others_minimum_wage}")
+    elif law == "wage_government":
+        print("wage_government")
+        print("Wages for government employees (what part of employees' "
+              "produced resources is actually given to them; the employers"
+              " take the rest):")
+        print(f"{interface.state.government.wage}")
     else:
         raise InvalidCommand
 
@@ -143,7 +153,8 @@ def laws(args: list[str], interface: Interface):
         args[1] = args[1][0]
 
         laws = {
-            "tax_personal", "tax_property", "tax_income", "wages"
+            "tax_personal", "tax_property", "tax_income", "wage_minimum",
+            "wage_government"
         }
 
         if args[1] == "view":

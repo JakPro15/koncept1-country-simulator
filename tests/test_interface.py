@@ -244,7 +244,7 @@ def test_set_law():
     with raises(AssertionError):
         interface.set_law("tax_income", "nobles", -0.1)
     with raises(AssertionError):
-        interface.set_law("wages", None, 1.2)
+        interface.set_law("wage_minimum", None, 1.2)
 
     assert state.setlaws == [["tax_personal", "nobles", 100]]
     assert history.history_lines == [
@@ -252,27 +252,27 @@ def test_set_law():
         "laws set tax_personal nobles 100"
     ]
 
-    interface.set_law("wages", None, 0.99)
+    interface.set_law("wage_minimum", None, 0.99)
     assert state.setlaws == [
         ["tax_personal", "nobles", 100],
-        ["wages", None, 0.99]
+        ["wage_minimum", None, 0.99]
     ]
     assert history.history_lines == [
         "next 6",
         "laws set tax_personal nobles 100",
-        "laws set wages None 0.99"
+        "laws set wage_minimum None 0.99"
     ]
 
     interface.set_law("tax_income", "artisans", 0.01)
     assert state.setlaws == [
         ["tax_personal", "nobles", 100],
-        ["wages", None, 0.99],
+        ["wage_minimum", None, 0.99],
         ["tax_income", "artisans", 0.01]
     ]
     assert history.history_lines == [
         "next 6",
         "laws set tax_personal nobles 100",
-        "laws set wages None 0.99",
+        "laws set wage_minimum None 0.99",
         "laws set tax_income artisans 0.01"
     ]
 

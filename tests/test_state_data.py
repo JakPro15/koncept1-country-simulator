@@ -8,7 +8,7 @@ from ..sources.auxiliaries.constants import (
     FOOD_CONSUMPTION,
     FREEZING_MORTALITY,
     INBUILT_RESOURCES,
-    OTHERS_WAGE,
+    OTHERS_MINIMUM_WAGE,
     RESOURCES,
     STARVATION_MORTALITY,
     TAX_RATES,
@@ -1927,9 +1927,9 @@ def test_do_set_law():
     state.do_set_law("tax_income", "others", 0)
     assert state.sm.tax_rates["income"]["others"] == 0.0
 
-    assert state.sm.others_wage == OTHERS_WAGE
-    state.do_set_law("wages", None, 0.4)
-    assert state.sm.others_wage == 0.4
+    assert state.sm.others_minimum_wage == OTHERS_MINIMUM_WAGE
+    state.do_set_law("wage_minimum", None, 0.4)
+    assert state.sm.others_minimum_wage == 0.4
 
 
 def test_execute_commands():
@@ -2019,7 +2019,7 @@ def test_execute_commands():
     ]
 
     state.execute_commands(["optimal iron 0",
-                            "laws set wages None 0",
+                            "laws set wage_minimum None 0",
                             "laws set tax_income peasants 0.9"])
     assert state.did_month == 106
     assert state.transfers == [
@@ -2037,7 +2037,7 @@ def test_execute_commands():
     ]
     assert state.setlaws == [
         ["tax_property", "nobles", 0.4],
-        ["wages", None, 0.0],
+        ["wage_minimum", None, 0.0],
         ["tax_income", "peasants", 0.9]
     ]
 
