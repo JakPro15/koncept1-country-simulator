@@ -1,7 +1,8 @@
 from ..auxiliaries.constants import (
     CLASS_NAME_TO_INDEX,
     DEFAULT_PRICES,
-    EMPTY_RESOURCES
+    EMPTY_RESOURCES,
+    WAGE_CHANGE
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -43,7 +44,7 @@ class _State_Data_Employment_and_Commands:
         employees_classes = []
         employees = 0
         for social_class in self.classes:
-            if social_class.employable > 0:
+            if social_class.employable:
                 employees_classes.append(social_class)
                 employees += social_class.population
         for social_class in employees_classes:
@@ -52,7 +53,7 @@ class _State_Data_Employment_and_Commands:
         max_employees = sum([social_class.max_employees
                              for social_class
                              in employers_classes])
-        if max_employees > employees:
+        if max_employees < employees:
             employees = max_employees
 
         return employees_classes, employees
@@ -96,6 +97,24 @@ class _State_Data_Employment_and_Commands:
                 employer.employees += value
             else:
                 employer.employees = value
+
+    def _get_produced_and_used(self, ratioed_employees):
+        """
+        Calculates how much resources will be produced and used as a result of
+        this month's employment.
+        """
+        per_capita = Arithmetic_Dict({
+            "food": self.sm.food_production[self.month],
+            "wood": self.sm.wood_production,
+            "stone": self.sm.stone_production,
+            "iron": self.sm.iron_production
+        })
+
+        produced = per_capita * ratioed_employees
+        used = EMPTY_RESOURCES.copy()
+        used["tools"] = self._get_tools_used(ratioed_employees)
+
+        return produced, used
 
     @staticmethod
     def _set_employers_employees(employers_classes: list[Class],
@@ -162,8 +181,6 @@ class _State_Data_Employment_and_Commands:
             employer.new_resources += share
             employers_share += share
             employer.new_resources -= used * employer.profit_share
-            produced -= \
-                produced * employer.profit_share * (1 - employer.wage)
             del employer.profit_share
 
         produced -= employers_share
@@ -177,10 +194,10 @@ class _State_Data_Employment_and_Commands:
         """
         for employer in employers_classes:
             if employer.increase_wage:
-                employer.wage += 0.05
+                employer.wage += WAGE_CHANGE
                 employer.wage = min(employer.wage, 1)
             else:
-                employer.wage -= 0.05
+                employer.wage -= WAGE_CHANGE
                 employer.wage = max(employer.wage, 0)
 
     def _employ(self):
@@ -196,25 +213,17 @@ class _State_Data_Employment_and_Commands:
         raw_prices = self.prices / DEFAULT_PRICES
         del raw_prices["tools"]
         del raw_prices["land"]
+
         ratioed_employees = _State_Data_Employment_and_Commands._get_ratios(
             raw_prices) * employees
 
-        per_capita = Arithmetic_Dict({
-            "food": self.parent.sm.food_production[self._parent.month],
-            "wood": self.parent.sm.wood_production,
-            "stone": self.parent.sm.stone_production,
-            "iron": self.parent.sm.iron_production
-        })
-
-        produced = per_capita * ratioed_employees
-        used = EMPTY_RESOURCES.copy()
-        used["tools"] = self._get_tools_used(ratioed_employees)
+        produced, used = self._get_produced_and_used(ratioed_employees)
 
         _State_Data_Employment_and_Commands._set_employers_employees(
             employers_classes, employees
         )
         _State_Data_Employment_and_Commands._employees_to_profit(
-            employers_classes, employees
+            employers_classes
         )
 
         _State_Data_Employment_and_Commands._distribute_produced_and_used(

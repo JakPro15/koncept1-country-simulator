@@ -18,7 +18,11 @@ class Government:
     Properties:
     parent - state this government is part of
     resources - dictionary containing info on the resources the govt owns
+    new_resources - temporary resources owned by the govt
+    secure_resources - govt's resources declared to be untradeable
+    real_resources - how much resources in total the govt owns
     optimal_resources - how much resources the govt wants to own
+    max_employees - how many employees can the govt employ
     """
     def __init__(self, parent, res: dict = None, optimal_res: dict = None,
                  secure_res: dict = None):
@@ -107,6 +111,14 @@ class Government:
     @property
     def real_resources(self):
         return self.resources + self.secure_resources
+
+    @property
+    def max_employees(self):
+        land_owned = self.resources["land"]
+        return min(
+            self.resources["tools"] / 3,
+            land_owned / self.parent.sm.worker_land_usage,
+        )
 
     def to_dict(self):
         """

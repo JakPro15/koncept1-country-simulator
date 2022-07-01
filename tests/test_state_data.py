@@ -12,6 +12,7 @@ from ..sources.auxiliaries.constants import (
     RESOURCES,
     STARVATION_MORTALITY,
     TAX_RATES,
+    WAGE_CHANGE,
     WOOD_CONSUMPTION,
     INCREASE_PRICE_FACTOR
 )
@@ -24,15 +25,6 @@ def test_constructor():
     state = State_Data("August", 3)
     assert state.month == "August"
     assert state.year == 3
-    assert state.payments == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
-    assert isinstance(state.payments, Arithmetic_Dict)
     assert state.prices == DEFAULT_PRICES
     assert state.prices is not DEFAULT_PRICES
 
@@ -41,15 +33,6 @@ def test_default_constructor():
     state = State_Data()
     assert state.month == "January"
     assert state.year == 0
-    assert state.payments == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
-    assert isinstance(state.payments, Arithmetic_Dict)
     assert state.prices == DEFAULT_PRICES
     assert state.prices is not DEFAULT_PRICES
 
@@ -778,32 +761,6 @@ def test_do_starvation():
     assert state.classes[3].population == 50
     assert not state.classes[3].starving
     assert state.classes[3].freezing
-
-
-def test_do_payments():
-    state = State_Data()
-
-    nobles = Nobles(state, 20)
-    artisans = Artisans(state, 30)
-    peasants = Peasants(state, 40)
-    others = Others(state, 50)
-
-    classes = [nobles, artisans, peasants, others]
-    state.classes = classes
-    payments = {
-        "food": 1,
-        "wood": 2,
-        "stone": 3,
-        "iron": 4,
-        "tools": 5,
-        "land": 0
-    }
-    state.payments += payments
-    state._do_payments()
-
-    assert state.payments == EMPTY_RESOURCES
-    assert others.new_resources == payments
-    assert others.resources == EMPTY_RESOURCES
 
 
 class Fake_Class_3:
@@ -1970,6 +1927,86 @@ def test_set_wages_and_employers():
     assert govt.wage == 0.5
 
 
+def test_set_wage_shares_and_employees_no_employer_max():
+    class Employer:
+        def __init__(self, max_employees):
+            self.max_employees = max_employees
+            self.employable = False
+
+    class Employee:
+        def __init__(self, population):
+            self.population = population
+            self.employable = True
+
+    employers = [
+        Employer(200),
+        Employer(50),
+        Employer(80),
+        Employer(100),
+    ]
+
+    classes = [
+        employers[2],
+        Employee(150),
+        Employee(40),
+        employers[0],
+        Employee(100)
+    ]
+    state = State_Data()
+    state._classes = classes
+
+    employees_classes, employees = state._set_employees_and_wage_shares(
+        employers
+    )
+    assert employees_classes == [
+        classes[1], classes[2], classes[4]
+    ]
+    assert employees == 290
+    assert classes[1].wage_share == 150 / 290
+    assert classes[2].wage_share == 40 / 290
+    assert classes[4].wage_share == 100 / 290
+
+
+def test_set_wage_shares_and_employees_with_employer_max():
+    class Employer:
+        def __init__(self, max_employees):
+            self.max_employees = max_employees
+            self.employable = False
+
+    class Employee:
+        def __init__(self, population):
+            self.population = population
+            self.employable = True
+
+    employers = [
+        Employer(20),
+        Employer(5),
+        Employer(8),
+        Employer(10),
+    ]
+
+    classes = [
+        employers[2],
+        Employee(150),
+        Employee(40),
+        employers[0],
+        Employee(100)
+    ]
+    state = State_Data()
+    state._classes = classes
+
+    employees_classes, employees = state._set_employees_and_wage_shares(
+        employers
+    )
+    assert employees_classes == [
+        classes[1], classes[2], classes[4]
+    ]
+    assert employees == 43
+    assert classes[1].wage_share == 150 / 290
+    assert classes[2].wage_share == 40 / 290
+    assert classes[4].wage_share == 100 / 290
+
+
 def test_get_ratios():
     dicti = Arithmetic_Dict({
         "a": 3,
@@ -2061,7 +2098,7 @@ class Employer_Class:
         self.max_employees = max_emps
 
 
-def test_employers_employees_no_max():
+def test_set_employers_employees_no_max():
     employers = [
         Employer_Class(2, 500),
         Employer_Class(5, 500),
@@ -2085,7 +2122,7 @@ def test_employers_employees_no_max():
     assert employers[1].employees == 500
 
 
-def test_employers_employees_with_max():
+def test_set_employers_employees_with_max():
     employers = [
         Employer_Class(2, 50),
         Employer_Class(5, 500),
@@ -2113,7 +2150,38 @@ def test_employers_employees_with_max():
     assert employers[3].employees == 0
 
 
-def test_employers_employees_not_all_employed():
+def test_get_produced_and_used():
+    ratioed_employees = {
+        "food": 20,
+        "wood": 40,
+        "stone": 10,
+        "iron": 30,
+    }
+
+    state = State_Data("June")
+    food_production = state.sm.food_production["June"]
+    state.sm.wood_production = 2
+    state.sm.stone_production = 1.2
+    state.sm.iron_production = 1.5
+
+    produced, used = state._get_produced_and_used(ratioed_employees)
+    assert produced == {
+        "food": food_production * 20,
+        "wood": 80,
+        "stone": 12,
+        "iron": 45
+    }
+    assert used == {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": state._get_tools_used(ratioed_employees),
+        "land": 0
+    }
+
+
+def test_set_employers_employees_not_all_employed():
     employers = [
         Employer_Class(2, 50),
         Employer_Class(5, 100),
@@ -2170,6 +2238,116 @@ def test_employees_to_profit():
     assert employers[0].profit_share == 0.2
     assert employers[1].profit_share == 0.6
     assert employers[2].profit_share == 0.2
+
+
+def test_distribute_produced_and_used():
+    class Employer:
+        def __init__(self, wage, profit_share, new_resources):
+            self.wage = wage
+            self.profit_share = profit_share
+            self.new_resources = new_resources.copy()
+
+    class Employee:
+        def __init__(self, wage_share, new_resources):
+            self.wage_share = wage_share
+            self.new_resources = new_resources.copy()
+
+    resources = Arithmetic_Dict({
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100
+    })
+    employers = [
+        Employer(0.2, 0.3, resources),
+        Employer(0.3, 0.2, EMPTY_RESOURCES),
+        Employer(0.5, 0.5, resources)
+    ]
+    employees = [
+        Employee(0.4, resources),
+        Employee(0.6, EMPTY_RESOURCES)
+    ]
+    produced = Arithmetic_Dict({
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100
+    })
+    used = Arithmetic_Dict({
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 10,
+        "land": 0
+    })
+    State_Data._distribute_produced_and_used(employers, employees,
+                                             produced, used)
+    assert employers[0].new_resources == {
+        "food": 124,
+        "wood": 124,
+        "stone": 124,
+        "iron": 124,
+        "tools": 97,
+        "land": 100
+    }
+    assert employers[1].new_resources == {
+        "food": 14,
+        "wood": 14,
+        "stone": 14,
+        "iron": 14,
+        "tools": -2,
+        "land": 0
+    }
+    assert employers[2].new_resources == {
+        "food": 125,
+        "wood": 125,
+        "stone": 125,
+        "iron": 125,
+        "tools": 95,
+        "land": 100
+    }
+    assert employees[0].new_resources == {
+        "food": 114.8,
+        "wood": 114.8,
+        "stone": 114.8,
+        "iron": 114.8,
+        "tools": 100,
+        "land": 100
+    }
+    assert employees[1].new_resources == {
+        "food": 22.2,
+        "wood": 22.2,
+        "stone": 22.2,
+        "iron": 22.2,
+        "tools": 0,
+        "land": 0
+    }
+
+
+def test_set_new_wages():
+    class Employer:
+        def __init__(self, wage, increase_wage):
+            self.wage = wage
+            self.increase_wage = increase_wage
+
+    employers = [
+        Employer(0.5, True),
+        Employer(1 - WAGE_CHANGE, True),
+        Employer(0.5, False),
+        Employer(WAGE_CHANGE, False),
+        Employer(WAGE_CHANGE / 2, False),
+        Employer(1 - WAGE_CHANGE / 2, True),
+    ]
+    State_Data._set_new_wages(employers)
+    assert employers[0].wage == 0.5 + WAGE_CHANGE
+    assert employers[1].wage == 1
+    assert employers[2].wage == 0.5 - WAGE_CHANGE
+    assert employers[3].wage == 0
+    assert employers[4].wage == 0
+    assert employers[5].wage == 1
 
 
 def test_execute_commands():

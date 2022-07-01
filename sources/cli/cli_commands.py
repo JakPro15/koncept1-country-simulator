@@ -488,7 +488,7 @@ def state(args: list[str], interface: Interface):
         elif args[1] in {"resources", "r"}:
             data = {
                 social_class.class_name: History.round_dict_values(
-                    social_class.resources, 1
+                    social_class.real_resources, 1
                 )
                 for social_class
                 in interface.state.classes
@@ -518,7 +518,8 @@ def state(args: list[str], interface: Interface):
         elif args[1] in {"total_resources", "tr"}:
             data = EMPTY_RESOURCES.copy()
             for social_class in interface.state.classes:
-                data += social_class.resources
+                data += social_class.real_resources
+            data += interface.state.government.real_resources
             print("Current total resources:")
             for resource, value in data.items():
                 print(f"{resource: >5}: {res_to_str(value)}")

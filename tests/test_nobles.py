@@ -338,14 +338,6 @@ class Fake_State_Data(State_Data):
     ):
         self._month = month
         self.available_employees = available_employees
-        self.payments = Arithmetic_Dict({
-            "food": 0,
-            "wood": 0,
-            "iron": 0,
-            "stone": 0,
-            "tools": 0,
-            "land": 0
-        })
         self.prices = Arithmetic_Dict(prices.copy())
         self.sm = State_Modifiers(self)
 

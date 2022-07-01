@@ -55,6 +55,7 @@ MINER_TOOL_USAGE = 0.3
 IRON_PRODUCTION = 1
 STONE_PRODUCTION = 1
 OTHERS_MINIMUM_WAGE = 0.5
+WAGE_CHANGE = 0.05
 
 ARTISAN_WOOD_USAGE = 0.2
 ARTISAN_IRON_USAGE = 0.5
@@ -132,21 +133,21 @@ MAX_PRICES = inf
 
 TAX_RATES = {
     "property": Arithmetic_Dict({
-        "nobles": 0.2,
-        "artisans": 0.2,
-        "peasants": 0.2,
-        "others": 0.2
+        "nobles": 0,
+        "artisans": 0,
+        "peasants": 0,
+        "others": 0
     }),
     "income": Arithmetic_Dict({
-        "nobles": 0.2,
-        "artisans": 0.2,
-        "peasants": 0.2,
-        "others": 0.2
+        "nobles": 0,
+        "artisans": 0,
+        "peasants": 0,
+        "others": 0
     }),
     "personal": Arithmetic_Dict({
-        "nobles": 0.2,
-        "artisans": 0.2,
-        "peasants": 0.2,
-        "others": 0.2
+        "nobles": 0,
+        "artisans": 0,
+        "peasants": 0,
+        "others": 0
     })
 }

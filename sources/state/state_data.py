@@ -1,6 +1,5 @@
 from ..auxiliaries.constants import (
     DEFAULT_PRICES,
-    EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
     MONTHS,
@@ -43,7 +42,6 @@ class State_Data(_State_Data_Employment_and_Commands):
     classes - social classes of the country
     government - government of the country's object
     _market - object executing trade within the country
-    payments - employee payments from the last produce
     prices - last month's resource prices on the market
     """
     def __init__(self, starting_month: str = "January",
@@ -55,14 +53,6 @@ class State_Data(_State_Data_Employment_and_Commands):
         """
         self._year = starting_year
         self._month = starting_month
-        self.payments = Arithmetic_Dict({
-            "food": 0,
-            "wood": 0,
-            "iron": 0,
-            "stone": 0,
-            "tools": 0,
-            "land": 0
-        })
         self.prices = DEFAULT_PRICES.copy()
         self.sm = State_Modifiers(self)
 
@@ -252,13 +242,6 @@ class State_Data(_State_Data_Employment_and_Commands):
             if self.debug:
                 print(f"Starved {old_pop - social_class.new_population} "
                       f"{social_class.class_name}")
-
-    def _do_payments(self):
-        """
-        Moves the payments into Others' pockets.
-        """
-        self.classes[3].new_resources += self.payments
-        self.payments = EMPTY_RESOURCES.copy()
 
     def _reset_flags(self):
         """
@@ -535,7 +518,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         # Second: production
         for social_class in self.classes:
             social_class.produce()
-        self._do_payments()
+        self._employ()
 
         # Third: consumption
         for social_class in self.classes:

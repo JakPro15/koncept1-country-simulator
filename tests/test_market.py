@@ -28,13 +28,6 @@ class Fake_State_Data(State_Data):
     def __init__(self, available_employees, month="January"):
         self._month = month
         self.available_employees = available_employees
-        self.payments = Arithmetic_Dict({
-            "food": 0,
-            "wood": 0,
-            "iron": 0,
-            "stone": 0,
-            "tools": 0
-        })
 
     def get_available_employees(self):
         return self.available_employees
