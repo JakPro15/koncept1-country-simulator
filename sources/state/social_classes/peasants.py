@@ -1,5 +1,6 @@
 from ...auxiliaries.constants import (
     CLASSES,
+    INBUILT_RESOURCES,
     DEFAULT_PRICES
 )
 from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
@@ -17,6 +18,15 @@ class Peasants(Class):
     @property
     def class_name(self):
         return CLASSES[2]
+
+    @property
+    def max_employees(self):
+        land_owned = self.resources["land"] + \
+            INBUILT_RESOURCES[self.class_name]["land"] * self.population
+        return max(min(
+            self.resources["tools"] / 3,
+            land_owned / self.parent.sm.worker_land_usage,
+        ) - self.population, 0)
 
     def produce(self):
         """

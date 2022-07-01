@@ -386,6 +386,40 @@ def test_net_worth():
     assert nobles.net_worth == 234567 + inbuilt_worth
 
 
+def test_max_employees_from_land():
+    state = State_Data()
+    state.sm.worker_land_usage = 10
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 1000000,
+        "land": 100
+    }
+    nobles = Nobles(state, 50, resources)
+
+    emps = 10 + INBUILT_RESOURCES["nobles"]["land"] * 5
+
+    assert nobles.max_employees == emps
+
+
+def test_max_employees_from_tools():
+    state = State_Data()
+    state.sm.worker_land_usage = 10
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 300,
+        "land": 1000000
+    }
+    nobles = Nobles(state, 50, resources)
+
+    assert nobles.max_employees == 100
+
+
 def test_consume():
     state = State_Data()
     resources = {

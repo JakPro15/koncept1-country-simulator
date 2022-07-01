@@ -362,6 +362,40 @@ def test_net_worth():
     assert peasants.net_worth == 234567 + inbuilt_worth
 
 
+def test_max_employees_from_land():
+    state = State_Data()
+    state.sm.worker_land_usage = 10
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 1000000,
+        "land": 600
+    }
+    peasants = Peasants(state, 50, resources)
+
+    emps = 10 + INBUILT_RESOURCES["peasants"]["land"] * 5
+
+    assert peasants.max_employees == emps
+
+
+def test_max_employees_from_tools():
+    state = State_Data()
+    state.sm.worker_land_usage = 10
+    resources = {
+        "food": 100,
+        "wood": 200,
+        "iron": 0,
+        "stone": 0,
+        "tools": 300,
+        "land": 1000000
+    }
+    peasants = Peasants(state, 50, resources)
+
+    assert peasants.max_employees == 50
+
+
 def test_produce_january():
     state = State_Data()
     resources = Arithmetic_Dict({
