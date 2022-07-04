@@ -43,6 +43,18 @@ class Fake_State_Data:
                 "c": 4.45324,
                 "d": 0
             },
+            "employees": {
+                "a": 1,
+                "b": 1.55,
+                "c": 4.1
+            },
+            "wages": {
+                "a": 0.012345,
+                "b": 0.264345566,
+                "c": 0.989,
+                "d": 0.2,
+                "e": 1
+            },
             "resources_change": {
                 "nobles": EMPTY_RESOURCES.copy(),
                 "artisans": EMPTY_RESOURCES.copy(),
@@ -107,7 +119,10 @@ def test_obtain_data_1():
     a = {}
     b = ["next 11", "next 1"]
     history = History(a, b)
-    data = history.obtain_data("resources_after", True, 3)
+    history.keys_info["resources_after"] = True, 3, False
+    data = history.obtain_data(["resources_after"])
+    assert len(data.keys()) == 1
+    data = data["resources_after"]
 
     assert len(data) == 12
     for month_data in data:
@@ -137,7 +152,10 @@ def test_obtain_data_2():
     a = {}
     b = ["next 100"]
     history = History(a, b)
-    data = history.obtain_data("abc", False)
+    history.keys_info["abc"] = False, 0, False
+    data = history.obtain_data(["abc"])
+    assert len(data) == 1
+    data = data["abc"]
 
     assert len(data) == 100
     for month_data in data:
@@ -148,36 +166,6 @@ def test_obtain_data_2():
         }
 
     State_Data.from_dict = old_from_dict
-
-
-def test_round_dict_values():
-    dicti = {
-        "a": 34545.435346,
-        "b": 67.4356,
-        "c": -214.2,
-        "d": 0
-    }
-    assert History.round_dict_values(dicti, 2) == {
-        "a": 34545.44,
-        "b": 67.44,
-        "c": -214.2,
-        "d": 0
-    }
-
-
-def test_round_dict_values_default_precision():
-    dicti = {
-        "a": 34545.435346,
-        "b": 67.4356,
-        "c": -214.2,
-        "d": 0
-    }
-    assert History.round_dict_values(dicti) == {
-        "a": 34545,
-        "b": 67,
-        "c": -214,
-        "d": 0
-    }
 
 
 def test_round_dict_of_dicts_values():
@@ -211,6 +199,7 @@ def test_round_dict_of_dicts_values_default_precision():
         },
         "cd": {
             "c": -214.2,
+
             "d": 0.009
         }
     }
@@ -425,6 +414,37 @@ def test_growth_modifiers():
                 "promoted_from": False,
                 "promoted_to": True
             }
+        }
+
+    State_Data.from_dict = old_from_dict
+
+
+def test_employment():
+    def fake_from_dict(dict):
+        return Fake_State_Data()
+
+    old_from_dict = State_Data.from_dict
+    State_Data.from_dict = fake_from_dict
+
+    a = {}
+    b = ["next 100"]
+    history = History(a, b)
+    data = history.employment()
+
+    assert len(data["employees"]) == 100
+    assert len(data["wages"]) == 100
+    for i in range(100):
+        assert data["employees"][i] == {
+            "a": 1,
+            "b": 2,
+            "c": 4
+        }
+        assert data["wages"][i] == {
+            "a": 0.01,
+            "b": 0.26,
+            "c": 0.99,
+            "d": 0.2,
+            "e": 1
         }
 
     State_Data.from_dict = old_from_dict

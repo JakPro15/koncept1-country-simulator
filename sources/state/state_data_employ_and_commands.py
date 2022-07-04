@@ -20,6 +20,8 @@ class _State_Data_Employment_and_Commands:
         """
         employers_classes = []
         for social_class in self.classes:
+            if hasattr(social_class, "employees"):
+                del social_class.employees
             if social_class.real_resources["land"] > 0:
                 employers_classes.append(social_class)
                 if not hasattr(social_class, "wage"):
@@ -166,7 +168,6 @@ class _State_Data_Employment_and_Commands:
 
         for employer in employers_classes:
             employer.profit_share = employer.employees / total_employees
-            del employer.employees
 
     @staticmethod
     def _distribute_produced_and_used(employers_classes, employees_classes,
@@ -193,6 +194,7 @@ class _State_Data_Employment_and_Commands:
         Sets new wages for the next month based on employment in this month.
         """
         for employer in employers_classes:
+            employer.old_wage = employer.wage
             if employer.increase_wage:
                 employer.wage += WAGE_CHANGE
                 employer.wage = min(employer.wage, 1)

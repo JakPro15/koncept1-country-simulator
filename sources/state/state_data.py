@@ -571,7 +571,8 @@ class State_Data(_State_Data_Employment_and_Commands):
             in month_data["resources_after"].items()
         }
         month_data["population_change"] = dict(
-            Arithmetic_Dict(month_data["population_after"]) - old_population
+            Arithmetic_Dict(month_data["population_after"]).round() -
+            Arithmetic_Dict(old_population).round()
         )
         month_data["growth_modifiers"] = {
             "nobles": {
@@ -606,5 +607,25 @@ class State_Data(_State_Data_Employment_and_Commands):
                 "promoted_from": self.classes[3].promoted_from,
                 "promoted_to": self.classes[3].promoted_to
             },
+        }
+
+        month_data["employees"] = {
+            "nobles": getattr(self.classes[0], "employees", 0),
+            "artisans": getattr(self.classes[1], "employees", 0),
+            "peasants": getattr(self.classes[2], "employees", 0),
+            "others": getattr(self.classes[3], "employees", 0),
+            "government": getattr(self.government, "employees", 0)
+        }
+        month_data["wages"] = {
+            "nobles": getattr(self.classes[0], "old_wage",
+                              self.sm.others_minimum_wage),
+            "artisans": getattr(self.classes[1], "old_wage",
+                                self.sm.others_minimum_wage),
+            "peasants": getattr(self.classes[2], "old_wage",
+                                self.sm.others_minimum_wage),
+            "others": getattr(self.classes[3], "old_wage",
+                              self.sm.others_minimum_wage),
+            "government": getattr(self.government, "old_wage",
+                                  self.sm.others_minimum_wage),
         }
         return month_data

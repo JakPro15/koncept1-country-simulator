@@ -1,4 +1,4 @@
-from math import inf, isnan, exp
+from math import inf, isnan, exp, isinf
 
 
 class Arithmetic_Dict(dict):
@@ -134,3 +134,11 @@ class Arithmetic_Dict(dict):
         return Arithmetic_Dict(
             {element: exp(value) for element, value in self.items()}
         )
+
+    def round(self, ndigits=0):
+        result = self.copy()
+        for key in result:
+            result[key] = round(result[key], ndigits)
+            if ndigits == 0 and not (isnan(result[key]) or isinf(result[key])):
+                result[key] = int(result[key])
+        return result

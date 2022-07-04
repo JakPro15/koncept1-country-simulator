@@ -137,7 +137,9 @@ def print_law(law: str, interface: Interface):
         print("Wages for government employees (what part of employees' "
               "produced resources is actually given to them; the employers"
               " take the rest):")
-        print(f"{interface.state.government.wage}")
+        govt_wage = max(interface.state.government.wage,
+                        interface.state.sm.others_minimum_wage)
+        print(f"{govt_wage}")
     else:
         raise InvalidCommand
 

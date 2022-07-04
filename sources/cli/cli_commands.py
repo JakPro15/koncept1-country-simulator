@@ -3,9 +3,9 @@
 # of a country.
 
 
+from sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from sources.state.state_data import EveryoneDeadError
 from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
-from ..abstract_interface.history import History
 from ..abstract_interface.interface import Interface, SaveAccessError
 from math import floor, inf, log10
 from os import mkdir
@@ -204,6 +204,10 @@ def help(args: list[str], commands: set):
 
 
 def set_months_of_history(months: int | None, interface: Interface, data):
+    """
+    Cuts the given history data to <months> most recent months. Also returns
+    the number of the first month not cut.
+    """
     current_month = MONTHS.index(interface.state.month) + \
         interface.state.year * 12
     if months is not None:
@@ -214,12 +218,18 @@ def set_months_of_history(months: int | None, interface: Interface, data):
 
 
 def get_month_string(month_int):
+    """
+    Returns a 13-characters long string representing the given month.
+    """
     month = MONTHS[month_int % 12]
     year = month_int // 12
     return f"{month: >9} {year: >3}"
 
 
 def res_to_str(amount: float | int):
+    """
+    Returns a string representing the given amount of a resource.
+    """
     if isinstance(amount, float):
         if amount.is_integer():
             amount = int(amount)
@@ -229,7 +239,10 @@ def res_to_str(amount: float | int):
     return string
 
 
-def price_to_str(amount):
+def price_to_str(amount: float):
+    """
+    Returns a string representing the given amount price.
+    """
     if amount == inf:
         string = '∞'
     elif amount == 0:
@@ -251,6 +264,10 @@ def price_to_str(amount):
 
 
 def get_modifiers_from_dict(data):
+    """
+    Extracts a 6-character long string representing growth modifiers from the
+    given growth modifiers dictionary.
+    """
     modifiers_string = ""
     modifiers_string += "S" if data["starving"] else " "
     modifiers_string += "F" if data["freezing"] else " "
@@ -267,7 +284,8 @@ def history(args: list[str], interface: Interface):
         assert args[1] in {
             "population", "resources", "prices", "modifiers",
             "population_change", "resources_change", "total_resources",
-            "p", "r", "pr", "pc", "rc", "tr", "m"
+            "employment",
+            "p", "r", "pr", "pc", "rc", "tr", "m", "e"
         }
 
         if args[1] in {"resources", "r", "resources_change", "rc"}:
@@ -401,6 +419,35 @@ def history(args: list[str], interface: Interface):
                      f"{get_modifiers_from_dict(month_data['peasants']): >9}"
                      f"{get_modifiers_from_dict(month_data['others']): >9}"
                     )
+            elif args[1] in {"employment", "e"}:
+                data = interface.history.employment()
+                employees = data["employees"]
+                wages = data["wages"]
+                begin_month, employees = set_months_of_history(
+                    args[2], interface, employees
+                )
+                begin_month, wages = set_months_of_history(
+                    args[2], interface, wages
+                )
+                print("Employment information:")
+
+                line2, line3 = " " * 13, " " * 13
+                for class_name in CLASSES:
+                    line2 += f" {class_name: ^19}"
+                    line3 += " Employees   Wages  "
+                line2 += f" {'government': ^19}"
+                line3 += " Employees   Wages  "
+                print(line2)
+                print(line3)
+
+                for index, month_data in enumerate(
+                     zip(employees, wages)):
+                    month_emps, month_wags = month_data
+                    line = f"{get_month_string(index + begin_month)}"
+                    for employer in month_emps:
+                        line += f" {month_emps[employer]: ^9}"
+                        line += f" {month_wags[employer]: ^9}"
+                    print(line)
     except AssertionError:
         print("Invalid syntax. See help for proper usage of history command")
 
@@ -470,7 +517,8 @@ def state(args: list[str], interface: Interface):
         assert len(args) in {2, 3}
         assert args[1] in {
             "population", "resources", "prices", "total_resources",
-            "modifiers", "government", "p", "r", "pr", "tr", "m", "g"
+            "modifiers", "government", "employment",
+            "p", "r", "pr", "tr", "m", "g", "e"
         }
         if len(args) == 3:
             assert args[2].isdigit()
@@ -487,15 +535,12 @@ def state(args: list[str], interface: Interface):
                 print(f"{class_name: >8}: {data[index]}")
         elif args[1] in {"resources", "r"}:
             data = {
-                social_class.class_name: History.round_dict_values(
-                    social_class.real_resources, 1
-                )
+                social_class.class_name: social_class.real_resources.round(1)
                 for social_class
                 in interface.state.classes
             }
-            data["government"] = History.round_dict_values(
-                interface.state.government.real_resources, 1
-            )
+            data["government"] = \
+                interface.state.government.real_resources.round(1)
             print("Current resources:")
             line = " " * 10
             for resource in RESOURCES:
@@ -569,6 +614,41 @@ def state(args: list[str], interface: Interface):
             for class_name in CLASSES:
                 line += f"  {res_to_str(taxes[class_name]): ^7}"
             print(line)
+        elif args[1] in {"employment", "e"}:
+            employees = Arithmetic_Dict({
+                "nobles": getattr(interface.state.classes[0], "employees",
+                                  0),
+                "artisans": getattr(interface.state.classes[1], "employees",
+                                    0),
+                "peasants": getattr(interface.state.classes[2], "employees",
+                                    0),
+                "others": getattr(interface.state.classes[3], "employees",
+                                  0),
+                "government": getattr(interface.state.government, "employees",
+                                      0)
+            }).round(0)
+            wages = Arithmetic_Dict({
+                "nobles": getattr(interface.state.classes[0], "old_wage",
+                                  interface.state.sm.others_minimum_wage),
+                "artisans": getattr(interface.state.classes[1], "old_wage",
+                                    interface.state.sm.others_minimum_wage),
+                "peasants": getattr(interface.state.classes[2], "old_wage",
+                                    interface.state.sm.others_minimum_wage),
+                "others": getattr(interface.state.classes[3], "old_wage",
+                                  interface.state.sm.others_minimum_wage),
+                "government": getattr(interface.state.government, "old_wage",
+                                      interface.state.sm.others_minimum_wage),
+            }).round(2)
+            print("Current employment information:")
+            line = " " * 10
+            for resource in RESOURCES:
+                line += f"{resource: >7}"
+            print(" " * 10 + "Employees   Wages")
+            for class_name in employees:
+                line = f"{class_name: >10}"
+                line += f" {employees[class_name]: ^9}"
+                line += f" {wages[class_name]: ^9}"
+                print(line)
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
 

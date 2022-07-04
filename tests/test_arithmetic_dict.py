@@ -464,3 +464,43 @@ def test_copy():
         "iron": 3,
         "tools": 4
     }
+
+
+def test_round():
+    resources1 = Arithmetic_Dict({
+        "food": 0,
+        "wood": 1.1111,
+        "stone": 2,
+        "iron": 37.3456,
+        "tools": 14.2
+    })
+
+    resources2 = resources1.round()
+    assert isinstance(resources2, Arithmetic_Dict)
+    assert resources2 == {
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 37,
+        "tools": 14
+    }
+
+    resources2 = resources1.round(2)
+    assert isinstance(resources2, Arithmetic_Dict)
+    assert resources2 == {
+        "food": 0,
+        "wood": 1.11,
+        "stone": 2,
+        "iron": 37.35,
+        "tools": 14.2
+    }
+
+    resources2 = resources1.round(-1)
+    assert isinstance(resources2, Arithmetic_Dict)
+    assert resources2 == {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 40,
+        "tools": 10
+    }

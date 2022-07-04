@@ -1,5 +1,5 @@
 from ..state.state_data import State_Data
-from math import isnan, isinf
+from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 
 
 class History:
@@ -14,19 +14,26 @@ class History:
     def __init__(self, starting_state_dict, history_lines):
         self.starting_state_dict = starting_state_dict.copy()
         self.history_lines = history_lines.copy()
+        self.keys_info = {
+            # "key": (double_dict?, round_digits, is_total?, new_key_if_total)
+            "population_after": (False, 0, False),
+            "resources_after": (True, 1, False),
+            "population_change": (False, 0, False),
+            "resources_change": (True, 1, False),
+            "prices": (False, 4, False),
+            "total_resources": (False, 1, True, "resources_after"),
+            "growth_modifiers": (None, 0, False),
+            "employees": (False, 0, False),
+            "wages": (False, 2, False)
+        }
 
-    def obtain_data(self, key: str, double_dict: bool, ndigits=0):
+    def obtain_data(self, keys: list[str]):
         """
         Returns the data about key from the whole history of the country.
         double_dict specifies how should the data be rounded - None signifies
         no rounding.
         """
-        result = []
-
-        total = False
-        if(key == "total_resources"):
-            total = True
-            key = "resources_after"
+        result = {key: [] for key in keys}
 
         state = State_Data.from_dict(self.starting_state_dict)
         for line in self.history_lines:
@@ -34,80 +41,73 @@ class History:
             if command[0] == "next":
                 amount = int(command[1])
                 for _ in range(amount):
-                    month_data = state.do_month()[key]
+                    month_data = state.do_month()
+                    for key in keys:
+                        old_key = key
+                        double_dict = self.keys_info[key][0]
+                        ndigits = self.keys_info[key][1]
+                        total = self.keys_info[key][2]
+                        if total:
+                            key = self.keys_info[key][3]
 
-                    if total:
-                        new_data = {}
-                        for dicti in month_data.values():
-                            for key2 in dicti:
-                                if key2 in new_data:
-                                    new_data[key2] += dicti[key2]
-                                else:
-                                    new_data[key2] = dicti[key2]
-                        month_data = new_data
-                        double_dict = False
+                        key_data = month_data[key]
 
-                    if double_dict is not None:
-                        if double_dict:
-                            month_data = History.round_dict_of_dicts_values(
-                                month_data, ndigits
-                            )
-                        else:
-                            month_data = History.round_dict_values(
-                                month_data, ndigits
-                            )
+                        if total:
+                            new_data = {}
+                            for dicti in key_data.values():
+                                for key2 in dicti:
+                                    if key2 in new_data:
+                                        new_data[key2] += dicti[key2]
+                                    else:
+                                        new_data[key2] = dicti[key2]
+                            key_data = new_data
+                            double_dict = False
 
-                    result.append(month_data)
+                        if double_dict is not None:
+                            if double_dict:
+                                key_data = History.round_dict_of_dicts_values(
+                                    key_data, ndigits
+                                )
+                            else:
+                                key_data = Arithmetic_Dict(key_data)
+                                key_data = key_data.round(ndigits)
+
+                        result[old_key].append(key_data)
             else:
                 state.execute_commands([line])
-        return result
-
-    @staticmethod
-    def round_dict_values(dictionary, ndigits=0):
-        result = dictionary.copy()
-        for key in result:
-            result[key] = round(result[key], ndigits)
-            if ndigits > 0:
-                result[key] = float(result[key])
-            else:
-                if not (isnan(result[key]) or isinf(result[key])):
-                    result[key] = int(result[key])
-                else:
-                    result[key] = result[key]
         return result
 
     @staticmethod
     def round_dict_of_dicts_values(dictionary, ndigits=0):
         result = dictionary.copy()
         for key in result:
-            for key2 in result[key]:
-                result[key][key2] = round(result[key][key2], ndigits)
-                if ndigits > 0:
-                    result[key][key2] = float(result[key][key2])
-                else:
-                    result[key][key2] = int(result[key][key2])
+            result[key] = Arithmetic_Dict(result[key])
+            result[key] = result[key].round(ndigits)
         return result
 
     def population(self):
-        return self.obtain_data("population_after", False)
+        return self.obtain_data(["population_after"])["population_after"]
 
     def resources(self):
-        return self.obtain_data("resources_after", True, 1)
+        return self.obtain_data(["resources_after"])["resources_after"]
 
     def population_change(self):
-        return self.obtain_data("population_change", False)
+        return self.obtain_data(["population_change"])["population_change"]
 
     def resources_change(self):
-        return self.obtain_data("resources_change", True, 1)
+        return self.obtain_data(["resources_change"])["resources_change"]
 
     def prices(self):
-        return self.obtain_data("prices", False, 4)
+        return self.obtain_data(["prices"])["prices"]
 
     def total_resources(self):
-        return self.obtain_data("total_resources", False, 1)
+        return self.obtain_data(["total_resources"])["total_resources"]
 
     def growth_modifiers(self):
-        return self.obtain_data("growth_modifiers", None)
+        return self.obtain_data(["growth_modifiers"])["growth_modifiers"]
+
+    def employment(self):
+        return self.obtain_data(["employees", "wages"])
 
     def add_history_line(self, command):
         """
