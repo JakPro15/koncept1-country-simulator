@@ -19,7 +19,9 @@ def main(arguments):
     args = parser.parse_args(arguments[1:])
 
     if args.gui:
-        raise NotImplementedError
+        raise NotImplementedError(
+            "Graphical user interface has not been implemented yet."
+        )
     elif args.cli:
         command_line_interface(args.debug)
 

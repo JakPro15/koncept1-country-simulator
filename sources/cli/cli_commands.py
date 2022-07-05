@@ -75,7 +75,7 @@ def help_command(command: str):
               " once if <AMOUNT> is omitted.")
     elif command == "history":
         print("history <STAT> [<CLASS>] [<MONTHS>]")
-        print("Shows the history (past statictics) of the country.")
+        print("Shows the history (past statistics) of the country.")
         print("    <STAT> decides which statistic to show")
         print("    Valid values:")
         print("        population (p)")
@@ -84,6 +84,7 @@ def help_command(command: str):
         print("        population_change (pc)")
         print("        resources_change (rc)")
         print("        prices (pr)")
+        print("        employment (e)")
         print("    <CLASS> decides which class' statistics to show - it should"
               " only be given when <STAT> is resources or resources_change.")
         print("    Valid values:")
@@ -106,6 +107,7 @@ def help_command(command: str):
         print("        prices (pr)")
         print("        modifiers (m)")
         print("        government (g)")
+        print("        employment (e)")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
         print("Transfers <AMOUNT> of <RESOURCE> from the government to "
@@ -142,7 +144,7 @@ def help_command(command: str):
               " to <AMOUNT>. When trading, the government will try to obtain "
               "this much of the resource. Secure resources do not count "
               "towards this amount - the government will aim to purchase this"
-              " amount of tradeable resource.")
+              " amount of tradeable resources.")
         print("Valid values for <RESOURCE>:")
         print("    food (f)")
         print("    wood (w)")

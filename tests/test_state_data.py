@@ -2105,21 +2105,28 @@ def test_set_employers_employees_no_max():
         Employer_Class(3, 500)
     ]
     employees = 400
-    State_Data._set_employers_employees(employers, employees)
+    State_Data._set_employers_employees(employers, employees, 4/15)
 
     assert employers[0].employees == 80
     assert employers[1].employees == 200
     assert employers[2].employees == 120
+
+    assert employers[0].increase_wage
+    assert not employers[1].increase_wage
+    assert employers[2].increase_wage
 
     employers = [
         Employer_Class(2, 500),
         Employer_Class(5, 500)
     ]
     employees = 700
-    State_Data._set_employers_employees(employers, employees)
+    State_Data._set_employers_employees(employers, employees, 0.7)
 
     assert employers[0].employees == 200
     assert employers[1].employees == 500
+
+    assert employers[0].increase_wage
+    assert not employers[1].increase_wage
 
 
 def test_set_employers_employees_with_max():
@@ -2129,11 +2136,15 @@ def test_set_employers_employees_with_max():
         Employer_Class(3, 500)
     ]
     employees = 850
-    State_Data._set_employers_employees(employers, employees)
+    State_Data._set_employers_employees(employers, employees, 85/105)
 
     assert employers[0].employees == 50
     assert employers[1].employees == 500
     assert employers[2].employees == 300
+
+    assert not employers[0].increase_wage
+    assert not employers[1].increase_wage
+    assert employers[2].increase_wage
 
     employers = [
         Employer_Class(2, 50),
@@ -2142,12 +2153,54 @@ def test_set_employers_employees_with_max():
         Employer_Class(0, 500)
     ]
     employees = 850
-    State_Data._set_employers_employees(employers, employees)
+    State_Data._set_employers_employees(employers, employees, 85/140)
 
     assert employers[0].employees == 50
     assert employers[1].employees == 550
     assert employers[2].employees == 250
     assert employers[3].employees == 0
+
+    assert not employers[0].increase_wage
+    assert not employers[1].increase_wage
+    assert not employers[2].increase_wage
+    assert employers[3].increase_wage
+
+
+def test_set_employers_employees_not_all_employed():
+    employers = [
+        Employer_Class(2, 50),
+        Employer_Class(5, 100),
+        Employer_Class(3, 150)
+    ]
+    employees = 850
+    State_Data._set_employers_employees(employers, employees, 1)
+
+    assert employers[0].employees == 50
+    assert employers[1].employees == 100
+    assert employers[2].employees == 150
+
+    assert not employers[0].increase_wage
+    assert not employers[1].increase_wage
+    assert not employers[2].increase_wage
+
+    employers = [
+        Employer_Class(0, 50),
+        Employer_Class(0, 600),
+        Employer_Class(0, 250),
+        Employer_Class(0, 500)
+    ]
+    employees = 850
+    State_Data._set_employers_employees(employers, employees, 85/140)
+
+    assert employers[0].employees == 0
+    assert employers[1].employees == 0
+    assert employers[2].employees == 0
+    assert employers[3].employees == 0
+
+    assert employers[0].increase_wage
+    assert employers[1].increase_wage
+    assert employers[2].increase_wage
+    assert employers[3].increase_wage
 
 
 def test_get_produced_and_used():
@@ -2181,34 +2234,6 @@ def test_get_produced_and_used():
     }
 
 
-def test_set_employers_employees_not_all_employed():
-    employers = [
-        Employer_Class(2, 50),
-        Employer_Class(5, 100),
-        Employer_Class(3, 150)
-    ]
-    employees = 850
-    State_Data._set_employers_employees(employers, employees)
-
-    assert employers[0].employees == 50
-    assert employers[1].employees == 100
-    assert employers[2].employees == 150
-
-    employers = [
-        Employer_Class(0, 50),
-        Employer_Class(0, 600),
-        Employer_Class(0, 250),
-        Employer_Class(0, 500)
-    ]
-    employees = 850
-    State_Data._set_employers_employees(employers, employees)
-
-    assert employers[0].employees == 0
-    assert employers[1].employees == 0
-    assert employers[2].employees == 0
-    assert employers[3].employees == 0
-
-
 class Employer_Class_2:
     def __init__(self, employees):
         self.employees = employees
@@ -2240,6 +2265,43 @@ def test_employees_to_profit():
     assert employers[2].profit_share == 0.2
 
 
+def test_get_monetary_value():
+    state = State_Data()
+    state.prices = Arithmetic_Dict({
+        "food": 1,
+        "wood": 2,
+        "stone": 3,
+        "iron": 4,
+        "tools": 5,
+        "land": 6
+    })
+    resources = {
+        "food": 1,
+        "wood": 20,
+        "stone": 300,
+    }
+    assert state._get_monetary_value(resources) == 941
+
+    resources = {
+        "food": 1,
+        "wood": 10,
+        "stone": 100,
+        "iron": 1000,
+        "tools": 10000,
+        "land": 100000
+    }
+    assert state._get_monetary_value(resources) == 654321
+
+    resources = {
+        "food": 34,
+        "wood": 10,
+        "stone": 100,
+        "iron": 0,
+        "land": 10
+    }
+    assert state._get_monetary_value(resources) == 414
+
+
 def test_distribute_produced_and_used():
     class Employer:
         def __init__(self, wage, profit_share, new_resources):
@@ -2251,6 +2313,16 @@ def test_distribute_produced_and_used():
         def __init__(self, wage_share, new_resources):
             self.wage_share = wage_share
             self.new_resources = new_resources.copy()
+
+    state = State_Data()
+    state.prices = Arithmetic_Dict({
+        "food": 1,
+        "wood": 1,
+        "stone": 1,
+        "iron": 1,
+        "tools": 1,
+        "land": 1
+    })
 
     resources = Arithmetic_Dict({
         "food": 100,
@@ -2283,8 +2355,10 @@ def test_distribute_produced_and_used():
         "tools": 10,
         "land": 0
     })
-    State_Data._distribute_produced_and_used(employers, employees,
-                                             produced, used)
+    state._distribute_produced_and_used(employers, employees,
+                                        produced, used)
+    assert state.max_wage == 0.025
+
     assert employers[0].new_resources == {
         "food": 124,
         "wood": 124,
@@ -2327,11 +2401,13 @@ def test_distribute_produced_and_used():
     }
 
 
-def test_set_new_wages():
+def test_set_new_wages_no_max_wage():
     class Employer:
         def __init__(self, wage, increase_wage):
             self.wage = wage
             self.increase_wage = increase_wage
+
+    state = State_Data()
 
     employers = [
         Employer(0.5, True),
@@ -2341,13 +2417,39 @@ def test_set_new_wages():
         Employer(WAGE_CHANGE / 2, False),
         Employer(1 - WAGE_CHANGE / 2, True),
     ]
-    State_Data._set_new_wages(employers)
+    state._set_new_wages(employers)
     assert employers[0].wage == 0.5 + WAGE_CHANGE
     assert employers[1].wage == 1
     assert employers[2].wage == 0.5 - WAGE_CHANGE
     assert employers[3].wage == 0
     assert employers[4].wage == 0
     assert employers[5].wage == 1
+
+
+def test_set_new_wages_with_max_wage():
+    class Employer:
+        def __init__(self, wage, increase_wage):
+            self.wage = wage
+            self.increase_wage = increase_wage
+
+    state = State_Data()
+    state.max_wage = 0.8
+
+    employers = [
+        Employer(0.4, True),
+        Employer(1 - WAGE_CHANGE, True),
+        Employer(0.4, False),
+        Employer(WAGE_CHANGE, True),
+        Employer(WAGE_CHANGE / 2, False),
+        Employer(1 - WAGE_CHANGE / 2, False),
+    ]
+    state._set_new_wages(employers)
+    assert employers[0].wage == 0.4 + WAGE_CHANGE
+    assert employers[1].wage == 0.8
+    assert employers[2].wage == 0.4 - WAGE_CHANGE
+    assert employers[3].wage == 2 * WAGE_CHANGE
+    assert employers[4].wage == 0
+    assert employers[5].wage == 0.8
 
 
 def test_execute_commands():

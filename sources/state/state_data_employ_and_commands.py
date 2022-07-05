@@ -31,6 +31,8 @@ class _State_Data_Employment_and_Commands:
                         social_class.wage, self.sm.others_minimum_wage
                     )
         if self.government.real_resources["land"] > 0:
+            if hasattr(self.government, "employees"):
+                del self.government.employees
             employers_classes.append(self.government)
             self.government.wage = max(
                 self.government.wage, self.sm.others_minimum_wage
@@ -57,6 +59,7 @@ class _State_Data_Employment_and_Commands:
                              in employers_classes])
         if max_employees < employees:
             employees = max_employees
+        self.emp_ratio = employees / max_employees
 
         return employees_classes, employees
 
@@ -120,7 +123,7 @@ class _State_Data_Employment_and_Commands:
 
     @staticmethod
     def _set_employers_employees(employers_classes: list[Class],
-                                 employees: int):
+                                 employees: int, emp_ratio: float):
         """
         Decides what part of produced and used resources will each employer
         class be given.
@@ -150,10 +153,10 @@ class _State_Data_Employment_and_Commands:
                     checked += 1
 
         for employer in employers_classes:
-            if employer.employees == employer.max_employees:
-                employer.increase_wage = False
-            else:
+            if employer.employees < emp_ratio * employer.max_employees:
                 employer.increase_wage = True
+            else:
+                employer.increase_wage = False
 
     @staticmethod
     def _employees_to_profit(employers_classes: list[Class]):
@@ -169,27 +172,42 @@ class _State_Data_Employment_and_Commands:
         for employer in employers_classes:
             employer.profit_share = employer.employees / total_employees
 
-    @staticmethod
-    def _distribute_produced_and_used(employers_classes, employees_classes,
-                                      produced, used):
+    def _get_monetary_value(self, resources):
+        """
+        Returns the monetary value, at the current prices, of the given
+        resources.
+        """
+        return sum((self.prices * resources).values())
+
+    def _distribute_produced_and_used(self, employers_classes,
+                                      employees_classes, produced, used):
         """
         Distributes the produced and used resources among employers and
         employees.
         """
-        employers_share = EMPTY_RESOURCES.copy()
+        total_employers_share = EMPTY_RESOURCES.copy()
+
+        full_value = self._get_monetary_value(produced)
+        used_value = self._get_monetary_value(used)
+        if full_value > 0:
+            self.max_wage = used_value / full_value
+        else:
+            self.max_wage = 1
+
         for employer in employers_classes:
             share = produced * employer.profit_share * (1 - employer.wage)
             employer.new_resources += share
-            employers_share += share
+            total_employers_share += share
+
             employer.new_resources -= used * employer.profit_share
+
             del employer.profit_share
 
-        produced -= employers_share
+        produced -= total_employers_share
         for employee in employees_classes:
             employee.new_resources += produced * employee.wage_share
 
-    @staticmethod
-    def _set_new_wages(employers_classes):
+    def _set_new_wages(self, employers_classes):
         """
         Sets new wages for the next month based on employment in this month.
         """
@@ -197,10 +215,15 @@ class _State_Data_Employment_and_Commands:
             employer.old_wage = employer.wage
             if employer.increase_wage:
                 employer.wage += WAGE_CHANGE
-                employer.wage = min(employer.wage, 1)
+                employer.wage = min(
+                    employer.wage, getattr(self, "max_wage", 1)
+                )
             else:
                 employer.wage -= WAGE_CHANGE
                 employer.wage = max(employer.wage, 0)
+                employer.wage = min(
+                    employer.wage, getattr(self, "max_wage", 1)
+                )
 
     def _employ(self):
         """
@@ -222,16 +245,16 @@ class _State_Data_Employment_and_Commands:
         produced, used = self._get_produced_and_used(ratioed_employees)
 
         _State_Data_Employment_and_Commands._set_employers_employees(
-            employers_classes, employees
+            employers_classes, employees, self.emp_ratio
         )
         _State_Data_Employment_and_Commands._employees_to_profit(
             employers_classes
         )
 
-        _State_Data_Employment_and_Commands._distribute_produced_and_used(
+        self._distribute_produced_and_used(
             employers_classes, employees_classes, produced, used
         )
-        _State_Data_Employment_and_Commands._set_new_wages(employers_classes)
+        self._set_new_wages(employers_classes)
 
     def do_transfer(self, class_name: str, resource: str, amount: int):
         """
