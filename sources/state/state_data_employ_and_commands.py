@@ -296,21 +296,23 @@ class _State_Data_Employment_and_Commands:
         """
         self.government.optimal_resources[resource] = amount
 
-    def do_set_law(self, law: str, social_class: str | None, value: float):
+    def do_set_law(self, law: str, argument: str | None, value: float):
         """
         Sets the given law to the given value.
         """
         try:
             if law == "tax_personal":
-                self.sm.tax_rates['personal'][social_class] = value
+                self.sm.tax_rates['personal'][argument] = value
             elif law == "tax_property":
-                self.sm.tax_rates['property'][social_class] = value
+                self.sm.tax_rates['property'][argument] = value
             elif law == "tax_income":
-                self.sm.tax_rates['income'][social_class] = value
+                self.sm.tax_rates['income'][argument] = value
             elif law == "wage_minimum":
                 self.sm.others_minimum_wage = value
             elif law == "wage_government":
                 self.government.wage = value
+            elif law == "max_prices":
+                self.sm.max_prices[argument] = value
             else:
                 raise InvalidCommandError
         except KeyError:

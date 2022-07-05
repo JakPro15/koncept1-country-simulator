@@ -8,7 +8,12 @@ from ..abstract_interface.interface import (
     NotEnoughClassResources,
     NotEnoughGovtResources
 )
-from .cli_commands import InvalidCommand, fill_command, res_to_str
+from .cli_commands import (
+    InvalidCommand,
+    fill_command,
+    res_to_str,
+    price_to_str
+)
 from ..auxiliaries.constants import CLASSES, RESOURCES
 
 
@@ -140,6 +145,18 @@ def print_law(law: str, interface: Interface):
         govt_wage = max(interface.state.government.wage,
                         interface.state.sm.others_minimum_wage)
         print(f"{govt_wage}")
+    elif law == "max_prices":
+        print("max_prices")
+        print("Maximum prices:")
+        print(" Nobles  Artisans Peasants  Others")
+        prices = interface.state.sm.max_prices
+        print("  Food    Wood   Stone    Iron   Tools    Land")
+        print(f"{price_to_str(prices['food']): ^7}"
+              f" {price_to_str(prices['wood']): ^7}"
+              f" {price_to_str(prices['stone']): ^7}"
+              f" {price_to_str(prices['iron']): ^7}"
+              f" {price_to_str(prices['tools']): ^7}"
+              f" {price_to_str(prices['land']): ^7}")
     else:
         raise InvalidCommand
 
@@ -156,7 +173,7 @@ def laws(args: list[str], interface: Interface):
 
         laws = {
             "tax_personal", "tax_property", "tax_income", "wage_minimum",
-            "wage_government"
+            "wage_government", "max_prices"
         }
 
         if args[1] == "view":
@@ -179,9 +196,10 @@ def laws(args: list[str], interface: Interface):
             except ValueError:
                 raise AssertionError
 
-            if args[2][:4] == "tax_":
+            if args[2][:4] in {"tax_", "max_"}:
                 assert len(args) == 5
-                args[3] = fill_command(args[3], CLASSES)
+                valid_args = CLASSES if args[2][:4] == "tax_" else RESOURCES
+                args[3] = fill_command(args[3], valid_args)
                 assert len(args[3]) == 1
                 args[3] = args[3][0]
 

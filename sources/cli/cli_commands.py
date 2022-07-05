@@ -164,21 +164,28 @@ def help_command(command: str):
         print("    tax_income")
         print("    wage_minimum")
         print("    wage_government")
+        print("    max_prices")
     elif command == "laws set":
-        print("laws set <LAW> [<CLASS>] <VALUE>")
+        print("laws set <LAW> [<CLASS>] [<RESOURCE>] <VALUE>")
         print("Changes the chosen <LAW>'s value for the given <CLASS> to the"
               " given <VALUE>.")
         print("Valid values for <LAW> and their valid <VALUE>s:")
         print("    tax_personal - <VALUE> above or equal 0, <CLASS> must be"
-              " given")
+              " given, <RESOURCE> must not be given")
         print("    tax_property - <VALUE> between 0 and 1 (including"
-              " endpoints), <CLASS> must be given")
+              " endpoints), <CLASS> must be given, <RESOURCE> must not be "
+              "given")
         print("    tax_income - <VALUE> between 0 and 1 (including"
-              " endpoints), <CLASS> must be given")
+              " endpoints), <CLASS> must be given, <RESOURCE> must not be "
+              "given")
         print("    wage_minimum - <VALUE> between 0 and 1 (including"
-              " endpoints), <CLASS> must not be given")
+              " endpoints), <CLASS> must not be given, <RESOURCE> must not be"
+              " given")
         print("    wage_government - <VALUE> between 0 and 1 (including"
-              " endpoints), <CLASS> must not be given")
+              " endpoints), <CLASS> must not be given, <RESOURCE> must not be"
+              " given")
+        print("    max_prices - <VALUE> above 1, <CLASS> must not be given, "
+              "<RESOURCE> must be given")
     else:
         raise InvalidCommand
 

@@ -1,4 +1,6 @@
-from sources.auxiliaries.constants import CLASS_NAME_TO_INDEX, CLASSES
+from sources.auxiliaries.constants import (
+    CLASS_NAME_TO_INDEX, CLASSES, RESOURCES
+)
 from ..state.state_data import State_Data
 from .history import History
 from math import inf
@@ -133,25 +135,26 @@ class Interface:
             f"optimal {resource} {amount}"
         )
 
-    def set_law(self, law: str, social_class: str | None, value: float):
+    def set_law(self, law: str, argument: str | None, value: float):
         """
         Sets the given law to the given value.
         """
         laws = {
-            "tax_personal": ((0, inf), True),
-            "tax_property": ((0, 1), True),
-            "tax_income": ((0, 1), True),
-            "wage_minimum": ((0, 1), False),
-            "wage_government": ((0, 1), False)
+            "tax_personal": ((0, inf), CLASSES),
+            "tax_property": ((0, 1), CLASSES),
+            "tax_income": ((0, 1), CLASSES),
+            "wage_minimum": ((0, 1), None),
+            "wage_government": ((0, 1), None),
+            "max_prices": ((1, inf), RESOURCES)
         }
         assert laws[law][0][0] <= value <= laws[law][0][1]
         if laws[law][1]:
-            assert social_class in CLASSES
+            assert argument in laws[law][1]
         else:
-            assert social_class is None
+            assert argument is None
 
-        self.state.do_set_law(law, social_class, value)
+        self.state.do_set_law(law, argument, value)
 
         self.history.add_history_line(
-            f"laws set {law} {social_class} {value}"
+            f"laws set {law} {argument} {value}"
         )
