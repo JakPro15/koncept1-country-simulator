@@ -264,7 +264,11 @@ class State_Data(_State_Data_Employment_and_Commands):
             moved_pop = min(
                 social_class.class_overpopulation, social_class.new_population
             )
-            moved_res = INBUILT_RESOURCES[lower_name] * moved_pop
+            if moved_pop == social_class.new_population:
+                moved_res = social_class.new_resources + \
+                    INBUILT_RESOURCES[social_class.class_name] * moved_pop
+            else:
+                moved_res = INBUILT_RESOURCES[lower_name] * moved_pop
 
             social_class.new_resources -= moved_res
             lower_class.new_resources += moved_res
@@ -299,7 +303,7 @@ class State_Data(_State_Data_Employment_and_Commands):
             avger_wealth = avg_wealth / increase_price
             # Math™
             part_promoted = max(min(log(
-                avger_wealth - 1 if avger_wealth > 1 else 1, 100
+                avger_wealth + 0.6666, 100
             ), 1), 0)
             part_paid = (part_promoted - 1) ** 3 + 1
 

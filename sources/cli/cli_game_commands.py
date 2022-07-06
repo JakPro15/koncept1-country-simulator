@@ -140,11 +140,16 @@ def print_law(law: str, interface: Interface):
     elif law == "wage_government":
         print("wage_government")
         print("Wages for government employees (what part of employees' "
-              "produced resources is actually given to them; the employers"
-              " take the rest):")
+              "produced resources is actually given to them; the government"
+              " takes the rest):")
         govt_wage = max(interface.state.government.wage,
                         interface.state.sm.others_minimum_wage)
         print(f"{govt_wage}")
+    elif law == "wage_autoregulation":
+        print("wage_autoregulation")
+        print("Whether wages for government employees will be automatically "
+              "regulated:")
+        print(f"{interface.state.government.wage_autoregulation}")
     elif law == "max_prices":
         print("max_prices")
         print("Maximum prices:")
@@ -173,7 +178,7 @@ def laws(args: list[str], interface: Interface):
 
         laws = {
             "tax_personal", "tax_property", "tax_income", "wage_minimum",
-            "wage_government", "max_prices"
+            "wage_government", "wage_autoregulation", "max_prices"
         }
 
         if args[1] == "view":

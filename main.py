@@ -1,6 +1,7 @@
 from sources.cli.cli import command_line_interface
 from sys import argv
 import argparse
+from os.path import isfile
 
 
 def main(arguments):
@@ -16,14 +17,22 @@ def main(arguments):
                       'launch the program with graphical user interface')
     parser.add_argument('-d', '--debug', action='store_true', help='whether '
                         'to print debug information to standard output')
+    parser.add_argument('-l', '--load', help='name of the save from which to '
+                        'load game state; not given means a new game is '
+                        'started', nargs=1, type=str, default=['starting'])
     args = parser.parse_args(arguments[1:])
+
+    if not (isfile(f"saves/{args.load[0]}/history.txt") and
+            isfile(f"saves/{args.load[0]}/starting_state.json")):
+        print(f"{args.load[0]} is not a valid save name")
+        return
 
     if args.gui:
         raise NotImplementedError(
             "Graphical user interface has not been implemented yet."
         )
     elif args.cli:
-        command_line_interface(args.debug)
+        command_line_interface(args.debug, args.load[0])
 
 
 if __name__ == "__main__":

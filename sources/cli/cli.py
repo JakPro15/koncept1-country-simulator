@@ -19,25 +19,9 @@ from .cli_game_commands import (
     optimal,
     laws
 )
-import os.path
 
 
-def command_line_interface(debug=False):
-    print("Do you want to start a new game, or continue a previous one?")
-    print("0 - new game")
-    print("1 - load a save file")
-    answer = input("Your choice: ").strip()
-    while answer not in {'0', '1'}:
-        print("Invalid choice")
-        answer = input("Your choice: ").strip()
-
-    if answer == '0':
-        dirname = "starting"
-    else:
-        dirname = input("Enter the name of the save: ").strip()
-        while not os.path.isfile("saves/" + dirname + "/history.txt"):
-            print("Invalid save name")
-            dirname = input("Enter the name of the save: ").strip()
+def command_line_interface(debug, dirname):
     print("Loading saves/" + dirname)
     interface = Interface(debug=debug)
     try:

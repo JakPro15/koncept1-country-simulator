@@ -3,7 +3,6 @@ from sources.auxiliaries.constants import (
 )
 from ..state.state_data import State_Data
 from .history import History
-from math import inf
 import json
 
 
@@ -56,15 +55,18 @@ class Interface:
             self.history = History(starting_state, history_lines)
             self.state.execute_commands(history_lines)
             self.state.debug = self.debug
+            self.save_name = dirname
         except IOError:
             raise SaveAccessError
         except Exception:
             raise MalformedSaveError
 
-    def save_data(self, dirname):
+    def save_data(self, dirname: str | None = None):
         """
         Saves the game state into the given directory.
         """
+        if not dirname:
+            dirname = self.save_name
         try:
             starting_state_file_name = \
                 "saves/" + dirname + "/starting_state.json"
@@ -140,18 +142,17 @@ class Interface:
         Sets the given law to the given value.
         """
         laws = {
-            "tax_personal": ((0, inf), CLASSES),
-            "tax_property": ((0, 1), CLASSES),
-            "tax_income": ((0, 1), CLASSES),
-            "wage_minimum": ((0, 1), None),
-            "wage_government": ((0, 1), None),
-            "max_prices": ((1, inf), RESOURCES)
+            "tax_personal": (lambda x: 0 <= x, lambda x: x in CLASSES),
+            "tax_property": (lambda x: 0 <= x <= 1, lambda x: x in CLASSES),
+            "tax_income": (lambda x: 0 <= x <= 1, lambda x: x in CLASSES),
+            "wage_minimum": (lambda x: 0 <= x <= 1, lambda x: x is None),
+            "wage_government": (lambda x: 0 <= x <= 1, lambda x: x is None),
+            "wage_autoregulation": (lambda x: x in {0, 1},
+                                    lambda x: x is None),
+            "max_prices": (lambda x: 1 <= x, lambda x: x in RESOURCES),
         }
-        assert laws[law][0][0] <= value <= laws[law][0][1]
-        if laws[law][1]:
-            assert argument in laws[law][1]
-        else:
-            assert argument is None
+        assert laws[law][0](value)
+        assert laws[law][1](argument)
 
         self.state.do_set_law(law, argument, value)
 

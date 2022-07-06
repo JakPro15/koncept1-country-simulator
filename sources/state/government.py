@@ -64,6 +64,7 @@ class Government:
             self._secure_resources = Arithmetic_Dict(secure_res)
 
         self.wage = self.parent.sm.others_minimum_wage
+        self.wage_autoregulation = True
 
     @property
     def parent(self):

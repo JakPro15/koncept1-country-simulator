@@ -45,8 +45,7 @@ def help_default():
           " the government and a social class")
     print("secure <RESOURCE> [<AMOUNT>] - make government resources tradeable"
           " or not tradeable")
-    print("optimal <RESOURCE> <AMOUNT> - set government optimal <RESOURCE> to"
-          " <AMOUNT>")
+    print("optimal <RESOURCE> <AMOUNT> - set government optimal resources")
     print("laws view [<LAW>] - view laws of the country")
     print("laws set <LAW> <VALUE> - set laws of the country")
 
@@ -164,6 +163,7 @@ def help_command(command: str):
         print("    tax_income")
         print("    wage_minimum")
         print("    wage_government")
+        print("    wage_autoregulation")
         print("    max_prices")
     elif command == "laws set":
         print("laws set <LAW> [<CLASS>] [<RESOURCE>] <VALUE>")
@@ -183,6 +183,9 @@ def help_command(command: str):
               " given")
         print("    wage_government - <VALUE> between 0 and 1 (including"
               " endpoints), <CLASS> must not be given, <RESOURCE> must not be"
+              " given")
+        print("    wage_autoregulation - <VALUE> either 0 or 1 (meaning False"
+              " or True), <CLASS> must not be given, <RESOURCE> must not be"
               " given")
         print("    max_prices - <VALUE> above 1, <CLASS> must not be given, "
               "<RESOURCE> must be given")
@@ -463,10 +466,12 @@ def history(args: list[str], interface: Interface):
 
 def save(args: list[str], interface: Interface):
     try:
+        if len(args) == 1:
+            args.append(interface.save_name)
         assert len(args) == 2
         assert args[1].isalpha()
         if args[1] == "starting":
-            print("This save name is prohibited. Please choose another one")
+            print('Please choose a save name different from "starting"')
             return
         try:
             mkdir(f"saves/{args[1]}")
@@ -622,6 +627,12 @@ def state(args: list[str], interface: Interface):
             taxes = interface.state.sm.tax_rates['income']
             for class_name in CLASSES:
                 line += f"  {res_to_str(taxes[class_name]): ^7}"
+            print(line)
+            govt_wage = getattr(interface.state.government, "old_wage",
+                                interface.state.sm.others_minimum_wage)
+            autoreg = interface.state.government.wage_autoregulation
+            line = f"Current wage for government employees: {govt_wage}"
+            line += f" (autoregulation {'on' if autoreg else 'off'})"
             print(line)
         elif args[1] in {"employment", "e"}:
             employees = Arithmetic_Dict({

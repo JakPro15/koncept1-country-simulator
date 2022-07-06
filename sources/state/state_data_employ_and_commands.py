@@ -52,7 +52,10 @@ class _State_Data_Employment_and_Commands:
                 employees_classes.append(social_class)
                 employees += social_class.population
         for social_class in employees_classes:
-            social_class.wage_share = social_class.population / employees
+            if employees > 0:
+                social_class.wage_share = social_class.population / employees
+            else:
+                social_class.wage_share = 0
 
         max_employees = sum([social_class.max_employees
                              for social_class
@@ -170,7 +173,10 @@ class _State_Data_Employment_and_Commands:
             total_employees += employer.employees
 
         for employer in employers_classes:
-            employer.profit_share = employer.employees / total_employees
+            if total_employees > 0:
+                employer.profit_share = employer.employees / total_employees
+            else:
+                employer.profit_share = 0
 
     def _get_monetary_value(self, resources):
         """
@@ -190,7 +196,7 @@ class _State_Data_Employment_and_Commands:
         full_value = self._get_monetary_value(produced)
         used_value = self._get_monetary_value(used)
         if full_value > 0:
-            self.max_wage = used_value / full_value
+            self.max_wage = 1 - used_value / full_value
         else:
             self.max_wage = 1
 
@@ -213,6 +219,9 @@ class _State_Data_Employment_and_Commands:
         """
         for employer in employers_classes:
             employer.old_wage = employer.wage
+            if not getattr(employer, "wage_autoregulation", True):
+                continue
+
             if employer.increase_wage:
                 employer.wage += WAGE_CHANGE
                 employer.wage = min(
@@ -311,6 +320,12 @@ class _State_Data_Employment_and_Commands:
                 self.sm.others_minimum_wage = value
             elif law == "wage_government":
                 self.government.wage = value
+                if hasattr(self.government, "old_wage"):
+                    del self.government.old_wage
+            elif law == "wage_autoregulation":
+                self.government.wage_autoregulation = bool(value)
+                if hasattr(self.government, "old_wage"):
+                    self.government.wage = self.government.old_wage
             elif law == "max_prices":
                 self.sm.max_prices[argument] = value
             else:
