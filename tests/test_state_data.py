@@ -855,9 +855,9 @@ def test_do_demotions():
     assert not nobles.demoted_to
 
     assert artisans.new_population == 0
-    # resources unchanged because new_population setter doesn't change them
-    # in Fake_Class_3
-    assert artisans.new_resources == HUNDREDS
+    # entire class demoted - all their resources moved
+    assert artisans.new_resources == EMPTY_RESOURCES - \
+        INBUILT_RESOURCES["artisans"] * 50
     assert artisans.demoted_from
     assert not artisans.demoted_to
 
@@ -868,7 +868,8 @@ def test_do_demotions():
     assert peasants.demoted_to
 
     assert others.new_population == 110
-    assert others.new_resources == HUNDREDS
+    assert others.new_resources == HUNDREDS + \
+        INBUILT_RESOURCES["artisans"] * 50 + HUNDREDS
     assert not others.demoted_from
     assert others.demoted_to
 
@@ -1042,7 +1043,7 @@ def test_do_promotions_no_starvation():
         5000, 100, increase_price_nobles
     )
     part_paid_others, transferred_others = State_Data._promotion_math(
-        5000, 100, increase_price_artisans
+        5000, 100, (increase_price_artisans + increase_price_peasants) / 2
     )
     part_paid_artisans = part_paid_others * increase_price_artisans / \
         (increase_price_artisans + increase_price_peasants)
@@ -1174,7 +1175,7 @@ def test_do_promotions_with_nobles_cap():
         sum((INBUILT_RESOURCES["artisans"] * state.prices).values())
 
     part_paid_others, transferred_others = State_Data._promotion_math(
-        5000, 100, increase_price_artisans
+        5000, 100, (increase_price_artisans + increase_price_peasants) / 2
     )
     part_paid_artisans = part_paid_others * increase_price_artisans / \
         (increase_price_artisans + increase_price_peasants)
@@ -2357,7 +2358,7 @@ def test_distribute_produced_and_used():
     })
     state._distribute_produced_and_used(employers, employees,
                                         produced, used)
-    assert state.max_wage == 0.025
+    assert state.max_wage == 0.975
 
     assert employers[0].new_resources == {
         "food": 124,
@@ -2452,6 +2453,136 @@ def test_set_new_wages_with_max_wage():
     assert employers[5].wage == 0.8
 
 
+def test_do_force_promotion():
+    data = {
+        "year": 0,
+        "month": "January",
+        "classes": {
+            "nobles": {
+                "population": 20,
+                "resources": {
+                    "food": 0,
+                    "wood": 240,
+                    "stone": 0,
+                    "iron": 50,
+                    "tools": 0,
+                    "land": 10
+                }
+            },
+            "artisans": {
+                "population": 50,
+                "resources": {
+                    "food": 0,
+                    "wood": 0,
+                    "stone": 0,
+                    "iron": 0,
+                    "tools": 0,
+                    "land": 0
+                }
+            },
+            "peasants": {
+                "population": 100,
+                "resources": {
+                    "food": 20,
+                    "wood": 18,
+                    "stone": 0,
+                    "iron": 0,
+                    "tools": 0,
+                    "land": 0
+                }
+            },
+            "others": {
+                "population": 50,
+                "resources": {
+                    "food": 0,
+                    "wood": 30,
+                    "stone": 0,
+                    "iron": 0,
+                    "tools": 0,
+                    "land": 0
+                }
+            }
+        },
+        "government": {
+            "resources": {
+                "food": 1061,
+                "wood": 1062,
+                "stone": 1063,
+                "iron": 1064,
+                "tools": 1065,
+                "land": 10200
+            },
+            "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
+            }
+        },
+        "prices": {
+            "food": 0.1,
+            "wood": 0.2,
+            "stone": 0.3,
+            "iron": 1.4,
+            "tools": 0.5,
+            "land": 10
+        }
+    }
+    state = State_Data.from_dict(data)
+
+    promotion_cost = (INBUILT_RESOURCES["nobles"] -
+                      INBUILT_RESOURCES["peasants"]) * 5
+
+    state.do_force_promotion("nobles", 5)
+    assert state.classes[0].population == 25
+    assert state.classes[1].population == 50
+    assert state.classes[2].population == 95
+    assert state.classes[3].population == 50
+
+    dict_eq(state.classes[0].resources, {
+        "food": 0,
+        "wood": 240,
+        "stone": 0,
+        "iron": 50,
+        "tools": 0,
+        "land": 10
+    })
+    dict_eq(state.classes[1].resources, {
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    })
+    dict_eq(state.classes[2].resources, {
+        "food": 20,
+        "wood": 18,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    })
+    dict_eq(state.classes[3].resources, {
+        "food": 0,
+        "wood": 30,
+        "stone": 0,
+        "iron": 0,
+        "tools": 0,
+        "land": 0
+    })
+    dict_eq(state.government.resources, Arithmetic_Dict({
+        "food": 1061,
+        "wood": 1062,
+        "stone": 1063,
+        "iron": 1064,
+        "tools": 1065,
+        "land": 10200
+    }) - promotion_cost)
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
@@ -2468,16 +2599,21 @@ def test_execute_commands():
     def fake_set_law(self, law, social_class, value):
         self.setlaws.append([law, social_class, value])
 
+    def fake_force_promotion(self, social_class, value):
+        self.forcepromos.append([social_class, value])
+
     old_do_month = State_Data.do_month
     old_transfer = State_Data.do_transfer
     old_secure = State_Data.do_secure
     old_optimal = State_Data.do_optimal
     old_set_law = State_Data.do_set_law
+    old_force_promotion = State_Data.do_force_promotion
     State_Data.do_month = fake_do_month
     State_Data.do_transfer = fake_transfer
     State_Data.do_secure = fake_secure
     State_Data.do_optimal = fake_optimal
     State_Data.do_set_law = fake_set_law
+    State_Data.do_force_promotion = fake_force_promotion
 
     state = State_Data()
     state.did_month = 0
@@ -2485,6 +2621,7 @@ def test_execute_commands():
     state.secures = []
     state.optimals = []
     state.setlaws = []
+    state.forcepromos = []
 
     state.execute_commands(["next 2"])
     assert state.did_month == 2
@@ -2492,6 +2629,7 @@ def test_execute_commands():
     assert state.secures == []
     assert state.optimals == []
     assert state.setlaws == []
+    assert state.forcepromos == []
 
     state.execute_commands(["next 100", "transfer nobles food 100"])
     assert state.did_month == 102
@@ -2501,10 +2639,12 @@ def test_execute_commands():
     assert state.secures == []
     assert state.optimals == []
     assert state.setlaws == []
+    assert state.forcepromos == []
 
     state.execute_commands(["next 1", "next 1", "next 2",
                             "secure food 200",
-                            "laws set tax_property nobles 0.4"])
+                            "laws set tax_property nobles 0.4",
+                            "promote artisans 50"])
     assert state.did_month == 106
     assert state.transfers == [
         ["nobles", "food", 100]
@@ -2515,6 +2655,9 @@ def test_execute_commands():
     assert state.optimals == []
     assert state.setlaws == [
         ["tax_property", "nobles", 0.4]
+    ]
+    assert state.forcepromos == [
+        ["artisans", 50]
     ]
 
     state.execute_commands(["transfer nobles food -100",
@@ -2537,10 +2680,15 @@ def test_execute_commands():
     assert state.setlaws == [
         ["tax_property", "nobles", 0.4]
     ]
+    assert state.forcepromos == [
+        ["artisans", 50]
+    ]
 
     state.execute_commands(["optimal iron 0",
+                            "promote nobles 10",
                             "laws set wage_minimum None 0",
-                            "laws set tax_income peasants 0.9"])
+                            "laws set tax_income peasants 0.9",
+                            "promote peasants 34"])
     assert state.did_month == 106
     assert state.transfers == [
         ["nobles", "food", 100],
@@ -2560,9 +2708,15 @@ def test_execute_commands():
         ["wage_minimum", None, 0.0],
         ["tax_income", "peasants", 0.9]
     ]
+    assert state.forcepromos == [
+        ["artisans", 50],
+        ["nobles", 10],
+        ["peasants", 34]
+    ]
 
     State_Data.do_month = old_do_month
     State_Data.do_transfer = old_transfer
     State_Data.do_secure = old_secure
     State_Data.do_optimal = old_optimal
     State_Data.do_set_law = old_set_law
+    State_Data.do_force_promotion = old_force_promotion

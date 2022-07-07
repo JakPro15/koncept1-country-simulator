@@ -48,6 +48,7 @@ def help_default():
     print("optimal <RESOURCE> <AMOUNT> - set government optimal resources")
     print("laws view [<LAW>] - view laws of the country")
     print("laws set <LAW> <VALUE> - set laws of the country")
+    print("promote <CLASS> <VALUE> - force promotion to a social class")
 
 
 def help_command(command: str):
@@ -167,8 +168,8 @@ def help_command(command: str):
         print("    max_prices")
     elif command == "laws set":
         print("laws set <LAW> [<CLASS>] [<RESOURCE>] <VALUE>")
-        print("Changes the chosen <LAW>'s value for the given <CLASS> to the"
-              " given <VALUE>.")
+        print("Changes the chosen <LAW>'s value for the given <CLASS> or the"
+              " given <RESOURCE> to the given <VALUE>.")
         print("Valid values for <LAW> and their valid <VALUE>s:")
         print("    tax_personal - <VALUE> above or equal 0, <CLASS> must be"
               " given, <RESOURCE> must not be given")
@@ -189,6 +190,26 @@ def help_command(command: str):
               " given")
         print("    max_prices - <VALUE> above 1, <CLASS> must not be given, "
               "<RESOURCE> must be given")
+        print("Valid values for <CLASS>:")
+        print("    nobles (n)")
+        print("    artisans (a)")
+        print("    peasants (p)")
+        print("    others (o)")
+        print("Valid values for <RESOURCE>:")
+        print("    food (f)")
+        print("    wood (w)")
+        print("    stone (s)")
+        print("    iron (i)")
+        print("    tools (t)")
+        print("    land (l)")
+        print("promote <CLASS> <VALUE> - force promotion to a social class")
+        print("Spends government resources to promote <VALUE> people to "
+              "<CLASS>.")
+        print("Valid values for <CLASS>:")
+        print("    nobles (n) - promotion from peasants")
+        print("    artisans (a) - promotion from others")
+        print("    peasants (p) - promotion from others")
+        print("<VALUE> must be nonnegative.")
     else:
         raise InvalidCommand
 

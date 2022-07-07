@@ -2,7 +2,8 @@ from ..auxiliaries.constants import (
     CLASS_NAME_TO_INDEX,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
-    WAGE_CHANGE
+    WAGE_CHANGE,
+    INBUILT_RESOURCES
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -267,8 +268,7 @@ class _State_Data_Employment_and_Commands:
 
     def do_transfer(self, class_name: str, resource: str, amount: int):
         """
-        Moves resources between the government and a social class. More info
-        in interface transfer command.
+        Moves resources between the government and a social class.
         """
         class_index = CLASS_NAME_TO_INDEX[class_name]
 
@@ -333,13 +333,33 @@ class _State_Data_Employment_and_Commands:
         except KeyError:
             raise InvalidCommandError
 
+    def do_force_promotion(self, class_name: str, number: int):
+        """
+        Promotes the given number of people to the given class using
+        government resources.
+        """
+        class_to = self.classes[CLASS_NAME_TO_INDEX[class_name]]
+        class_from = class_to.lower_class
+        removal_res = INBUILT_RESOURCES[class_from.class_name] * number
+        addition_res = INBUILT_RESOURCES[class_name] * number
+
+        class_from.new_population -= number
+        class_from.new_resources -= removal_res
+
+        class_to.new_resources += addition_res
+        class_to.new_population += number
+
+        self.government.new_resources -= addition_res - removal_res
+
+        self._secure_classes()
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
         Format: [
-            "<command> <argument> <argument>...",
-            "<command> <argument> <argument>...",
-            and so on
+            "<command> <argument> <argument> ...",
+            "<command> <argument> <argument> ...",
+            ...
         ]
         """
         for line in commands:
@@ -358,5 +378,7 @@ class _State_Data_Employment_and_Commands:
                 if command[3] == "None":
                     command[3] = None
                 self.do_set_law(command[2], command[3], float(command[4]))
+            elif command[0] == "promote":
+                self.do_force_promotion(command[1], int(command[2]))
             else:
                 raise InvalidCommandError

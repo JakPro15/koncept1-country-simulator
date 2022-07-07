@@ -5,6 +5,7 @@
 
 from ..abstract_interface.interface import (
     Interface,
+    NotEnoughClassPopulation,
     NotEnoughClassResources,
     NotEnoughGovtResources
 )
@@ -216,3 +217,33 @@ def laws(args: list[str], interface: Interface):
             raise AssertionError
     except AssertionError:
         print("Invalid syntax. See help for proper usage of laws command")
+
+
+def promote(args: list[str], interface: Interface):
+    """
+    Forces a promotion using government resources.
+    """
+    try:
+        assert len(args) == 3
+
+        valid_classes = CLASSES.copy()
+        valid_classes.remove("others")
+        args[1] = fill_command(args[1], valid_classes)
+        assert len(args[1]) == 1
+        args[1] = args[1][0]
+
+        try:
+            args[2] = int(args[2])
+        except ValueError:
+            raise AssertionError
+
+        try:
+            interface.force_promotion(args[1], args[2])
+        except NotEnoughGovtResources:
+            print("The government does not have enough resources for this"
+                  " operation.")
+        except NotEnoughClassPopulation:
+            print("The class from which the promotion was to be done does not"
+                  " have enough population.")
+    except AssertionError:
+        print("Invalid syntax. See help for proper usage of promote command")

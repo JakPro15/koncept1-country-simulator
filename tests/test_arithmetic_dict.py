@@ -447,6 +447,89 @@ def test_assignment_floor_division_by_zero():
     }
 
 
+def test_lesser_than_operator_on_dicts_both_ways():
+    resources1 = Arithmetic_Dict({
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 3,
+        "tools": 4
+    })
+    resources2 = Arithmetic_Dict({
+        "food": 4,
+        "wood": 3,
+        "stone": 2,
+        "iron": 1,
+        "tools": 0
+    })
+    assert resources1 < resources2
+    assert resources2 < resources1
+
+    resources2 = dict(resources2)
+    assert resources1 < resources2
+
+
+def test_lesser_than_operator_on_dicts_strictly_lesser():
+    resources1 = Arithmetic_Dict({
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 3,
+        "tools": 4
+    })
+    resources2 = Arithmetic_Dict({
+        "food": 1,
+        "wood": 2,
+        "stone": 3,
+        "iron": 4,
+        "tools": 5
+    })
+    assert resources1 < resources2
+    assert not resources2 < resources1
+
+    resources2 = dict(resources2)
+    assert resources1 < resources2
+
+
+def test_lesser_than_operator_on_dicts_equals():
+    resources1 = Arithmetic_Dict({
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 3,
+        "tools": 4
+    })
+    assert not resources1 < resources1
+
+    resources2 = dict(resources1)
+    assert not resources1 < resources2
+
+
+def test_lesser_than_operator_with_number_various_values():
+    resources1 = Arithmetic_Dict({
+        "food": 0,
+        "wood": 1,
+        "stone": 2,
+        "iron": 3,
+        "tools": 4
+    })
+    assert resources1 < 4
+    assert resources1 < 1
+    assert not resources1 < 0
+    assert not resources1 < -1.5
+
+
+def test_lesser_than_operator_with_number_equals():
+    resources1 = Arithmetic_Dict({
+        "stone": 4,
+        "iron": 4,
+        "tools": 4
+    })
+    assert not resources1 < 4
+    assert resources1 < 4.5
+    assert not resources1 < 3.5
+
+
 def test_copy():
     resources1 = Arithmetic_Dict({
         "food": 0,

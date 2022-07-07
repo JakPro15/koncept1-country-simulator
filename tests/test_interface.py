@@ -1,7 +1,9 @@
 from pytest import raises
+from sources.auxiliaries.constants import INBUILT_RESOURCES
 from sources.state.government import Government
 from ..sources.abstract_interface.interface import (
     Interface,
+    NotEnoughClassPopulation,
     NotEnoughClassResources,
     NotEnoughGovtResources
 )
@@ -277,3 +279,93 @@ def test_set_law():
     ]
 
     State_Data.do_set_law = old_do_set_law
+
+
+def test_force_promotion():
+    def fake_do_force_promotion(self, resource, amount):
+        self.force_promotions.append([resource, amount])
+
+    class Fake_Class:
+        def __init__(self, population, name):
+            self.population = population
+            self.class_name = name
+
+    old_do_force_promotion = State_Data.do_force_promotion
+    State_Data.do_force_promotion = fake_do_force_promotion
+
+    state = State_Data()
+    state._classes = [
+        Fake_Class(50, "nobles"),
+        Fake_Class(50, "artisans"),
+        Fake_Class(60, "peasants"),
+        Fake_Class(200, "others"),
+    ]
+    state._classes[0].lower_class = state._classes[2]
+    state._classes[1].lower_class = state._classes[3]
+    state._classes[2].lower_class = state._classes[3]
+    state._classes[3].lower_class = state._classes[3]
+    state.force_promotions = []
+    state.government = Government(state)
+    state.government.new_resources = (INBUILT_RESOURCES["peasants"] -
+                                      INBUILT_RESOURCES["others"]) * 100
+    state.government.flush()
+
+    history = History({}, ["next 6"])
+
+    interface = Interface()
+    interface.state = state
+    interface.history = history
+
+    interface.force_promotion("peasants", 60)
+    with raises(AssertionError):
+        interface.force_promotion("peasants", -1)
+    with raises(NotEnoughClassPopulation):
+        interface.force_promotion("nobles", 61)
+    with raises(NotEnoughGovtResources):
+        interface.force_promotion("peasants", 101)
+
+    assert state.force_promotions == [["peasants", 60]]
+    assert history.history_lines == [
+        "next 6",
+        "promote peasants 60"
+    ]
+
+    state.government.new_resources = (INBUILT_RESOURCES["nobles"] -
+                                      INBUILT_RESOURCES["peasants"]) * 20
+    state.government.flush()
+
+    interface.force_promotion("nobles", 20)
+    with raises(NotEnoughGovtResources):
+        interface.force_promotion("nobles", 21)
+
+    assert state.force_promotions == [
+        ["peasants", 60],
+        ["nobles", 20]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "promote peasants 60",
+        "promote nobles 20"
+    ]
+
+    state.government.new_resources = (INBUILT_RESOURCES["artisans"] -
+                                      INBUILT_RESOURCES["others"]) * 20
+    state.government.flush()
+
+    interface.force_promotion("artisans", 20)
+    with raises(NotEnoughGovtResources):
+        interface.force_promotion("artisans", 21)
+
+    assert state.force_promotions == [
+        ["peasants", 60],
+        ["nobles", 20],
+        ["artisans", 20]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "promote peasants 60",
+        "promote nobles 20",
+        "promote artisans 20"
+    ]
+
+    State_Data.do_force_promotion = old_do_force_promotion

@@ -127,6 +127,17 @@ class Arithmetic_Dict(dict):
                         self[key] = inf
         return self
 
+    def __lt__(self, other):
+        if isinstance(other, Arithmetic_Dict) or isinstance(other, dict):
+            for key in self | other:
+                if self.get(key, 0) < other.get(key, 0):
+                    return True
+        else:
+            for key in self:
+                if self.get(key, 0) < other:
+                    return True
+        return False
+
     def copy(self):
         return Arithmetic_Dict(super().copy())
 
@@ -139,6 +150,6 @@ class Arithmetic_Dict(dict):
         result = self.copy()
         for key in result:
             result[key] = round(result[key], ndigits)
-            if ndigits == 0 and not (isnan(result[key]) or isinf(result[key])):
+            if ndigits <= 0 and not (isnan(result[key]) or isinf(result[key])):
                 result[key] = int(result[key])
         return result

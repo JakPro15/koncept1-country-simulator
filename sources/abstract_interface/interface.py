@@ -1,5 +1,5 @@
 from sources.auxiliaries.constants import (
-    CLASS_NAME_TO_INDEX, CLASSES, RESOURCES
+    CLASS_NAME_TO_INDEX, CLASSES, INBUILT_RESOURCES, RESOURCES
 )
 from ..state.state_data import State_Data
 from .history import History
@@ -11,6 +11,10 @@ class NotEnoughGovtResources(Exception):
 
 
 class NotEnoughClassResources(Exception):
+    pass
+
+
+class NotEnoughClassPopulation(Exception):
     pass
 
 
@@ -141,21 +145,49 @@ class Interface:
         """
         Sets the given law to the given value.
         """
-        laws = {
-            "tax_personal": (lambda x: 0 <= x, lambda x: x in CLASSES),
-            "tax_property": (lambda x: 0 <= x <= 1, lambda x: x in CLASSES),
-            "tax_income": (lambda x: 0 <= x <= 1, lambda x: x in CLASSES),
-            "wage_minimum": (lambda x: 0 <= x <= 1, lambda x: x is None),
-            "wage_government": (lambda x: 0 <= x <= 1, lambda x: x is None),
-            "wage_autoregulation": (lambda x: x in {0, 1},
-                                    lambda x: x is None),
-            "max_prices": (lambda x: 1 <= x, lambda x: x in RESOURCES),
+        laws_conditions = {
+            "tax_personal": (lambda val: 0 <= val,
+                             lambda arg: arg in CLASSES),
+            "tax_property": (lambda val: 0 <= val <= 1,
+                             lambda arg: arg in CLASSES),
+            "tax_income": (lambda val: 0 <= val <= 1,
+                           lambda arg: arg in CLASSES),
+            "wage_minimum": (lambda val: 0 <= val <= 1,
+                             lambda arg: arg is None),
+            "wage_government": (lambda val: 0 <= val <= 1,
+                                lambda arg: arg is None),
+            "wage_autoregulation": (lambda val: val in {0, 1},
+                                    lambda arg: arg is None),
+            "max_prices": (lambda val: 1 <= val,
+                           lambda arg: arg in RESOURCES),
         }
-        assert laws[law][0](value)
-        assert laws[law][1](argument)
+        assert laws_conditions[law][0](value)
+        assert laws_conditions[law][1](argument)
 
         self.state.do_set_law(law, argument, value)
 
         self.history.add_history_line(
             f"laws set {law} {argument} {value}"
+        )
+
+    def force_promotion(self, class_name: str, number: int):
+        """
+        Promotes the given number of people to the given class using
+        government resources.
+        """
+        assert number >= 0
+        class_index = CLASS_NAME_TO_INDEX[class_name]
+        lower_class = self.state.classes[class_index].lower_class
+
+        if lower_class.population < number:
+            raise NotEnoughClassPopulation
+        if self.state.government.real_resources < (
+             INBUILT_RESOURCES[class_name] -
+             INBUILT_RESOURCES[lower_class.class_name]) * number:
+            raise NotEnoughGovtResources
+
+        self.state.do_force_promotion(class_name, number)
+
+        self.history.add_history_line(
+            f"promote {class_name} {number}"
         )
