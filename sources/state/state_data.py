@@ -232,12 +232,14 @@ class State_Data(_State_Data_Employment_and_Commands):
             else:
                 social_class.freezing = False
 
+            dead = starving_number + freezing_number
             if starving_number + freezing_number < social_class.new_population:
-                social_class.new_population -= (
-                    starving_number + freezing_number
-                )
+                part_dead = dead / social_class.new_population
+                social_class.new_population -= dead
+                social_class.happiness += Class.starvation_happiness(part_dead)
             else:
                 social_class.new_population = 0
+                social_class.happiness = social_class.happiness_plateau
 
             if self.debug:
                 print(f"Starved {old_pop - social_class.new_population} "
@@ -473,6 +475,9 @@ class State_Data(_State_Data_Employment_and_Commands):
                 rel_taxes[social_class.class_name]
             self.government.new_resources += tax
             social_class.new_resources -= tax
+            social_class.happiness += Class.resources_seized_happiness(
+                rel_taxes[social_class.class_name]
+            )
 
     def do_month(self):
         """
@@ -516,6 +521,10 @@ class State_Data(_State_Data_Employment_and_Commands):
             "month": self.month
         }
 
+        # Zeroth: decay happiness
+        for social_class in self.classes:
+            social_class.decay_happiness()
+
         # First: growth - resources might become negative
         self._do_growth()
 
@@ -555,7 +564,11 @@ class State_Data(_State_Data_Employment_and_Commands):
         self._secure_classes()
         self._advance_month()
 
-        # Eleventh: return the necessary data
+        # Eleventh: update happiness plateau
+        for social_class in self.classes:
+            social_class.update_happiness_plateau()
+
+        # Twelfth: return the necessary data
         month_data["resources_after"] = {
             "nobles": self.classes[0].real_resources,
             "artisans": self.classes[1].real_resources,

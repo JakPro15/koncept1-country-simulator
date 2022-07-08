@@ -280,7 +280,17 @@ class _State_Data_Employment_and_Commands:
         res[resource] += amount
         self.classes[class_index].new_resources = res
 
+        res_price = -amount * self.prices[resource]
+        part_seized = res_price / self.classes[class_index].net_worth
+
         self._do_demotions()
+
+        if self.classes[class_index].new_population > 0:
+            self.classes[class_index].happiness += \
+                Class.resources_seized_happiness(part_seized)
+        else:
+            self.classes[class_index].happiness = \
+                self.classes[class_index].happiness_plateau
         self._secure_classes()
 
     def do_secure(self, resource: str, amount: int):

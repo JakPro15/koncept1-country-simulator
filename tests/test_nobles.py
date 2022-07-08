@@ -45,6 +45,9 @@ def test_constructor():
     assert not nobles.starving
     assert not nobles.freezing
 
+    assert nobles.happiness == 0
+    assert nobles.happiness_plateau == 0
+
 
 def test_default_constructor():
     state = State_Data()
@@ -71,6 +74,9 @@ def test_default_constructor():
     assert nobles.temp["resources"] == EMPTY_RESOURCES
     assert not nobles.starving
     assert not nobles.freezing
+
+    assert nobles.happiness == 0
+    assert nobles.happiness_plateau == 0
 
 
 def test_class_name():
@@ -615,3 +621,71 @@ def test_flush_exception():
     nobles.new_resources = resources
     with raises(Exception):
         nobles.flush()
+
+
+def test_decay_happiness_no_plateau():
+    state = State_Data()
+    nobles = Nobles(state, 80)
+    nobles.happiness = 20
+    nobles.decay_happiness()
+    assert 0 < nobles.happiness < 20
+
+    nobles.happiness = -20
+    nobles.decay_happiness()
+    assert 0 > nobles.happiness > -20
+
+    nobles.happiness = 0
+    nobles.decay_happiness()
+    assert nobles.happiness == 0
+
+
+def test_decay_happiness_with_plateau():
+    state = State_Data()
+    nobles = Nobles(state, 80)
+    nobles.happiness = 30
+    nobles.happiness_plateau = 10
+    nobles.decay_happiness()
+    assert 10 < nobles.happiness < 30
+
+    nobles.happiness = -10
+    nobles.decay_happiness()
+    assert 10 > nobles.happiness > -10
+
+    nobles.happiness = 10
+    nobles.decay_happiness()
+    assert nobles.happiness == 10
+
+
+def test_update_happiness_plateau():
+    state = State_Data()
+    nobles = Nobles(state, 80)
+
+    nobles.starving = False
+    nobles.freezing = True
+    nobles.demoted_from = False
+    nobles.demoted_to = True
+    nobles.promoted_from = True
+    nobles.promoted_to = False
+
+    nobles.update_happiness_plateau()
+    assert nobles.happiness_plateau == -20
+
+    nobles.starving = True
+    nobles.freezing = False
+    nobles.demoted_from = False
+    nobles.demoted_to = False
+    nobles.promoted_from = True
+    nobles.promoted_to = False
+
+    nobles.update_happiness_plateau()
+    assert nobles.happiness_plateau == -10
+
+    nobles.starving = False
+    nobles.freezing = False
+    nobles.demoted_from = True
+    nobles.demoted_to = False
+    nobles.promoted_from = False
+    nobles.promoted_to = True
+
+    nobles.update_happiness_plateau()
+    assert nobles.happiness_plateau == 0

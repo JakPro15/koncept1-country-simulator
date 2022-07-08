@@ -48,6 +48,9 @@ def test_constructor():
     assert not artisans.starving
     assert not artisans.freezing
 
+    assert artisans.happiness == 0
+    assert artisans.happiness_plateau == 0
+
 
 def test_default_constructor():
     state = State_Data()
@@ -73,6 +76,9 @@ def test_default_constructor():
     assert artisans.temp["resources"] == EMPTY_RESOURCES
     assert not artisans.starving
     assert not artisans.freezing
+
+    assert artisans.happiness == 0
+    assert artisans.happiness_plateau == 0
 
 
 def test_class_name():
@@ -638,3 +644,71 @@ def test_flush_exception():
     artisans.new_resources = resources
     with raises(Exception):
         artisans.flush()
+
+
+def test_decay_happiness_no_plateau():
+    state = State_Data()
+    artisans = Artisans(state, 80)
+    artisans.happiness = 20
+    artisans.decay_happiness()
+    assert 0 < artisans.happiness < 20
+
+    artisans.happiness = -20
+    artisans.decay_happiness()
+    assert 0 > artisans.happiness > -20
+
+    artisans.happiness = 0
+    artisans.decay_happiness()
+    assert artisans.happiness == 0
+
+
+def test_decay_happiness_with_plateau():
+    state = State_Data()
+    artisans = Artisans(state, 80)
+    artisans.happiness = 30
+    artisans.happiness_plateau = 10
+    artisans.decay_happiness()
+    assert 10 < artisans.happiness < 30
+
+    artisans.happiness = -10
+    artisans.decay_happiness()
+    assert 10 > artisans.happiness > -10
+
+    artisans.happiness = 10
+    artisans.decay_happiness()
+    assert artisans.happiness == 10
+
+
+def test_update_happiness_plateau():
+    state = State_Data()
+    artisans = Artisans(state, 80)
+
+    artisans.starving = False
+    artisans.freezing = True
+    artisans.demoted_from = False
+    artisans.demoted_to = True
+    artisans.promoted_from = True
+    artisans.promoted_to = False
+
+    artisans.update_happiness_plateau()
+    assert artisans.happiness_plateau == -20
+
+    artisans.starving = True
+    artisans.freezing = False
+    artisans.demoted_from = False
+    artisans.demoted_to = False
+    artisans.promoted_from = True
+    artisans.promoted_to = False
+
+    artisans.update_happiness_plateau()
+    assert artisans.happiness_plateau == -10
+
+    artisans.starving = False
+    artisans.freezing = False
+    artisans.demoted_from = True
+    artisans.demoted_to = False
+    artisans.promoted_from = False
+    artisans.promoted_to = True
+
+    artisans.update_happiness_plateau()
+    assert artisans.happiness_plateau == 0

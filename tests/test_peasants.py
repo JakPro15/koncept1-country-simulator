@@ -49,6 +49,9 @@ def test_constructor():
     assert not peasants.starving
     assert not peasants.freezing
 
+    assert peasants.happiness == 0
+    assert peasants.happiness_plateau == 0
+
 
 def test_default_constructor():
     state = State_Data()
@@ -75,6 +78,9 @@ def test_default_constructor():
     assert peasants.temp["resources"] == EMPTY_RESOURCES
     assert not peasants.starving
     assert not peasants.freezing
+
+    assert peasants.happiness == 0
+    assert peasants.happiness_plateau == 0
 
 
 def test_class_name():
@@ -672,3 +678,71 @@ def test_flush_exception():
     peasants.new_resources = resources
     with raises(Exception):
         peasants.flush()
+
+
+def test_decay_happiness_no_plateau():
+    state = State_Data()
+    peasants = Peasants(state, 80)
+    peasants.happiness = 20
+    peasants.decay_happiness()
+    assert 0 < peasants.happiness < 20
+
+    peasants.happiness = -20
+    peasants.decay_happiness()
+    assert 0 > peasants.happiness > -20
+
+    peasants.happiness = 0
+    peasants.decay_happiness()
+    assert peasants.happiness == 0
+
+
+def test_decay_happiness_with_plateau():
+    state = State_Data()
+    peasants = Peasants(state, 80)
+    peasants.happiness = 30
+    peasants.happiness_plateau = 10
+    peasants.decay_happiness()
+    assert 10 < peasants.happiness < 30
+
+    peasants.happiness = -10
+    peasants.decay_happiness()
+    assert 10 > peasants.happiness > -10
+
+    peasants.happiness = 10
+    peasants.decay_happiness()
+    assert peasants.happiness == 10
+
+
+def test_update_happiness_plateau():
+    state = State_Data()
+    peasants = Peasants(state, 80)
+
+    peasants.starving = False
+    peasants.freezing = True
+    peasants.demoted_from = False
+    peasants.demoted_to = True
+    peasants.promoted_from = True
+    peasants.promoted_to = False
+
+    peasants.update_happiness_plateau()
+    assert peasants.happiness_plateau == -20
+
+    peasants.starving = True
+    peasants.freezing = False
+    peasants.demoted_from = False
+    peasants.demoted_to = False
+    peasants.promoted_from = True
+    peasants.promoted_to = False
+
+    peasants.update_happiness_plateau()
+    assert peasants.happiness_plateau == -10
+
+    peasants.starving = False
+    peasants.freezing = False
+    peasants.demoted_from = True
+    peasants.demoted_to = False
+    peasants.promoted_from = False
+    peasants.promoted_to = True
+
+    peasants.update_happiness_plateau()
+    assert peasants.happiness_plateau == 0

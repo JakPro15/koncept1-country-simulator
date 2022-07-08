@@ -45,6 +45,9 @@ def test_constructor():
     assert not others.starving
     assert not others.freezing
 
+    assert others.happiness == 0
+    assert others.happiness_plateau == 0
+
 
 def test_default_constructor():
     state = State_Data()
@@ -71,6 +74,9 @@ def test_default_constructor():
     assert others.temp["resources"] == EMPTY_RESOURCES
     assert not others.starving
     assert not others.freezing
+
+    assert others.happiness == 0
+    assert others.happiness_plateau == 0
 
 
 def test_class_name():
@@ -586,3 +592,71 @@ def test_flush_exception():
     others.new_resources = resources
     with raises(Exception):
         others.flush()
+
+
+def test_decay_happiness_no_plateau():
+    state = State_Data()
+    others = Others(state, 80)
+    others.happiness = 20
+    others.decay_happiness()
+    assert 0 < others.happiness < 20
+
+    others.happiness = -20
+    others.decay_happiness()
+    assert 0 > others.happiness > -20
+
+    others.happiness = 0
+    others.decay_happiness()
+    assert others.happiness == 0
+
+
+def test_decay_happiness_with_plateau():
+    state = State_Data()
+    others = Others(state, 80)
+    others.happiness = 30
+    others.happiness_plateau = 10
+    others.decay_happiness()
+    assert 10 < others.happiness < 30
+
+    others.happiness = -10
+    others.decay_happiness()
+    assert 10 > others.happiness > -10
+
+    others.happiness = 10
+    others.decay_happiness()
+    assert others.happiness == 10
+
+
+def test_update_happiness_plateau():
+    state = State_Data()
+    others = Others(state, 80)
+
+    others.starving = False
+    others.freezing = True
+    others.demoted_from = False
+    others.demoted_to = True
+    others.promoted_from = True
+    others.promoted_to = False
+
+    others.update_happiness_plateau()
+    assert others.happiness_plateau == -20
+
+    others.starving = True
+    others.freezing = False
+    others.demoted_from = False
+    others.demoted_to = False
+    others.promoted_from = True
+    others.promoted_to = False
+
+    others.update_happiness_plateau()
+    assert others.happiness_plateau == -10
+
+    others.starving = False
+    others.freezing = False
+    others.demoted_from = True
+    others.demoted_to = False
+    others.promoted_from = False
+    others.promoted_to = True
+
+    others.update_happiness_plateau()
+    assert others.happiness_plateau == 0

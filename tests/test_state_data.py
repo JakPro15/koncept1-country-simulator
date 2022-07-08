@@ -1,3 +1,4 @@
+from sources.state.social_classes.class_file import Class
 from ..sources.state.state_data import (
     State_Data, Nobles, Artisans, Peasants, Others, Government
 )
@@ -725,6 +726,7 @@ def test_do_starvation():
     assert state.classes[0].population == 20
     assert state.classes[0].starving
     assert not state.classes[0].freezing
+    assert state.classes[0].happiness == 0
 
     dead_artisans = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION
     assert state.classes[1].new_population == 50 - dead_artisans
@@ -739,6 +741,9 @@ def test_do_starvation():
     assert state.classes[1].population == 50
     assert state.classes[1].starving
     assert not state.classes[1].freezing
+    assert state.classes[1].happiness == Class.starvation_happiness(
+        dead_artisans / 50
+    )
 
     dead_peasants = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION + \
         18 * FREEZING_MORTALITY / WOOD_CONSUMPTION["January"]
@@ -754,6 +759,9 @@ def test_do_starvation():
     assert state.classes[2].population == 100
     assert state.classes[2].starving
     assert state.classes[2].freezing
+    assert state.classes[2].happiness == Class.starvation_happiness(
+        dead_peasants / 100
+    )
 
     assert state.classes[3].new_population == \
         50 - 30 * FREEZING_MORTALITY / WOOD_CONSUMPTION["January"]
@@ -761,6 +769,9 @@ def test_do_starvation():
     assert state.classes[3].population == 50
     assert not state.classes[3].starving
     assert state.classes[3].freezing
+    assert state.classes[3].happiness == Class.starvation_happiness(
+        (30 * FREEZING_MORTALITY / WOOD_CONSUMPTION["January"]) / 50
+    )
 
 
 class Fake_Class_3:
@@ -1427,6 +1438,15 @@ def test_do_taxes():
     assert state.classes[3].new_resources == other_after
     assert state.government.new_resources == govt_after
 
+    assert state.classes[0].happiness == \
+        Class.resources_seized_happiness(rel_tax["nobles"])
+    assert state.classes[1].happiness == \
+        Class.resources_seized_happiness(1)
+    assert state.classes[2].happiness == \
+        Class.resources_seized_happiness(rel_tax["peasants"])
+    assert state.classes[3].happiness == \
+        Class.resources_seized_happiness(rel_tax["others"])
+
 
 def test_do_transfer_from_government():
     data = {
@@ -1506,6 +1526,7 @@ def test_do_transfer_from_government():
         }
     }
     state = State_Data.from_dict(data)
+    part_seized = -10 / state.classes[0].net_worth
     state.do_transfer("nobles", "food", 10)
     assert state.classes[0].resources == {
         "food": 20,
@@ -1515,6 +1536,9 @@ def test_do_transfer_from_government():
         "tools": 10,
         "land": 10
     }
+    assert state.classes[0].happiness == Class.resources_seized_happiness(
+        part_seized
+    )
     assert state.government.resources == {
         "food": 0,
         "wood": 10,
@@ -1603,6 +1627,7 @@ def test_do_transfer_to_government():
         }
     }
     state = State_Data.from_dict(data)
+    part_seized = 75 / state.classes[1].net_worth
     state.do_transfer("artisans", "tools", -15)
     assert state.classes[1].resources == {
         "food": 20,
@@ -1612,6 +1637,9 @@ def test_do_transfer_to_government():
         "tools": 5,
         "land": 20
     }
+    assert state.classes[1].happiness == Class.resources_seized_happiness(
+        part_seized
+    )
     assert state.government.resources == {
         "food": 10,
         "wood": 10,
@@ -1700,8 +1728,12 @@ def test_do_transfer_to_government_demotion():
         }
     }
     state = State_Data.from_dict(data)
+    part_seized = 125 / state.classes[1].net_worth
     state.do_transfer("artisans", "tools", -25)
     assert state.classes[1].demoted_from
+    assert state.classes[1].happiness == Class.resources_seized_happiness(
+        part_seized
+    )
     assert state.classes[3].demoted_to
     assert state.government.resources == {
         "food": 10,

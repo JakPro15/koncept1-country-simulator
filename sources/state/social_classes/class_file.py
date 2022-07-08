@@ -82,6 +82,9 @@ class Class:
         self.promoted_from = False
         self.promoted_to = False
 
+        self.happiness = 0
+        self.happiness_plateau = 0
+
     @property
     def parent(self):
         return self._parent
@@ -306,3 +309,51 @@ class Class:
 
         self._population = self._new_population
         self._resources = self._new_resources.copy()
+
+    def decay_happiness(self):
+        """
+        Changes the happiness a bit towards zero. Changes are bigger the
+        further happiness is from zero.
+        """
+        self.happiness -= self.happiness_plateau
+        decay = min(0.2 * abs(self.happiness), abs(self.happiness))
+        sign = -1 if self.happiness > 0 else 1
+        self.happiness += sign * decay
+        self.happiness += self.happiness_plateau
+
+    def update_happiness_plateau(self):
+        """
+        Sets happiness plateau based on growth modifiers flags.
+        """
+        self.happiness_plateau = 0
+        if self.starving:
+            self.happiness_plateau -= 20
+        if self.freezing:
+            self.happiness_plateau -= 20
+        if self.demoted_from:
+            self.happiness_plateau -= 10
+        if self.demoted_to:
+            self.happiness_plateau -= 10
+        if self.promoted_from:
+            self.happiness_plateau += 10
+        if self.promoted_to:
+            self.happiness_plateau += 10
+
+    @staticmethod
+    def starvation_happiness(part_dead):
+        """
+        Returns the change in happiness of a social class whose given part
+        died of starvation or freezing.
+        """
+        percent_dead = part_dead * 100
+        return (percent_dead ** 2.5) / (percent_dead - 100.01) - percent_dead
+
+    @staticmethod
+    def resources_seized_happiness(part_seized):
+        """
+        Returns the change in happiness of a social class whose given part
+        of resources was seized by the government.
+        """
+        percent_seized = abs(part_seized) * 100
+        return ((percent_seized ** 1.5) / (percent_seized - 100.01) -
+                percent_seized) * (1 if part_seized > 0 else -1)
