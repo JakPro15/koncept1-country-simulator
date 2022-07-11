@@ -129,6 +129,7 @@ class Government:
         data = {
             "resources": dict(self.resources),
             "optimal_resources": dict(self.optimal_resources),
+            "secure_resources": dict(self.secure_resources)
         }
         return data
 
@@ -137,7 +138,8 @@ class Government:
         """
         Creates a government object from the given dict.
         """
-        return cls(parent, data["resources"], data["optimal_resources"])
+        return cls(parent, data["resources"], data["optimal_resources"],
+                   data["secure_resources"])
 
     def handle_negative_resources(self):
         """

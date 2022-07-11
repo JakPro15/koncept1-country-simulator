@@ -241,7 +241,8 @@ class Class:
         """
         data = {
             "population": self.population,
-            "resources": dict(self.resources)
+            "resources": dict(self.resources),
+            "happiness": self.happiness
         }
         return data
 
@@ -250,7 +251,9 @@ class Class:
         """
         Creates a social class object from the given dict.
         """
-        return cls(parent, data["population"], data["resources"])
+        new_class = cls(parent, data["population"], data["resources"])
+        new_class.happiness = data.get("happiness", 0)
+        return new_class
 
     def handle_empty_class(self):
         """

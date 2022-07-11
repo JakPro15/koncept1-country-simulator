@@ -195,11 +195,20 @@ def test_to_dict():
         "tools": 10,
         "land": 0
     }
-    govt = Government(state, resources, optimal_resources)
+    secure_resources = {
+        "food": 300,
+        "wood": 300,
+        "iron": 10,
+        "stone": 10,
+        "tools": 300,
+        "land": 10
+    }
+    govt = Government(state, resources, optimal_resources, secure_resources)
 
     dicted = govt.to_dict()
     assert dicted["resources"] == resources
     assert dicted["optimal_resources"] == optimal_resources
+    assert dicted["secure_resources"] == secure_resources
 
 
 def test_from_dict():
@@ -221,6 +230,14 @@ def test_from_dict():
             "tools": 100,
             "land": 50
         },
+        "secure_resources": {
+            "food": 10,
+            "wood": 20,
+            "iron": 40,
+            "stone": 50,
+            "tools": 10,
+            "land": 10
+        }
     }
     govt = Government.from_dict(state, dicted)
 
@@ -228,6 +245,7 @@ def test_from_dict():
     assert govt.resources == dicted["resources"]
     assert govt.new_resources == dicted["resources"]
     assert govt.optimal_resources == dicted["optimal_resources"]
+    assert govt.secure_resources == dicted["secure_resources"]
 
 
 def test_handle_negative_resources():

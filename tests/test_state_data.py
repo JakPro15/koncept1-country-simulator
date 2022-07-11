@@ -9,6 +9,7 @@ from ..sources.auxiliaries.constants import (
     FOOD_CONSUMPTION,
     FREEZING_MORTALITY,
     INBUILT_RESOURCES,
+    MAX_PRICES,
     OTHERS_MINIMUM_WAGE,
     RESOURCES,
     STARVATION_MORTALITY,
@@ -145,7 +146,8 @@ def test_from_dict():
                     "iron": 24,
                     "tools": 25,
                     "land": 26
-                }
+                },
+                "happiness": -1
             },
             "artisans": {
                 "population": 30,
@@ -156,7 +158,8 @@ def test_from_dict():
                     "iron": 34,
                     "tools": 35,
                     "land": 36
-                }
+                },
+                "happiness": 2
             },
             "peasants": {
                 "population": 40,
@@ -167,7 +170,8 @@ def test_from_dict():
                     "iron": 44,
                     "tools": 45,
                     "land": 46
-                }
+                },
+                "happiness": 3
             },
             "others": {
                 "population": 50,
@@ -178,7 +182,8 @@ def test_from_dict():
                     "iron": 54,
                     "tools": 55,
                     "land": 56
-                }
+                },
+                "happiness": -4
             }
         },
         "government": {
@@ -197,6 +202,14 @@ def test_from_dict():
                 "iron": 74,
                 "tools": 75,
                 "land": 76
+            },
+            "secure_resources": {
+                "food": 7,
+                "wood": 2,
+                "stone": 3,
+                "iron": 7,
+                "tools": 7,
+                "land": 6
             }
         },
         "prices": {
@@ -206,6 +219,37 @@ def test_from_dict():
             "iron": 1.4,
             "tools": 0.5,
             "land": 2.6
+        },
+        "laws": {
+            "tax_personal": {
+                "nobles": 2,
+                "artisans": 3,
+                "peasants": 1,
+                "others": 4
+            },
+            "tax_property": {
+                "nobles": 0.2,
+                "artisans": 0.3,
+                "peasants": 0.1,
+                "others": 0.4
+            },
+            "tax_income": {
+                "nobles": 0.1,
+                "artisans": 0.1,
+                "peasants": 0.1,
+                "others": 0.1
+            },
+            "wage_minimum": 0.2,
+            "wage_government": 0.4,
+            "wage_autoregulation": False,
+            "max_prices": {
+                "food": 2,
+                "wood": 3,
+                "stone": 4,
+                "iron": 5,
+                "tools": 6,
+                "land": 10
+            }
         }
     }
     state = State_Data.from_dict(data)
@@ -222,6 +266,7 @@ def test_from_dict():
         "tools": 25,
         "land": 26
     }
+    assert state.classes[0].happiness == -1
 
     assert isinstance(state.classes[1], Artisans)
     assert state.classes[1].population == 30
@@ -233,6 +278,7 @@ def test_from_dict():
         "tools": 35,
         "land": 36
     }
+    assert state.classes[1].happiness == 2
 
     assert isinstance(state.classes[2], Peasants)
     assert state.classes[2].population == 40
@@ -244,6 +290,7 @@ def test_from_dict():
         "tools": 45,
         "land": 46
     }
+    assert state.classes[2].happiness == 3
 
     assert isinstance(state.classes[3], Others)
     assert state.classes[3].population == 50
@@ -255,6 +302,7 @@ def test_from_dict():
         "tools": 55,
         "land": 56
     }
+    assert state.classes[3].happiness == -4
 
     assert isinstance(state.prices, Arithmetic_Dict)
     assert state.prices == {
@@ -283,6 +331,44 @@ def test_from_dict():
         "tools": 75,
         "land": 76
     }
+    assert state.government.secure_resources == {
+        "food": 7,
+        "wood": 2,
+        "stone": 3,
+        "iron": 7,
+        "tools": 7,
+        "land": 6
+    }
+
+    assert state.sm.tax_rates["personal"] == {
+        "nobles": 2,
+        "artisans": 3,
+        "peasants": 1,
+        "others": 4
+    }
+    assert state.sm.tax_rates["property"] == {
+        "nobles": 0.2,
+        "artisans": 0.3,
+        "peasants": 0.1,
+        "others": 0.4
+    }
+    assert state.sm.tax_rates["income"] == {
+        "nobles": 0.1,
+        "artisans": 0.1,
+        "peasants": 0.1,
+        "others": 0.1
+    }
+    assert state.sm.others_minimum_wage == 0.2
+    assert state.government.wage == 0.4
+    assert state.government.wage_autoregulation is False
+    assert state.sm.max_prices == {
+        "food": 2,
+        "wood": 3,
+        "stone": 4,
+        "iron": 5,
+        "tools": 6,
+        "land": 10
+    }
 
 
 def test_to_dict():
@@ -300,7 +386,8 @@ def test_to_dict():
                     "iron": 24,
                     "tools": 25,
                     "land": 0
-                }
+                },
+                "happiness": 0
             },
             "artisans": {
                 "population": 30,
@@ -311,7 +398,8 @@ def test_to_dict():
                     "iron": 34,
                     "tools": 35,
                     "land": 0
-                }
+                },
+                "happiness": 0
             },
             "peasants": {
                 "population": 40,
@@ -322,7 +410,8 @@ def test_to_dict():
                     "iron": 44,
                     "tools": 45,
                     "land": 0
-                }
+                },
+                "happiness": 0
             },
             "others": {
                 "population": 50,
@@ -333,7 +422,8 @@ def test_to_dict():
                     "iron": 54,
                     "tools": 55,
                     "land": 0
-                }
+                },
+                "happiness": 0
             }
         },
         "government": {
@@ -352,6 +442,14 @@ def test_to_dict():
                 "iron": 74,
                 "tools": 75,
                 "land": 76
+            },
+            "secure_resources": {
+                "food": 0,
+                "wood": 0,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0
             }
         },
         "prices": {
@@ -361,6 +459,19 @@ def test_to_dict():
             "iron": 1.4,
             "tools": 0.5,
             "land": 10
+        },
+        "laws": {
+            "tax_personal": TAX_RATES["personal"],
+            "tax_property": TAX_RATES["property"],
+            "tax_income": TAX_RATES["income"],
+            "wage_minimum": OTHERS_MINIMUM_WAGE,
+            "wage_government": OTHERS_MINIMUM_WAGE,
+            "wage_autoregulation": True,
+            "max_prices": {
+                resource: MAX_PRICES
+                for resource
+                in RESOURCES
+            }
         }
     }
 
@@ -503,6 +614,14 @@ def test_get_available_employees():
                 "land": 66
             },
             "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
+            },
+            "secure_resources": {
                 "food": 71,
                 "wood": 72,
                 "stone": 73,
@@ -658,6 +777,14 @@ def test_do_starvation():
                 "land": 66
             },
             "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
+            },
+            "secure_resources": {
                 "food": 71,
                 "wood": 72,
                 "stone": 73,
@@ -1356,6 +1483,14 @@ def test_do_taxes():
                 "iron": 0,
                 "tools": 0,
                 "land": 0
+            },
+            "secure_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -1514,6 +1649,14 @@ def test_do_transfer_from_government():
                 "iron": 0,
                 "tools": 0,
                 "land": 0
+            },
+            "secure_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -1615,6 +1758,14 @@ def test_do_transfer_to_government():
                 "iron": 0,
                 "tools": 0,
                 "land": 0
+            },
+            "secure_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -1716,6 +1867,14 @@ def test_do_transfer_to_government_demotion():
                 "iron": 0,
                 "tools": 0,
                 "land": 0
+            },
+            "secure_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
             }
         },
         "prices": {
@@ -2545,6 +2704,14 @@ def test_do_force_promotion():
                 "land": 10200
             },
             "optimal_resources": {
+                "food": 71,
+                "wood": 72,
+                "stone": 73,
+                "iron": 74,
+                "tools": 75,
+                "land": 76
+            },
+            "secure_resources": {
                 "food": 71,
                 "wood": 72,
                 "stone": 73,

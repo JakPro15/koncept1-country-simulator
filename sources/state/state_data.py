@@ -159,6 +159,16 @@ class State_Data(_State_Data_Employment_and_Commands):
         state.government = government
         state.prices = Arithmetic_Dict(data["prices"])
 
+        if "laws" in data:
+            state.sm.tax_rates["personal"] = data["laws"]["tax_personal"]
+            state.sm.tax_rates["property"] = data["laws"]["tax_property"]
+            state.sm.tax_rates["income"] = data["laws"]["tax_income"]
+            state.sm.others_minimum_wage = data["laws"]["wage_minimum"]
+            state.government.wage = data["laws"]["wage_government"]
+            state.government.wage_autoregulation = \
+                data["laws"]["wage_autoregulation"]
+            state.sm.max_prices = data["laws"]["max_prices"]
+
         return state
 
     def to_dict(self):
@@ -176,7 +186,16 @@ class State_Data(_State_Data_Employment_and_Commands):
                 "others": self.classes[3].to_dict()
             },
             "government": self.government.to_dict(),
-            "prices": self.prices
+            "prices": self.prices,
+            "laws": {
+                "tax_personal": self.sm.tax_rates["personal"],
+                "tax_property": self.sm.tax_rates["property"],
+                "tax_income": self.sm.tax_rates["income"],
+                "wage_minimum": self.sm.others_minimum_wage,
+                "wage_government": self.government.wage,
+                "wage_autoregulation": self.government.wage_autoregulation,
+                "max_prices": self.sm.max_prices,
+            }
         }
         return data
 

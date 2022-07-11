@@ -460,10 +460,12 @@ def test_to_dict():
     })
     nobles = Nobles(state, 80, resources)
     nobles.new_population += 20
+    nobles.happiness = -20
 
     dicted = nobles.to_dict()
     assert dicted["population"] == 80
     assert dicted["resources"] == resources
+    assert dicted["happiness"] == -20
 
 
 def test_from_dict():
@@ -478,13 +480,15 @@ def test_from_dict():
     })
     dicted = {
         "population": 80,
-        "resources": dict(resources.copy())
+        "resources": dict(resources.copy()),
+        "happiness": -20
     }
     nobles = Nobles.from_dict(state, dicted)
 
     assert nobles.parent == state
     assert nobles.population == 80
     assert nobles.resources == resources
+    assert nobles.happiness == -20
     assert nobles.new_population == 80
     assert nobles.new_resources == resources
 

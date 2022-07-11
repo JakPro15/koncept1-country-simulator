@@ -63,6 +63,14 @@
             "iron": 100,
             "tools": 100,
             "land": 500
+        },
+        "secure_resources": {
+            "food": 0,
+            "wood": 0,
+            "stone": 0,
+            "iron": 0,
+            "tools": 0,
+            "land": 0
         }
     },
     "prices": {
