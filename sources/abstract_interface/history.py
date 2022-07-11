@@ -15,16 +15,17 @@ class History:
         self.starting_state_dict = starting_state_dict.copy()
         self.history_lines = history_lines.copy()
         self.keys_info = {
-            # "key": (double_dict?, round_digits, is_total?, new_key_if_total)
-            "population_after": (False, 0, False),
-            "resources_after": (True, 1, False),
-            "population_change": (False, 0, False),
-            "resources_change": (True, 1, False),
-            "prices": (False, 4, False),
-            "total_resources": (False, 1, True, "resources_after"),
-            "growth_modifiers": (None, 0, False),
-            "employees": (False, 0, False),
-            "wages": (False, 2, False)
+            # "key": (double_dict?, round_digits, new_key_if_total)
+            "population_after": (False, 0, None),
+            "resources_after": (True, 1, None),
+            "population_change": (False, 0, None),
+            "resources_change": (True, 1, None),
+            "prices": (False, 4, None),
+            "total_resources": (False, 1, "resources_after"),
+            "growth_modifiers": (None, 0, None),
+            "employees": (False, 0, None),
+            "wages": (False, 2, None),
+            "happiness": (False, 2, None)
         }
 
     def obtain_data(self, keys: list[str]):
@@ -48,7 +49,7 @@ class History:
                         ndigits = self.keys_info[key][1]
                         total = self.keys_info[key][2]
                         if total:
-                            key = self.keys_info[key][3]
+                            key = self.keys_info[key][2]
 
                         key_data = month_data[key]
 
@@ -108,6 +109,9 @@ class History:
 
     def employment(self):
         return self.obtain_data(["employees", "wages"])
+
+    def happiness(self):
+        return self.obtain_data(["happiness"])["happiness"]
 
     def add_history_line(self, command):
         """

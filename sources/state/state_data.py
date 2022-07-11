@@ -1,8 +1,10 @@
 from ..auxiliaries.constants import (
+    CLASSES,
     DEFAULT_PRICES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
     MONTHS,
+    REBELLION_THRESHOLD,
     WOOD_CONSUMPTION
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
@@ -19,6 +21,10 @@ from math import isinf, log
 
 
 class EveryoneDeadError(Exception):
+    pass
+
+
+class RebellionError(Exception):
     pass
 
 
@@ -239,7 +245,7 @@ class State_Data(_State_Data_Employment_and_Commands):
                 social_class.happiness += Class.starvation_happiness(part_dead)
             else:
                 social_class.new_population = 0
-                social_class.happiness = social_class.happiness_plateau
+                social_class.happiness += Class.starvation_happiness(1)
 
             if self.debug:
                 print(f"Starved {old_pop - social_class.new_population} "
@@ -479,6 +485,20 @@ class State_Data(_State_Data_Employment_and_Commands):
                 rel_taxes[social_class.class_name]
             )
 
+    def get_state_data(self, attribute: str, govt: bool, default=None):
+        """
+        Returns a dict with the given name containing the chosen attribute to
+        month_data.
+        """
+        result = Arithmetic_Dict({
+            class_name: getattr(self.classes[index], attribute, default)
+            for index, class_name
+            in enumerate(CLASSES)
+        })
+        if govt:
+            result["government"] = getattr(self.government, attribute, default)
+        return result
+
     def do_month(self):
         """
         Does all the needed calculations and changes to end the month and move
@@ -494,26 +514,14 @@ class State_Data(_State_Data_Employment_and_Commands):
         if not someone_alive:
             raise EveryoneDeadError
 
-        # Save old resources to calculate the changes
-        old_resources = {
-            "nobles": self.classes[0].real_resources,
-            "artisans": self.classes[1].real_resources,
-            "peasants": self.classes[2].real_resources,
-            "others": self.classes[3].real_resources,
-            "government": self.government.real_resources
-        }
-        old_population = {
-            "nobles": self.classes[0].population,
-            "artisans": self.classes[1].population,
-            "peasants": self.classes[2].population,
-            "others": self.classes[3].population
-        }
-        old_net_worths = Arithmetic_Dict({
-            "nobles": self.classes[0].net_worth,
-            "artisans": self.classes[1].net_worth,
-            "peasants": self.classes[2].net_worth,
-            "others": self.classes[3].net_worth
-        })
+        for social_class in self.classes:
+            if social_class.happiness < REBELLION_THRESHOLD:
+                raise RebellionError(social_class.class_name)
+
+        # Save old data to calculate the changes
+        old_resources = self.get_state_data("real_resources", True)
+        old_population = self.get_state_data("population", False)
+        old_net_worths = self.get_state_data("net_worth", False)
 
         # Create returned dict
         month_data = {
@@ -569,80 +577,33 @@ class State_Data(_State_Data_Employment_and_Commands):
             social_class.update_happiness_plateau()
 
         # Twelfth: return the necessary data
-        month_data["resources_after"] = {
-            "nobles": self.classes[0].real_resources,
-            "artisans": self.classes[1].real_resources,
-            "peasants": self.classes[2].real_resources,
-            "others": self.classes[3].real_resources,
-            "government": self.government.real_resources
-        }
-        month_data["population_after"] = {
-            "nobles": self.classes[0].population,
-            "artisans": self.classes[1].population,
-            "peasants": self.classes[2].population,
-            "others": self.classes[3].population
-        }
-        month_data["resources_change"] = {
-            social_class: dict(values_dict - old_resources[social_class])
-            for social_class, values_dict
-            in month_data["resources_after"].items()
-        }
-        month_data["population_change"] = dict(
-            Arithmetic_Dict(month_data["population_after"]).round() -
-            Arithmetic_Dict(old_population).round()
+        month_data["resources_after"] = self.get_state_data(
+            "real_resources", True
         )
+        month_data["population_after"] = self.get_state_data(
+            "population", False
+        )
+        month_data["resources_change"] = \
+            month_data["resources_after"] - old_resources
+        month_data["population_change"] = \
+            month_data["population_after"].round() - old_population.round()
+
         month_data["growth_modifiers"] = {
-            "nobles": {
-                "starving": self.classes[0].starving,
-                "freezing": self.classes[0].freezing,
-                "demoted_from": self.classes[0].demoted_from,
-                "demoted_to": self.classes[0].demoted_to,
-                "promoted_from": self.classes[0].promoted_from,
-                "promoted_to": self.classes[0].promoted_to
-            },
-            "artisans": {
-                "starving": self.classes[1].starving,
-                "freezing": self.classes[1].freezing,
-                "demoted_from": self.classes[1].demoted_from,
-                "demoted_to": self.classes[1].demoted_to,
-                "promoted_from": self.classes[1].promoted_from,
-                "promoted_to": self.classes[1].promoted_to
-            },
-            "peasants": {
-                "starving": self.classes[2].starving,
-                "freezing": self.classes[2].freezing,
-                "demoted_from": self.classes[2].demoted_from,
-                "demoted_to": self.classes[2].demoted_to,
-                "promoted_from": self.classes[2].promoted_from,
-                "promoted_to": self.classes[2].promoted_to
-            },
-            "others": {
-                "starving": self.classes[3].starving,
-                "freezing": self.classes[3].freezing,
-                "demoted_from": self.classes[3].demoted_from,
-                "demoted_to": self.classes[3].demoted_to,
-                "promoted_from": self.classes[3].promoted_from,
-                "promoted_to": self.classes[3].promoted_to
-            },
+            class_name: {
+                "starving": self.classes[index].starving,
+                "freezing": self.classes[index].freezing,
+                "demoted_from": self.classes[index].demoted_from,
+                "demoted_to": self.classes[index].demoted_to,
+                "promoted_from": self.classes[index].promoted_from,
+                "promoted_to": self.classes[index].promoted_to
+            }
+            for index, class_name
+            in enumerate(CLASSES)
         }
 
-        month_data["employees"] = {
-            "nobles": getattr(self.classes[0], "employees", 0),
-            "artisans": getattr(self.classes[1], "employees", 0),
-            "peasants": getattr(self.classes[2], "employees", 0),
-            "others": getattr(self.classes[3], "employees", 0),
-            "government": getattr(self.government, "employees", 0)
-        }
-        month_data["wages"] = {
-            "nobles": getattr(self.classes[0], "old_wage",
-                              self.sm.others_minimum_wage),
-            "artisans": getattr(self.classes[1], "old_wage",
-                                self.sm.others_minimum_wage),
-            "peasants": getattr(self.classes[2], "old_wage",
-                                self.sm.others_minimum_wage),
-            "others": getattr(self.classes[3], "old_wage",
-                              self.sm.others_minimum_wage),
-            "government": getattr(self.government, "old_wage",
-                                  self.sm.others_minimum_wage),
-        }
+        month_data["employees"] = self.get_state_data("employees", True, 0)
+        month_data["wages"] = self.get_state_data(
+            "old_wage", True, self.sm.others_minimum_wage
+        )
+        month_data["happiness"] = self.get_state_data("happiness", False)
         return month_data

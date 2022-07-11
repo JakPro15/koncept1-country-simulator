@@ -726,7 +726,7 @@ def test_do_starvation():
     assert state.classes[0].population == 20
     assert state.classes[0].starving
     assert not state.classes[0].freezing
-    assert state.classes[0].happiness == 0
+    assert state.classes[0].happiness == Class.starvation_happiness(1)
 
     dead_artisans = 20 * STARVATION_MORTALITY / FOOD_CONSUMPTION
     assert state.classes[1].new_population == 50 - dead_artisans

@@ -151,3 +151,5 @@ TAX_RATES = {
         "others": 0
     })
 }
+
+REBELLION_THRESHOLD = -100

@@ -4,7 +4,7 @@
 
 
 from sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from sources.state.state_data import EveryoneDeadError
+from sources.state.state_data import EveryoneDeadError, RebellionError
 from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
 from ..abstract_interface.interface import Interface, SaveAccessError
 from math import floor, inf, log10
@@ -85,6 +85,7 @@ def help_command(command: str):
         print("        resources_change (rc)")
         print("        prices (pr)")
         print("        employment (e)")
+        print("        happiness (h)")
         print("    <CLASS> decides which class' statistics to show - it should"
               " only be given when <STAT> is resources or resources_change.")
         print("    Valid values:")
@@ -108,6 +109,7 @@ def help_command(command: str):
         print("        modifiers (m)")
         print("        government (g)")
         print("        employment (e)")
+        print("        happiness (h)")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
         print("Transfers <AMOUNT> of <RESOURCE> from the government to "
@@ -317,8 +319,8 @@ def history(args: list[str], interface: Interface):
         assert args[1] in {
             "population", "resources", "prices", "modifiers",
             "population_change", "resources_change", "total_resources",
-            "employment",
-            "p", "r", "pr", "pc", "rc", "tr", "m", "e"
+            "employment", "happiness",
+            "p", "r", "pr", "pc", "rc", "tr", "m", "e", "h"
         }
 
         if args[1] in {"resources", "r", "resources_change", "rc"}:
@@ -481,6 +483,19 @@ def history(args: list[str], interface: Interface):
                         line += f" {month_emps[employer]: ^9}"
                         line += f" {month_wags[employer]: ^9}"
                     print(line)
+            elif args[1] in {"happiness", "h"}:
+                data = interface.history.happiness()
+                begin_month, data = set_months_of_history(
+                    args[2], interface, data
+                )
+                print("Happiness stats:")
+                print(" " * 14 + "  Nobles Artisans Peasants   Others")
+                for index, month_data in enumerate(data):
+                    print(f"{get_month_string(index + begin_month)}"
+                          f"{month_data['nobles']: >9}"
+                          f"{month_data['artisans']: >9}"
+                          f"{month_data['peasants']: >9}"
+                          f"{month_data['others']: >9}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of history command")
 
@@ -534,6 +549,11 @@ def next(args: list[str], interface: Interface):
         print("GAME OVER")
         print("There is not a living person left in your country.")
         raise ShutDownCommand
+    except RebellionError as e:
+        class_name = str(e).title()
+        print("GAME OVER")
+        print(f"{class_name} have rebelled.")
+        raise ShutDownCommand
 
 
 def get_modifiers_string(social_class):
@@ -552,8 +572,8 @@ def state(args: list[str], interface: Interface):
         assert len(args) in {2, 3}
         assert args[1] in {
             "population", "resources", "prices", "total_resources",
-            "modifiers", "government", "employment",
-            "p", "r", "pr", "tr", "m", "g", "e"
+            "modifiers", "government", "employment", "happiness",
+            "p", "r", "pr", "tr", "m", "g", "e", "h"
         }
         if len(args) == 3:
             assert args[2].isdigit()
@@ -690,6 +710,15 @@ def state(args: list[str], interface: Interface):
                 line += f" {employees[class_name]: ^9}"
                 line += f" {wages[class_name]: ^9}"
                 print(line)
+        elif args[1] in {"happiness", "h"}:
+            data = [
+                round(social_class.happiness, 2)
+                for social_class
+                in interface.state.classes
+            ]
+            print("Current happiness:")
+            for index, class_name in enumerate(CLASSES):
+                print(f"{class_name: >8}: {data[index]}")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
 
