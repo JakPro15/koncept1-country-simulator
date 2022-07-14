@@ -1,7 +1,9 @@
 from ..auxiliaries.constants import (
     CLASS_NAME_TO_INDEX,
+    CLASS_TO_SOLDIER,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
+    RECRUITMENT_COST,
     WAGE_CHANGE,
     INBUILT_RESOURCES
 )
@@ -360,6 +362,22 @@ class _State_Data_Employment_and_Commands:
 
         self._secure_classes()
 
+    def do_recruit(self, class_name: str, number: int):
+        """
+        Recruits the given number of people from the given social class to the
+        military.
+        """
+        class_from = self.classes[CLASS_NAME_TO_INDEX[class_name]]
+        soldier_type = CLASS_TO_SOLDIER[class_name]
+        cost = RECRUITMENT_COST[soldier_type] * number
+
+        class_from.new_population -= number
+
+        self.government.new_resources -= cost
+        self.government.soldiers[soldier_type] += number
+
+        self._secure_classes()
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
@@ -387,5 +405,7 @@ class _State_Data_Employment_and_Commands:
                 self.do_set_law(command[2], command[3], float(command[4]))
             elif command[0] == "promote":
                 self.do_force_promotion(command[1], int(command[2]))
+            elif command[0] == "recruit":
+                self.do_recruit(command[1], int(command[2]))
             else:
                 raise InvalidCommandError

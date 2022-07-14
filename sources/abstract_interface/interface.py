@@ -1,5 +1,6 @@
 from sources.auxiliaries.constants import (
-    CLASS_NAME_TO_INDEX, CLASSES, INBUILT_RESOURCES, RESOURCES
+    CLASS_NAME_TO_INDEX, CLASS_TO_SOLDIER, CLASSES, INBUILT_RESOURCES,
+    RESOURCES, RECRUITMENT_COST
 )
 from ..state.state_data import State_Data
 from .history import History
@@ -190,4 +191,25 @@ class Interface:
 
         self.history.add_history_line(
             f"promote {class_name} {number}"
+        )
+
+    def recruit(self, class_name: str, number: int):
+        """
+        Recruits the given number of people from the given social class to the
+        military.
+        """
+        assert number >= 0
+        class_index = CLASS_NAME_TO_INDEX[class_name]
+        soldier_type = CLASS_TO_SOLDIER[class_name]
+
+        if self.state.classes[class_index].population < number:
+            raise NotEnoughClassPopulation
+        if self.state.government.real_resources < \
+           RECRUITMENT_COST[soldier_type] * number:
+            raise NotEnoughGovtResources
+
+        self.state.do_recruit(class_name, number)
+
+        self.history.add_history_line(
+            f"recruit {class_name} {number}"
         )

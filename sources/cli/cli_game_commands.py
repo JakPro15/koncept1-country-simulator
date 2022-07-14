@@ -154,7 +154,6 @@ def print_law(law: str, interface: Interface):
     elif law == "max_prices":
         print("max_prices")
         print("Maximum prices:")
-        print(" Nobles  Artisans Peasants  Others")
         prices = interface.state.sm.max_prices
         print("  Food    Wood   Stone    Iron   Tools    Land")
         print(f"{price_to_str(prices['food']): ^7}"
@@ -245,5 +244,33 @@ def promote(args: list[str], interface: Interface):
         except NotEnoughClassPopulation:
             print("The class from which the promotion was to be done does not"
                   " have enough population.")
+    except AssertionError:
+        print("Invalid syntax. See help for proper usage of promote command")
+
+
+def recruit(args: list[str], interface: Interface):
+    """
+    Recruits soldiers.
+    """
+    try:
+        assert len(args) == 3
+
+        args[1] = fill_command(args[1], CLASSES)
+        assert len(args[1]) == 1
+        args[1] = args[1][0]
+
+        try:
+            args[2] = int(args[2])
+        except ValueError:
+            raise AssertionError
+
+        try:
+            interface.recruit(args[1], args[2])
+        except NotEnoughGovtResources:
+            print("The government does not have enough resources for this"
+                  " operation.")
+        except NotEnoughClassPopulation:
+            print("The class from which the recruitment was to be done does "
+                  "not have enough population.")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of promote command")

@@ -1,3 +1,7 @@
+from sources.auxiliaries.constants import (
+    KNIGHT_FIGHTING_STRENGTH,
+    KNIGHT_FOOD_CONSUMPTION
+)
 from ..sources.state.government import Government
 from ..sources.state.state_data import State_Data
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
@@ -14,7 +18,11 @@ def test_constructor():
         "tools": 100,
         "land": 0
     })
-    govt = Government(state, resources, resources / 2)
+    soldiers = {
+        "knights": 10,
+        "footmen": 50
+    }
+    govt = Government(state, resources, resources / 2, resources / 4, soldiers)
 
     assert govt.parent == state
 
@@ -32,11 +40,11 @@ def test_constructor():
     assert govt._new_resources["tools"] == 100
     assert govt._new_resources["land"] == 0
 
-    assert govt._secure_resources["food"] == 0
-    assert govt._secure_resources["wood"] == 0
+    assert govt._secure_resources["food"] == 25
+    assert govt._secure_resources["wood"] == 50
     assert govt._secure_resources["iron"] == 0
     assert govt._secure_resources["stone"] == 0
-    assert govt._secure_resources["tools"] == 0
+    assert govt._secure_resources["tools"] == 25
     assert govt._secure_resources["land"] == 0
 
     assert govt.optimal_resources["food"] == 50
@@ -45,6 +53,10 @@ def test_constructor():
     assert govt.optimal_resources["stone"] == 0
     assert govt.optimal_resources["tools"] == 50
     assert govt.optimal_resources["land"] == 0
+
+    assert govt.soldiers["knights"] == 10
+    assert govt.soldiers["footmen"] == 50
+    assert govt.soldier_revolt is False
 
 
 def test_default_constructor():
@@ -80,6 +92,10 @@ def test_default_constructor():
     assert govt.optimal_resources["stone"] == 0
     assert govt.optimal_resources["tools"] == 0
     assert govt.optimal_resources["land"] == 0
+
+    assert govt.soldiers["knights"] == 0
+    assert govt.soldiers["footmen"] == 0
+    assert govt.soldier_revolt is False
 
 
 def test_resources():
@@ -175,6 +191,94 @@ def test_secure_resources():
         "tools": 0,
         "land": 1000
     }
+
+
+def test_soldiers_private_properties():
+    state = State_Data()
+    govt = Government(state)
+    govt.soldiers = {
+        "knights": 30,
+        "footmen": 100
+    }
+    assert govt._soldiers_fighting_strength == \
+        100 + 30 * KNIGHT_FIGHTING_STRENGTH
+    assert govt._soldiers_population == 130
+
+    govt.soldiers = {
+        "knights": 10,
+        "footmen": 200
+    }
+    assert govt._soldiers_fighting_strength == \
+        200 + 10 * KNIGHT_FIGHTING_STRENGTH
+    assert govt._soldiers_population == 210
+
+
+def test_consume_typical():
+    state = State_Data()
+    res = {
+        "food": 300,
+        "wood": 20,
+        "stone": 230,
+        "iron": 1,
+        "tools": 44,
+        "land": 234
+    }
+    govt = Government(state, res)
+    govt.soldiers = {
+        "knights": 30,
+        "footmen": 100
+    }
+    govt.consume()
+    govt.flush()
+    assert govt.resources == {
+        "food": 200 - 30 * KNIGHT_FOOD_CONSUMPTION,
+        "wood": 20,
+        "stone": 230,
+        "iron": 1,
+        "tools": 44,
+        "land": 234
+    }
+
+    govt.soldiers = {
+        "knights": 10,
+        "footmen": 20
+    }
+    govt.consume()
+    govt.flush()
+    assert govt.resources == {
+        "food": 180 - 40 * KNIGHT_FOOD_CONSUMPTION,
+        "wood": 20,
+        "stone": 230,
+        "iron": 1,
+        "tools": 44,
+        "land": 234
+    }
+
+
+def test_consume_no_food():
+    class NoFood(Exception):
+        pass
+
+    def fake_handle():
+        raise NoFood
+
+    state = State_Data()
+    res = {
+        "food": 100,
+        "wood": 20,
+        "stone": 230,
+        "iron": 1,
+        "tools": 44,
+        "land": 234
+    }
+    govt = Government(state, res)
+    govt.handle_soldier_bankruptcy = fake_handle
+    govt.soldiers = {
+        "knights": 30,
+        "footmen": 100
+    }
+    with raises(NoFood):
+        govt.consume()
 
 
 def test_to_dict():

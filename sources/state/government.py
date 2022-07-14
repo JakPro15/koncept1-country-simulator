@@ -1,6 +1,8 @@
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from ..auxiliaries.constants import (
     EMPTY_RESOURCES,
+    KNIGHT_FIGHTING_STRENGTH,
+    KNIGHT_FOOD_CONSUMPTION,
     RESOURCES,
     MONTHS
 )
@@ -9,6 +11,10 @@ from .social_classes.class_file import (
     InvalidParentError,
     NegativeResourcesError
 )
+
+
+class InvalidSoldiersDictError(Exception):
+    pass
 
 
 class Government:
@@ -25,7 +31,7 @@ class Government:
     max_employees - how many employees can the govt employ
     """
     def __init__(self, parent, res: dict = None, optimal_res: dict = None,
-                 secure_res: dict = None):
+                 secure_res: dict = None, soldiers: dict = None):
         """
         Creates an object of type Government.
         Parent is the State_Data object this belongs to.
@@ -65,6 +71,20 @@ class Government:
 
         self.wage = self.parent.sm.others_minimum_wage
         self.wage_autoregulation = True
+
+        if soldiers is None:
+            self.soldiers = {
+                "knights": 0,
+                "footmen": 0
+            }
+        else:
+            if set(soldiers.keys()) != {"knights", "footmen"}:
+                raise InvalidSoldiersDictError("Invalid keys")
+            for value in soldiers.values():
+                if value < 0:
+                    raise InvalidSoldiersDictError("Invalid values")
+            self.soldiers = Arithmetic_Dict(soldiers)
+        self.soldier_revolt = False
 
     @property
     def parent(self):
@@ -120,6 +140,29 @@ class Government:
             self.resources["tools"] / 3,
             land_owned / self.parent.sm.worker_land_usage,
         )
+
+    @property
+    def _soldiers_fighting_strength(self):
+        return self.soldiers["knights"] * KNIGHT_FIGHTING_STRENGTH \
+            + self.soldiers["footmen"]
+
+    @property
+    def _soldiers_population(self):
+        return self.soldiers["knights"] + self.soldiers["footmen"]
+
+    def consume(self):
+        """
+        Removes resources the government's soldiers consumed this month.
+        """
+        self._new_resources["food"] -= self.soldiers["footmen"] + \
+            self.soldiers["knights"] * KNIGHT_FOOD_CONSUMPTION
+        if self.new_resources["food"] < 0:
+            self.handle_soldier_bankruptcy()
+
+    def handle_soldier_bankruptcy(self):
+        # TEMPORARY TO MAKE THE PROGRAM NOT CRASH WHEN BANKRUPT
+        self.soldier_revolt = True
+        self._new_resources["food"] = 0
 
     def to_dict(self):
         """

@@ -153,3 +153,31 @@ TAX_RATES = {
 }
 
 REBELLION_THRESHOLD = -100
+
+CLASS_TO_SOLDIER = {
+    "nobles": "knights",
+    "artisans": "footmen",
+    "peasants": "footmen",
+    "others": "footmen"
+}
+RECRUITMENT_COST = {
+    "knights": Arithmetic_Dict({
+        "food": 0,
+        "wood": 1,
+        "stone": 0,
+        "iron": 2,
+        "tools": 6,
+        "land": 0
+    }),
+    "footmen": Arithmetic_Dict({
+        "food": 0,
+        "wood": 0,
+        "stone": 0,
+        "iron": 0,
+        "tools": 2,
+        "land": 0
+    })
+}
+
+KNIGHT_FOOD_CONSUMPTION = 2.5
+KNIGHT_FIGHTING_STRENGTH = 3

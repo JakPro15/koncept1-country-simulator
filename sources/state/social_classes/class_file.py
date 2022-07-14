@@ -258,7 +258,7 @@ class Class:
     def handle_empty_class(self):
         """
         Makes classes with pop < 0.5 effectively empty.
-        WARNING: Flushes the class.
+        Flushes the class.
         """
         self.flush()
         if self.is_temp:

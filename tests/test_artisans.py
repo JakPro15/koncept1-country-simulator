@@ -483,10 +483,12 @@ def test_to_dict():
     })
     artisans = Artisans(state, 80, resources)
     artisans.new_population += 20
+    artisans.happiness = 10
 
     dicted = artisans.to_dict()
     assert dicted["population"] == 80
     assert dicted["resources"] == resources
+    assert dicted["happiness"] == 10
 
 
 def test_from_dict():

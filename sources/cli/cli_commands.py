@@ -3,7 +3,6 @@
 # of a country.
 
 
-from sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from sources.state.state_data import EveryoneDeadError, RebellionError
 from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
 from ..abstract_interface.interface import Interface, SaveAccessError
@@ -49,6 +48,7 @@ def help_default():
     print("laws view [<LAW>] - view laws of the country")
     print("laws set <LAW> <VALUE> - set laws of the country")
     print("promote <CLASS> <VALUE> - force promotion to a social class")
+    print("recruit <CLASS> <VALUE> - recruit soldiers from a class")
 
 
 def help_command(command: str):
@@ -84,6 +84,7 @@ def help_command(command: str):
         print("        population_change (pc)")
         print("        resources_change (rc)")
         print("        prices (pr)")
+        print("        modifiers (mo)")
         print("        employment (e)")
         print("        happiness (h)")
         print("    <CLASS> decides which class' statistics to show - it should"
@@ -106,10 +107,11 @@ def help_command(command: str):
         print("        resources (r)")
         print("        total_resources (tr)")
         print("        prices (pr)")
-        print("        modifiers (m)")
+        print("        modifiers (mo)")
         print("        government (g)")
         print("        employment (e)")
         print("        happiness (h)")
+        print("        military (mi)")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
         print("Transfers <AMOUNT> of <RESOURCE> from the government to "
@@ -204,6 +206,7 @@ def help_command(command: str):
         print("    iron (i)")
         print("    tools (t)")
         print("    land (l)")
+    elif command == "promote":
         print("promote <CLASS> <VALUE> - force promotion to a social class")
         print("Spends government resources to promote <VALUE> people to "
               "<CLASS>.")
@@ -211,7 +214,16 @@ def help_command(command: str):
         print("    nobles (n) - promotion from peasants")
         print("    artisans (a) - promotion from others")
         print("    peasants (p) - promotion from others")
-        print("<VALUE> must be nonnegative.")
+        print("<VALUE> must be nonnegative and not higher than <CLASS> "
+              "population.")
+    elif command == "recruit":
+        print("recruit <CLASS> <VALUE>")
+        print("Recruit people from a social class to the military.")
+        print("    <CLASS> specifies which class to recruit people from."
+              " Nobles are made into knights, artisans, peasants and others'"
+              "into footmen.")
+        print("<VALUE> must be nonnegative and not higher than <CLASS> "
+              "population.")
     else:
         raise InvalidCommand
 
@@ -320,7 +332,7 @@ def history(args: list[str], interface: Interface):
             "population", "resources", "prices", "modifiers",
             "population_change", "resources_change", "total_resources",
             "employment", "happiness",
-            "p", "r", "pr", "pc", "rc", "tr", "m", "e", "h"
+            "p", "r", "pr", "pc", "rc", "tr", "mo", "e", "h"
         }
 
         if args[1] in {"resources", "r", "resources_change", "rc"}:
@@ -437,7 +449,7 @@ def history(args: list[str], interface: Interface):
                           f" {res_to_str(month_data['iron']): >7}"
                           f" {res_to_str(month_data['tools']): >7}"
                           f" {res_to_str(month_data['land']): >7}")
-            elif args[1] in {"modifiers", "m"}:
+            elif args[1] in {"modifiers", "mo"}:
                 data = interface.history.growth_modifiers()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -572,8 +584,8 @@ def state(args: list[str], interface: Interface):
         assert len(args) in {2, 3}
         assert args[1] in {
             "population", "resources", "prices", "total_resources",
-            "modifiers", "government", "employment", "happiness",
-            "p", "r", "pr", "tr", "m", "g", "e", "h"
+            "modifiers", "government", "employment", "happiness", "military",
+            "p", "r", "pr", "tr", "mo", "g", "e", "h", "mi"
         }
         if len(args) == 3:
             assert args[2].isdigit()
@@ -676,30 +688,12 @@ def state(args: list[str], interface: Interface):
             line += f" (autoregulation {'on' if autoreg else 'off'})"
             print(line)
         elif args[1] in {"employment", "e"}:
-            employees = Arithmetic_Dict({
-                "nobles": getattr(interface.state.classes[0], "employees",
-                                  0),
-                "artisans": getattr(interface.state.classes[1], "employees",
-                                    0),
-                "peasants": getattr(interface.state.classes[2], "employees",
-                                    0),
-                "others": getattr(interface.state.classes[3], "employees",
-                                  0),
-                "government": getattr(interface.state.government, "employees",
-                                      0)
-            }).round(0)
-            wages = Arithmetic_Dict({
-                "nobles": getattr(interface.state.classes[0], "old_wage",
-                                  interface.state.sm.others_minimum_wage),
-                "artisans": getattr(interface.state.classes[1], "old_wage",
-                                    interface.state.sm.others_minimum_wage),
-                "peasants": getattr(interface.state.classes[2], "old_wage",
-                                    interface.state.sm.others_minimum_wage),
-                "others": getattr(interface.state.classes[3], "old_wage",
-                                  interface.state.sm.others_minimum_wage),
-                "government": getattr(interface.state.government, "old_wage",
-                                      interface.state.sm.others_minimum_wage),
-            }).round(2)
+            employees = interface.state.get_state_data(
+                "employees", True, 0
+            ).round(0)
+            wages = interface.state.get_state_data(
+                "old_wage", True, interface.state.sm.others_minimum_wage
+            ).round(2)
             print("Current employment information:")
             line = " " * 10
             for resource in RESOURCES:
@@ -719,6 +713,13 @@ def state(args: list[str], interface: Interface):
             print("Current happiness:")
             for index, class_name in enumerate(CLASSES):
                 print(f"{class_name: >8}: {data[index]}")
+        elif args[1] in {"military", "mi"}:
+            data = interface.state.government.soldiers
+            print("Current state of the military:")
+            print(f"Footmen: {data['footmen']}")
+            print(f"Knights: {data['knights']}")
+            rev = "" if interface.state.government.soldier_revolt else "not "
+            print(f"The soldiers are {rev}revolting.")
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
 

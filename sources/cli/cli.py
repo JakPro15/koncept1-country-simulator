@@ -18,7 +18,8 @@ from .cli_game_commands import (
     secure,
     optimal,
     laws,
-    promote
+    promote,
+    recruit
 )
 
 
@@ -37,7 +38,7 @@ def command_line_interface(debug, dirname):
 
     commands = {
         "help", "save", "exit", "history", "next", "state", "delete",
-        "transfer", "secure", "optimal", "laws", "promote"
+        "transfer", "secure", "optimal", "laws", "promote", "recruit"
     }
 
     while True:
@@ -79,6 +80,8 @@ def command_line_interface(debug, dirname):
                     laws(answer, interface)
                 elif answer[0] == "promote":
                     promote(answer, interface)
+                elif answer[0] == "recruit":
+                    recruit(answer, interface)
                 else:
                     print(
                         "Invalid command. Enter help for a list of commands."

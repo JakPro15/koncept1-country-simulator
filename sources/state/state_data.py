@@ -317,7 +317,8 @@ class State_Data(_State_Data_Employment_and_Commands):
             if flush:
                 social_class.handle_empty_class()
         self.government.handle_negative_resources()
-        self.government.flush()
+        if flush:
+            self.government.flush()
 
     @staticmethod
     def _promotion_math(from_wealth, from_pop, increase_price):

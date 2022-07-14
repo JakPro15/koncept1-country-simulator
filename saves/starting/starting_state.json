@@ -11,7 +11,8 @@
                 "iron": 0,
                 "tools": 400,
                 "land": 2000
-            }
+            },
+            "happiness": 0
         },
         "artisans": {
             "population": 20,
@@ -22,7 +23,8 @@
                 "iron": 100,
                 "tools": 40,
                 "land": 0
-            }
+            },
+            "happiness": 0
         },
         "peasants": {
             "population": 50,
@@ -33,7 +35,8 @@
                 "iron": 0,
                 "tools": 100,
                 "land": 1000
-            }
+            },
+            "happiness": 0
         },
         "others": {
             "population": 100,
@@ -44,7 +47,8 @@
                 "iron": 0,
                 "tools": 0,
                 "land": 0
-            }
+            },
+            "happiness": 0
         }
     },
     "government": {
