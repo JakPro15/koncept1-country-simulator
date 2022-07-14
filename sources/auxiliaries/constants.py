@@ -152,6 +152,7 @@ TAX_RATES = {
     })
 }
 
+# MILITARY CONSTANTS
 REBELLION_THRESHOLD = -100
 
 CLASS_TO_SOLDIER = {
@@ -177,6 +178,14 @@ RECRUITMENT_COST = {
         "tools": 2,
         "land": 0
     })
+}
+BRIGAND_STRENGTH = {
+    "nobles": 1,
+    "artisans": 0.8,
+    "peasants": 0.8,
+    "others": 0.7,
+    "knights": 2,
+    "footmen": 1
 }
 
 KNIGHT_FOOD_CONSUMPTION = 2.5

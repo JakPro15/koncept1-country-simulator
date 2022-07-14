@@ -202,7 +202,7 @@ def test_soldiers_private_properties():
     }
     assert govt._soldiers_fighting_strength == \
         100 + 30 * KNIGHT_FIGHTING_STRENGTH
-    assert govt._soldiers_population == 130
+    assert govt.soldiers_population == 130
 
     govt.soldiers = {
         "knights": 10,
@@ -210,7 +210,7 @@ def test_soldiers_private_properties():
     }
     assert govt._soldiers_fighting_strength == \
         200 + 10 * KNIGHT_FIGHTING_STRENGTH
-    assert govt._soldiers_population == 210
+    assert govt.soldiers_population == 210
 
 
 def test_consume_typical():

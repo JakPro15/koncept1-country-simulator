@@ -84,7 +84,7 @@ class Government:
                 if value < 0:
                     raise InvalidSoldiersDictError("Invalid values")
             self.soldiers = Arithmetic_Dict(soldiers)
-        self.soldier_revolt = False
+        self.missing_food = 0
 
     @property
     def parent(self):
@@ -147,8 +147,12 @@ class Government:
             + self.soldiers["footmen"]
 
     @property
-    def _soldiers_population(self):
+    def soldiers_population(self):
         return self.soldiers["knights"] + self.soldiers["footmen"]
+
+    @property
+    def soldier_revolt(self):
+        return self.missing_food > 0
 
     def consume(self):
         """
@@ -160,9 +164,13 @@ class Government:
             self.handle_soldier_bankruptcy()
 
     def handle_soldier_bankruptcy(self):
-        # TEMPORARY TO MAKE THE PROGRAM NOT CRASH WHEN BANKRUPT
-        self.soldier_revolt = True
+        """
+        Handles the government being unable to pay the soldiers.
+        """
+        # Missing food will cause soldiers to rebel
+        self.missing_food = -self.new_resources["food"]
         self._new_resources["food"] = 0
+        # A soldier rebellion could be done here
 
     def to_dict(self):
         """
