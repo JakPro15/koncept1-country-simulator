@@ -11,6 +11,7 @@ from ..sources.auxiliaries.constants import (
     INBUILT_RESOURCES,
     MAX_PRICES,
     OTHERS_MINIMUM_WAGE,
+    RECRUITMENT_COST,
     RESOURCES,
     STARVATION_MORTALITY,
     TAX_RATES,
@@ -2780,6 +2781,49 @@ def test_do_force_promotion():
         "tools": 1065,
         "land": 10200
     }) - promotion_cost)
+
+
+def test_do_recruit():
+    class Fake_Class:
+        def __init__(self):
+            self.new_population = 50
+
+        def handle_negative_resources(self):
+            pass
+
+        def handle_empty_class(self):
+            pass
+
+    state = State_Data()
+    res = Arithmetic_Dict({
+        "food": 1000,
+        "wood": 1000,
+        "stone": 1000,
+        "iron": 1000,
+        "tools": 1000,
+        "land": 1000
+    })
+    state.government = Government(state, res)
+    state._classes = [Fake_Class(), Fake_Class()]
+
+    state.do_recruit("nobles", 10)
+    assert state.classes[0].new_population == 40
+    assert state.classes[1].new_population == 50
+    assert state.government.resources == res - RECRUITMENT_COST["knights"] * 10
+    assert state.government.soldiers == {
+        "knights": 10,
+        "footmen": 0
+    }
+
+    state.do_recruit("artisans", 40)
+    assert state.classes[0].new_population == 40
+    assert state.classes[1].new_population == 10
+    assert state.government.resources == res - \
+        RECRUITMENT_COST["knights"] * 10 - RECRUITMENT_COST["footmen"] * 40
+    assert state.government.soldiers == {
+        "knights": 10,
+        "footmen": 40
+    }
 
 
 def test_execute_commands():

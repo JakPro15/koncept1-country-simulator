@@ -1,5 +1,5 @@
 from pytest import raises
-from sources.auxiliaries.constants import INBUILT_RESOURCES
+from sources.auxiliaries.constants import INBUILT_RESOURCES, RECRUITMENT_COST
 from sources.state.government import Government
 from ..sources.abstract_interface.interface import (
     Interface,
@@ -282,8 +282,8 @@ def test_set_law():
 
 
 def test_force_promotion():
-    def fake_do_force_promotion(self, resource, amount):
-        self.force_promotions.append([resource, amount])
+    def fake_do_force_promotion(self, class_name, amount):
+        self.force_promotions.append([class_name, amount])
 
     class Fake_Class:
         def __init__(self, population, name):
@@ -369,3 +369,62 @@ def test_force_promotion():
     ]
 
     State_Data.do_force_promotion = old_do_force_promotion
+
+
+def test_recruit():
+    def fake_do_recruit(self, class_name, amount):
+        self.recruits.append([class_name, amount])
+
+    class Fake_Class:
+        def __init__(self, population, name):
+            self.population = population
+            self.class_name = name
+
+    old_do_recruit = State_Data.do_recruit
+    State_Data.do_recruit = fake_do_recruit
+
+    state = State_Data()
+    state._classes = [
+        Fake_Class(300, "nobles"),
+        Fake_Class(50, "artisans"),
+        Fake_Class(60, "peasants"),
+        Fake_Class(200000, "others"),
+    ]
+    state.recruits = []
+    state.government = Government(state, RECRUITMENT_COST["knights"] * 40)
+
+    history = History({}, ["next 6"])
+
+    interface = Interface()
+    interface.state = state
+    interface.history = history
+
+    interface.recruit("nobles", 30)
+    with raises(AssertionError):
+        interface.recruit("peasants", -1)
+    with raises(NotEnoughClassPopulation):
+        interface.recruit("peasants", 61)
+    with raises(NotEnoughGovtResources):
+        interface.recruit("nobles", 101)
+
+    assert state.recruits == [["nobles", 30]]
+    assert history.history_lines == [
+        "next 6",
+        "recruit nobles 30"
+    ]
+
+    interface.recruit("artisans", 40)
+    with raises(NotEnoughGovtResources):
+        interface.recruit("others", 21000)
+
+    assert state.recruits == [
+        ["nobles", 30],
+        ["artisans", 40]
+    ]
+    assert history.history_lines == [
+        "next 6",
+        "recruit nobles 30",
+        "recruit artisans 40"
+    ]
+
+    State_Data.do_recruit = old_do_recruit

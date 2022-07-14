@@ -564,6 +564,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         # Third: consumption
         for social_class in self.classes:
             social_class.consume()
+        self.government.consume()
 
         # Fourth: taxes
         self._do_taxes(old_net_worths)
