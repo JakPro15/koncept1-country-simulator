@@ -510,11 +510,16 @@ class State_Data(_State_Data_Employment_and_Commands):
             )
 
     @staticmethod
-    def _get_crime_rate(happiness):
+    def _get_flee_rate(happiness):
         """
-        Math for the crime rate based on happiness.
+        Math for the flee rate based on happiness.
         """
-        return (happiness / 100) ** 4 / 15
+        if happiness > 0:
+            flee_rate = 0
+        else:
+            flee_rate = (happiness / 100) ** 4 / 15
+            flee_rate = min(flee_rate, 1)
+        return flee_rate
 
     def _add_brigands(self, number, strength):
         """
@@ -527,40 +532,63 @@ class State_Data(_State_Data_Employment_and_Commands):
         self.brigands += number
         self.brigand_strength = total_strength / self.brigands
 
+    @property
+    def total_population(self):
+        total = self.government.soldiers_population
+        for social_class in self.classes:
+            total += social_class.population
+        total += self.brigands
+        return total
+
+    def _do_theft(self):
+        """
+        Makes brigands steal resources. Stolen resources are not stored
+        anywhere, they disappear.
+        """
+        crime_rate = self.brigands / self.total_population
+
+        for social_class in self.classes:
+            stolen = social_class.real_resources * (crime_rate / 2)
+            stolen["land"] = 0
+            social_class.new_resources -= stolen
+            if social_class.net_worth > 0:
+                social_class.happiness += Class.resources_seized_happiness(
+                    self._get_monetary_value(stolen) / social_class.net_worth
+                )
+        stolen = self.government.real_resources * (crime_rate / 2)
+        stolen["land"] = 0
+        self.government.new_resources -= stolen
+
+    def _make_new_brigands(self):
+        """
+        Makes people from unhappy social classes flee to become brigands.
+        """
+        for social_class in self.classes:
+            if social_class.happiness < 0:
+                flee_rate = State_Data._get_flee_rate(social_class.happiness)
+                fled = social_class.population * flee_rate
+                self._add_brigands(
+                    fled, BRIGAND_STRENGTH[social_class.class_name]
+                )
+                social_class.new_population -= fled
+        if self.government.soldier_revolt:
+            soldiers_happiness = -100 * self.government.missing_food / \
+                self.government.soldiers_population
+            flee_rate = State_Data._get_flee_rate(soldiers_happiness)
+            for soldier_kind, number in self.government.soldiers.items():
+                fled = number * flee_rate
+                self._add_brigands(fled, BRIGAND_STRENGTH[soldier_kind])
+                self.government.soldiers[soldier_kind] -= fled
+
     def _do_crime(self):
         """
         Handles crime and people fleeing to join the brigands.
         """
         # Do crime - steal resources
-        total_population = self.government.soldiers_population
-        for social_class in self.classes:
-            total_population += social_class.population
-        total_population += self.brigands
-        crime_rate = self.brigands / total_population
-
-        for social_class in self.classes:
-            stolen = social_class.real_resources * (crime_rate / 2)
-            social_class.new_resources -= stolen
-            social_class.happiness += Class.resources_seized_happiness(
-                crime_rate / 2
-            )
-        stolen = self.government.real_resources * (crime_rate / 2)
-        self.government.new_resources -= stolen
+        self._do_theft()
 
         # Increase of number of criminals
-        for social_class in self.classes:
-            if social_class.happiness < 0:
-                flee_rate = State_Data._get_crime_rate(social_class.happiness)
-                self._add_brigands(social_class.population * flee_rate,
-                                   BRIGAND_STRENGTH[social_class.class_name])
-            if self.government.soldier_revolt:
-                soldiers_happiness = -self.government.missing_food / \
-                    self.government.soldiers_population
-                flee_rate = State_Data._get_crime_rate(soldiers_happiness)
-                flee_rate = min(flee_rate, 1)
-                for soldier_kind, number in self.government.soldiers.items():
-                    self._add_brigands(number * flee_rate,
-                                       BRIGAND_STRENGTH[soldier_kind])
+        self._make_new_brigands()
 
     def get_state_data(self, attribute: str, govt: bool, default=None):
         """
@@ -618,10 +646,11 @@ class State_Data(_State_Data_Employment_and_Commands):
             social_class.produce()
         self._employ()
 
-        # Third: consumption
+        # Third: consumption (and crime)
         for social_class in self.classes:
             social_class.consume()
         self.government.consume()
+        self._do_crime()
 
         # Fourth: taxes
         self._do_taxes(old_net_worths)

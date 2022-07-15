@@ -3,6 +3,7 @@ from ..sources.state.state_data import (
     State_Data, Nobles, Artisans, Peasants, Others, Government
 )
 from ..sources.auxiliaries.constants import (
+    BRIGAND_STRENGTH,
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
@@ -22,6 +23,7 @@ from ..sources.auxiliaries.constants import (
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from ..sources.auxiliaries.testing import dict_eq
 from pytest import approx, raises
+from ..sources.auxiliaries.testing import replace
 
 
 def test_constructor():
@@ -1584,6 +1586,172 @@ def test_do_taxes():
         Class.resources_seized_happiness(rel_tax["others"])
 
 
+def test_get_crime_rate():
+    happinesses = [(x - 50) / 1000 for x in range(3000)]
+    old = 1
+    for happiness in happinesses:
+        flee_rate = State_Data._get_flee_rate(happiness)
+        assert 0 <= flee_rate <= 1
+        assert flee_rate <= old
+        old = flee_rate
+
+
+def test_add_brigands():
+    state = State_Data()
+    assert state.brigands == 0
+
+    state._add_brigands(10, 1)
+    assert state.brigands == 10
+    assert state.brigand_strength == 1
+
+    state._add_brigands(10, 0.5)
+    assert state.brigands == 20
+    assert state.brigand_strength == approx(0.75)
+
+    state._add_brigands(10, 2)
+    assert state.brigands == 30
+    assert state.brigand_strength == approx(1.1667, abs=0.001)
+
+    state._add_brigands(30, 0.8333333)
+    assert state.brigands == 60
+    assert state.brigand_strength == approx(1, abs=0.001)
+
+
+def test_total_population():
+    state = State_Data()
+    state.government = Government(state, None, None, None,
+                                  {"knights": 10, "footmen": 30})
+    state.classes = [
+        Nobles(state, 22),
+        Artisans(state, 33),
+        Peasants(state, 44),
+        Others(state, 55)
+    ]
+    state.brigands = 15
+    assert state.total_population == 209
+
+    state.brigands = 6
+    assert state.total_population == 200
+
+    state.classes[2]._population = 54
+    assert state.total_population == 210
+
+    state.classes[0]._population = 20
+    assert state.total_population == 208
+
+    state.government.soldiers["footmen"] = 12
+    assert state.total_population == 190
+
+
+def test_do_theft():
+    state = State_Data()
+    res0 = EMPTY_RESOURCES.copy()
+    res0["food"] = 10
+    res0["land"] = 20
+    res0["stone"] = 50
+    state.government = Government(state, res0, None, res0,
+                                  {"knights": 10, "footmen": 30})
+    res1 = EMPTY_RESOURCES.copy()
+    res1["food"] = 100
+    res1["stone"] = 50
+    res2 = EMPTY_RESOURCES.copy()
+    res2["wood"] = 100
+    res2["land"] = 50
+    res3 = EMPTY_RESOURCES.copy()
+    res3["iron"] = 10
+    res3["tools"] = 500
+    state.classes = [
+        Nobles(state, 22, res1),
+        Artisans(state, 33, res2),
+        Peasants(state, 40, res3),
+        Others(state, 50)
+    ]
+    state.brigands = 15
+
+    res1 -= state.classes[0].real_resources * 0.0375
+    res1["land"] = 0
+    res2 -= state.classes[1].real_resources * 0.0375
+    res2["land"] = 50
+    res3 -= state.classes[2].real_resources * 0.0375
+    res3["land"] = 0
+    res0 *= 0.925
+    res0["land"] = 20
+
+    state._do_theft()
+    assert state.government.new_resources == res0
+    assert state.classes[0].new_resources == res1
+    assert state.classes[0].happiness < 0
+    assert state.classes[1].new_resources == res2
+    assert state.classes[1].happiness < 0
+    assert state.classes[2].new_resources == res3
+    assert state.classes[2].happiness < 0
+    assert state.classes[3].new_resources == EMPTY_RESOURCES
+    assert state.classes[3].happiness == 0
+
+
+def test_make_new_brigands():
+    class Fake_Class:
+        def __init__(self, happiness, population, name):
+            self.happiness = happiness
+            self.population = population
+            self.new_population = population
+            self.class_name = name
+
+    def fake_add_brigands(self, number, strength):
+        self.brigands_added.append([number, strength])
+
+    with replace(State_Data, "_add_brigands", fake_add_brigands):
+        state = State_Data()
+        state.brigands_added = []
+        state._classes = [
+            Fake_Class(-20, 100, "nobles"),
+            Fake_Class(10, 120, "artisans"),
+            Fake_Class(-50, 200, "peasants"),
+            Fake_Class(0, 12, "others")
+        ]
+        state.government = Government(state)
+        state.government.soldiers = {
+            "knights": 20,
+            "footmen": 80
+        }
+        state.government.missing_food = 40
+
+        flee_rate_1 = State_Data._get_flee_rate(-20)
+        flee_rate_2 = State_Data._get_flee_rate(-50)
+        flee_rate_3 = State_Data._get_flee_rate(-40)
+
+        state._make_new_brigands()
+
+        assert state.brigands_added == [
+            [approx(100 * flee_rate_1), BRIGAND_STRENGTH["nobles"]],
+            [approx(200 * flee_rate_2), BRIGAND_STRENGTH["peasants"]],
+            [approx(20 * flee_rate_3), BRIGAND_STRENGTH["knights"]],
+            [approx(80 * flee_rate_3), BRIGAND_STRENGTH["footmen"]]
+        ]
+        assert state.classes[0].new_population == 100 * (1 - flee_rate_1)
+        assert state.classes[1].new_population == 120
+        assert state.classes[2].new_population == 200 * (1 - flee_rate_2)
+        assert state.classes[3].new_population == 12
+        assert state.government.soldiers["knights"] == 20 * (1 - flee_rate_3)
+        assert state.government.soldiers["footmen"] == 80 * (1 - flee_rate_3)
+
+
+def test_do_crime():
+    def fake_do_theft(self):
+        self.did_theft = True
+
+    def fake_make_new_brigands(self):
+        self.made_new_brigands = True
+
+    with replace(State_Data, "_do_theft", fake_do_theft), \
+         replace(State_Data, "_make_new_brigands", fake_make_new_brigands):
+        state = State_Data()
+        state._do_crime()
+
+    assert state.did_theft
+    assert state.made_new_brigands
+
+
 def test_do_transfer_from_government():
     data = {
         "year": 3,
@@ -2845,121 +3013,107 @@ def test_execute_commands():
     def fake_force_promotion(self, social_class, value):
         self.forcepromos.append([social_class, value])
 
-    old_do_month = State_Data.do_month
-    old_transfer = State_Data.do_transfer
-    old_secure = State_Data.do_secure
-    old_optimal = State_Data.do_optimal
-    old_set_law = State_Data.do_set_law
-    old_force_promotion = State_Data.do_force_promotion
-    State_Data.do_month = fake_do_month
-    State_Data.do_transfer = fake_transfer
-    State_Data.do_secure = fake_secure
-    State_Data.do_optimal = fake_optimal
-    State_Data.do_set_law = fake_set_law
-    State_Data.do_force_promotion = fake_force_promotion
+    with replace(State_Data, "do_month", fake_do_month), \
+         replace(State_Data, "do_transfer", fake_transfer), \
+         replace(State_Data, "do_secure", fake_secure), \
+         replace(State_Data, "do_optimal", fake_optimal), \
+         replace(State_Data, "do_set_law", fake_set_law), \
+         replace(State_Data, "do_force_promotion", fake_force_promotion):
+        state = State_Data()
+        state.did_month = 0
+        state.transfers = []
+        state.secures = []
+        state.optimals = []
+        state.setlaws = []
+        state.forcepromos = []
 
-    state = State_Data()
-    state.did_month = 0
-    state.transfers = []
-    state.secures = []
-    state.optimals = []
-    state.setlaws = []
-    state.forcepromos = []
+        state.execute_commands(["next 2"])
+        assert state.did_month == 2
+        assert state.transfers == []
+        assert state.secures == []
+        assert state.optimals == []
+        assert state.setlaws == []
+        assert state.forcepromos == []
 
-    state.execute_commands(["next 2"])
-    assert state.did_month == 2
-    assert state.transfers == []
-    assert state.secures == []
-    assert state.optimals == []
-    assert state.setlaws == []
-    assert state.forcepromos == []
+        state.execute_commands(["next 100", "transfer nobles food 100"])
+        assert state.did_month == 102
+        assert state.transfers == [
+            ["nobles", "food", 100]
+        ]
+        assert state.secures == []
+        assert state.optimals == []
+        assert state.setlaws == []
+        assert state.forcepromos == []
 
-    state.execute_commands(["next 100", "transfer nobles food 100"])
-    assert state.did_month == 102
-    assert state.transfers == [
-        ["nobles", "food", 100]
-    ]
-    assert state.secures == []
-    assert state.optimals == []
-    assert state.setlaws == []
-    assert state.forcepromos == []
+        state.execute_commands(["next 1", "next 1", "next 2",
+                                "secure food 200",
+                                "laws set tax_property nobles 0.4",
+                                "promote artisans 50"])
+        assert state.did_month == 106
+        assert state.transfers == [
+            ["nobles", "food", 100]
+        ]
+        assert state.secures == [
+            ["food", 200]
+        ]
+        assert state.optimals == []
+        assert state.setlaws == [
+            ["tax_property", "nobles", 0.4]
+        ]
+        assert state.forcepromos == [
+            ["artisans", 50]
+        ]
 
-    state.execute_commands(["next 1", "next 1", "next 2",
-                            "secure food 200",
-                            "laws set tax_property nobles 0.4",
-                            "promote artisans 50"])
-    assert state.did_month == 106
-    assert state.transfers == [
-        ["nobles", "food", 100]
-    ]
-    assert state.secures == [
-        ["food", 200]
-    ]
-    assert state.optimals == []
-    assert state.setlaws == [
-        ["tax_property", "nobles", 0.4]
-    ]
-    assert state.forcepromos == [
-        ["artisans", 50]
-    ]
+        state.execute_commands(["transfer nobles food -100",
+                                "transfer artisans land 50",
+                                "secure tools 340",
+                                "optimal wood 1000"])
+        assert state.did_month == 106
+        assert state.transfers == [
+            ["nobles", "food", 100],
+            ["nobles", "food", -100],
+            ["artisans", "land", 50]
+        ]
+        assert state.secures == [
+            ["food", 200],
+            ["tools", 340]
+        ]
+        assert state.optimals == [
+            ["wood", 1000]
+        ]
+        assert state.setlaws == [
+            ["tax_property", "nobles", 0.4]
+        ]
+        assert state.forcepromos == [
+            ["artisans", 50]
+        ]
 
-    state.execute_commands(["transfer nobles food -100",
-                            "transfer artisans land 50",
-                            "secure tools 340",
-                            "optimal wood 1000"])
-    assert state.did_month == 106
-    assert state.transfers == [
-        ["nobles", "food", 100],
-        ["nobles", "food", -100],
-        ["artisans", "land", 50]
-    ]
-    assert state.secures == [
-        ["food", 200],
-        ["tools", 340]
-    ]
-    assert state.optimals == [
-        ["wood", 1000]
-    ]
-    assert state.setlaws == [
-        ["tax_property", "nobles", 0.4]
-    ]
-    assert state.forcepromos == [
-        ["artisans", 50]
-    ]
-
-    state.execute_commands(["optimal iron 0",
-                            "promote nobles 10",
-                            "laws set wage_minimum None 0",
-                            "laws set tax_income peasants 0.9",
-                            "promote peasants 34"])
-    assert state.did_month == 106
-    assert state.transfers == [
-        ["nobles", "food", 100],
-        ["nobles", "food", -100],
-        ["artisans", "land", 50]
-    ]
-    assert state.secures == [
-        ["food", 200],
-        ["tools", 340]
-    ]
-    assert state.optimals == [
-        ["wood", 1000],
-        ["iron", 0]
-    ]
-    assert state.setlaws == [
-        ["tax_property", "nobles", 0.4],
-        ["wage_minimum", None, 0.0],
-        ["tax_income", "peasants", 0.9]
-    ]
-    assert state.forcepromos == [
-        ["artisans", 50],
-        ["nobles", 10],
-        ["peasants", 34]
-    ]
-
-    State_Data.do_month = old_do_month
-    State_Data.do_transfer = old_transfer
-    State_Data.do_secure = old_secure
-    State_Data.do_optimal = old_optimal
-    State_Data.do_set_law = old_set_law
-    State_Data.do_force_promotion = old_force_promotion
+        state.execute_commands(["optimal iron 0",
+                                "promote nobles 10",
+                                "laws set wage_minimum None 0",
+                                "laws set tax_income peasants 0.9",
+                                "promote peasants 34"])
+        assert state.did_month == 106
+        assert state.transfers == [
+            ["nobles", "food", 100],
+            ["nobles", "food", -100],
+            ["artisans", "land", 50]
+        ]
+        assert state.secures == [
+            ["food", 200],
+            ["tools", 340]
+        ]
+        assert state.optimals == [
+            ["wood", 1000],
+            ["iron", 0]
+        ]
+        assert state.setlaws == [
+            ["tax_property", "nobles", 0.4],
+            ["wage_minimum", None, 0.0],
+            ["tax_income", "peasants", 0.9]
+        ]
+        assert state.forcepromos == [
+            ["artisans", 50],
+            ["nobles", 10],
+            ["peasants", 34]
+        ]

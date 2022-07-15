@@ -1,6 +1,7 @@
 from ..sources.abstract_interface.history import History
 from ..sources.state.state_data import State_Data
 from ..sources.auxiliaries.constants import EMPTY_RESOURCES
+from ..sources.auxiliaries.testing import replace
 
 
 def test_constructor():
@@ -109,63 +110,53 @@ class Fake_State_Data:
         }
 
 
+def fake_from_dict(dict):
+    return Fake_State_Data()
+
+
 def test_obtain_data_1():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 11", "next 1"]
+        history = History(a, b)
+        history.keys_info["resources_after"] = True, 3, False
+        data = history.obtain_data(["resources_after"])
+        assert len(data.keys()) == 1
+        data = data["resources_after"]
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 11", "next 1"]
-    history = History(a, b)
-    history.keys_info["resources_after"] = True, 3, False
-    data = history.obtain_data(["resources_after"])
-    assert len(data.keys()) == 1
-    data = data["resources_after"]
-
-    assert len(data) == 12
-    for month_data in data:
-        assert month_data == {
-            "nobles": {
-                "food": 2.356,
-                "wood": 4.575
-            },
-            "artisans": EMPTY_RESOURCES.copy(),
-            "peasants": {
-                "food": 4.355,
-                "a": 3636.364
-            },
-            "others": EMPTY_RESOURCES.copy()
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 12
+        for month_data in data:
+            assert month_data == {
+                "nobles": {
+                    "food": 2.356,
+                    "wood": 4.575
+                },
+                "artisans": EMPTY_RESOURCES.copy(),
+                "peasants": {
+                    "food": 4.355,
+                    "a": 3636.364
+                },
+                "others": EMPTY_RESOURCES.copy()
+            }
 
 
 def test_obtain_data_2():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        history.keys_info["abc"] = False, 0, False
+        data = history.obtain_data(["abc"])
+        assert len(data) == 1
+        data = data["abc"]
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    history.keys_info["abc"] = False, 0, False
-    data = history.obtain_data(["abc"])
-    assert len(data) == 1
-    data = data["abc"]
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "a": 3,
-            "b": -13,
-            "c": 4
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "a": 3,
+                "b": -13,
+                "c": 4
+            }
 
 
 def test_round_dict_of_dicts_values():
@@ -216,238 +207,182 @@ def test_round_dict_of_dicts_values_default_precision():
 
 
 def test_population():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.population()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.population()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "a": 3,
-            "b": -13,
-            "c": 4
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "a": 3,
+                "b": -13,
+                "c": 4
+            }
 
 
 def test_resources():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.resources()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.resources()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "nobles": {
-                "food": 2.4,
-                "wood": 4.6
-            },
-            "artisans": EMPTY_RESOURCES.copy(),
-            "peasants": {
-                "food": 4.4,
-                "a": 3636.4
-            },
-            "others": EMPTY_RESOURCES.copy()
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "nobles": {
+                    "food": 2.4,
+                    "wood": 4.6
+                },
+                "artisans": EMPTY_RESOURCES.copy(),
+                "peasants": {
+                    "food": 4.4,
+                    "a": 3636.4
+                },
+                "others": EMPTY_RESOURCES.copy()
+            }
 
 
 def test_population_change():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.population_change()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.population_change()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "a": 3,
-            "b": -13,
-            "c": 4,
-            "d": 0
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "a": 3,
+                "b": -13,
+                "c": 4,
+                "d": 0
+            }
 
 
 def test_resources_change():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.resources_change()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.resources_change()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "nobles": EMPTY_RESOURCES.copy(),
-            "artisans": EMPTY_RESOURCES.copy(),
-            "peasants": {"a": 3636.4},
-            "others": EMPTY_RESOURCES.copy()
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "nobles": EMPTY_RESOURCES.copy(),
+                "artisans": EMPTY_RESOURCES.copy(),
+                "peasants": {"a": 3636.4},
+                "others": EMPTY_RESOURCES.copy()
+            }
 
 
 def test_prices():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.prices()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.prices()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "a": 3.4636,
-            "b": -13.4564,
-            "c": 4.4532,
-            "d": 0.0000
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "a": 3.4636,
+                "b": -13.4564,
+                "c": 4.4532,
+                "d": 0.0000
+            }
 
 
 def test_total_resources():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.total_resources()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.total_resources()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "food": 6.7,
-            "wood": 4.6,
-            "stone": 0,
-            "iron": 0,
-            "tools": 0,
-            "land": 0,
-            "a": 3636.4
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "food": 6.7,
+                "wood": 4.6,
+                "stone": 0,
+                "iron": 0,
+                "tools": 0,
+                "land": 0,
+                "a": 3636.4
+            }
 
 
 def test_growth_modifiers():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.growth_modifiers()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.growth_modifiers()
-
-    assert len(data) == 100
-    for month_data in data:
-        assert month_data == {
-            "nobles": {
-                "starving": False,
-                "freezing": False,
-                "demoted_from": True,
-                "demoted_to": False,
-                "promoted_from": False,
-                "promoted_to": False
-            },
-            "artisans": {
-                "starving": False,
-                "freezing": True,
-                "demoted_from": False,
-                "demoted_to": False,
-                "promoted_from": True,
-                "promoted_to": False
-            },
-            "peasants": {
-                "starving": True,
-                "freezing": False,
-                "demoted_from": True,
-                "demoted_to": True,
-                "promoted_from": False,
-                "promoted_to": False
-            },
-            "others": {
-                "starving": True,
-                "freezing": False,
-                "demoted_from": True,
-                "demoted_to": False,
-                "promoted_from": False,
-                "promoted_to": True
+        assert len(data) == 100
+        for month_data in data:
+            assert month_data == {
+                "nobles": {
+                    "starving": False,
+                    "freezing": False,
+                    "demoted_from": True,
+                    "demoted_to": False,
+                    "promoted_from": False,
+                    "promoted_to": False
+                },
+                "artisans": {
+                    "starving": False,
+                    "freezing": True,
+                    "demoted_from": False,
+                    "demoted_to": False,
+                    "promoted_from": True,
+                    "promoted_to": False
+                },
+                "peasants": {
+                    "starving": True,
+                    "freezing": False,
+                    "demoted_from": True,
+                    "demoted_to": True,
+                    "promoted_from": False,
+                    "promoted_to": False
+                },
+                "others": {
+                    "starving": True,
+                    "freezing": False,
+                    "demoted_from": True,
+                    "demoted_to": False,
+                    "promoted_from": False,
+                    "promoted_to": True
+                }
             }
-        }
-
-    State_Data.from_dict = old_from_dict
 
 
 def test_employment():
-    def fake_from_dict(dict):
-        return Fake_State_Data()
+    with replace(State_Data, "from_dict", fake_from_dict):
+        a = {}
+        b = ["next 100"]
+        history = History(a, b)
+        data = history.employment()
 
-    old_from_dict = State_Data.from_dict
-    State_Data.from_dict = fake_from_dict
-
-    a = {}
-    b = ["next 100"]
-    history = History(a, b)
-    data = history.employment()
-
-    assert len(data["employees"]) == 100
-    assert len(data["wages"]) == 100
-    for i in range(100):
-        assert data["employees"][i] == {
-            "a": 1,
-            "b": 2,
-            "c": 4
-        }
-        assert data["wages"][i] == {
-            "a": 0.01,
-            "b": 0.26,
-            "c": 0.99,
-            "d": 0.2,
-            "e": 1
-        }
-
-    State_Data.from_dict = old_from_dict
+        assert len(data["employees"]) == 100
+        assert len(data["wages"]) == 100
+        for i in range(100):
+            assert data["employees"][i] == {
+                "a": 1,
+                "b": 2,
+                "c": 4
+            }
+            assert data["wages"][i] == {
+                "a": 0.01,
+                "b": 0.26,
+                "c": 0.99,
+                "d": 0.2,
+                "e": 1
+            }
 
 
 def test_add_history_line():
