@@ -395,3 +395,32 @@ def test_recruit():
             "recruit nobles 30",
             "recruit artisans 40"
         ]
+
+
+def test_get_brigands():
+    class EmptyState:
+        def __init__(self, brig, strength):
+            self.brigands = brig
+            self.brigand_strength = strength
+    interface = Interface(None, True)
+    interface.state = EmptyState(24, 0.7)
+    brigands, strength = interface.get_brigands()
+    assert brigands == 24
+    assert strength == 0.7
+
+    interface.debug = False
+    brigands, strength = interface.get_brigands()
+    assert brigands == (20, 30)
+    assert strength == (0.5, 1)
+
+    interface.state.brigands = 100
+    interface.state.brigand_strength = 1.999
+    brigands, strength = interface.get_brigands()
+    assert brigands == (100, 200)
+    assert strength == (1.5, 2)
+
+    interface.state.brigands = 6
+    interface.state.brigand_strength = 2
+    brigands, strength = interface.get_brigands()
+    assert brigands == (0, 10)
+    assert strength == (2, 2.5)

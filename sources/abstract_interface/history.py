@@ -30,9 +30,7 @@ class History:
 
     def obtain_data(self, keys: list[str]):
         """
-        Returns the data about key from the whole history of the country.
-        double_dict specifies how should the data be rounded - None signifies
-        no rounding.
+        Returns the data about the keys from the whole history of the country.
         """
         result = {key: [] for key in keys}
 

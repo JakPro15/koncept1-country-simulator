@@ -715,11 +715,24 @@ def state(args: list[str], interface: Interface):
                 print(f"{class_name: >8}: {data[index]}")
         elif args[1] in {"military", "mi"}:
             data = interface.state.government.soldiers
+            if not interface.debug:
+                data["footmen"] = round(data["footmen"])
+                data["knights"] = round(data["knights"])
             print("Current state of the military:")
             print(f"Footmen: {data['footmen']}")
             print(f"Knights: {data['knights']}")
             rev = "" if interface.state.government.soldier_revolt else "not "
             print(f"The soldiers are {rev}revolting.")
+            brigands, strength = interface.get_brigands()
+            if isinstance(brigands, tuple):
+                print(f"Brigands: {brigands[0]}-{brigands[1]}")
+            else:
+                print(f"Brigands: {brigands}")
+            if isinstance(strength, tuple):
+                print(f"Brigand strength: {strength[0]}-{strength[1]}")
+            else:
+                print(f"Brigand strength: {strength}")
+
     except AssertionError:
         print("Invalid syntax. See help for proper usage of state command")
 

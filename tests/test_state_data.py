@@ -1146,15 +1146,6 @@ def test_do_double_promotion():
 
 
 def test_do_promotions_no_starvation():
-    # force default prices to all be equal to 1
-    saved_defaults = DEFAULT_PRICES.copy()
-    a = DEFAULT_PRICES
-    a["food"] = 1
-    a["wood"] = 1
-    a["stone"] = 1
-    a["iron"] = 1
-    a["tools"] = 1
-
     resources = Arithmetic_Dict({
         "food": 1000,
         "wood": 1000,
@@ -1217,20 +1208,8 @@ def test_do_promotions_no_starvation():
     assert others.promoted_from == (transferred_others > 0)
     assert not others.promoted_to
 
-    for key in saved_defaults:
-        a[key] = saved_defaults[key]
-
 
 def test_do_promotions_with_starvation():
-    # force default prices to all be equal to 1
-    saved_defaults = DEFAULT_PRICES.copy()
-    a = DEFAULT_PRICES
-    a["food"] = 1
-    a["wood"] = 1
-    a["stone"] = 1
-    a["iron"] = 1
-    a["tools"] = 1
-
     resources = Arithmetic_Dict({
         "food": 1000,
         "wood": 1000,
@@ -1278,20 +1257,8 @@ def test_do_promotions_with_starvation():
     assert not others.promoted_from
     assert not others.promoted_to
 
-    for key in saved_defaults:
-        a[key] = saved_defaults[key]
-
 
 def test_do_promotions_with_nobles_cap():
-    # force default prices to all be equal to 1
-    saved_defaults = DEFAULT_PRICES.copy()
-    a = DEFAULT_PRICES
-    a["food"] = 1
-    a["wood"] = 1
-    a["stone"] = 1
-    a["iron"] = 1
-    a["tools"] = 1
-
     resources = Arithmetic_Dict({
         "food": 1000,
         "wood": 1000,
@@ -1345,9 +1312,6 @@ def test_do_promotions_with_nobles_cap():
             resources * (1 - part_paid_others))
     assert others.promoted_from == (transferred_others > 0)
     assert not others.promoted_to
-
-    for key in saved_defaults:
-        a[key] = saved_defaults[key]
 
 
 def test_get_personal_taxes():

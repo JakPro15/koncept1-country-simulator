@@ -162,6 +162,8 @@ class Government:
             self.soldiers["knights"] * KNIGHT_FOOD_CONSUMPTION
         if self.new_resources["food"] < 0:
             self.handle_soldier_bankruptcy()
+        else:
+            self.missing_food = 0
 
     def handle_soldier_bankruptcy(self):
         """

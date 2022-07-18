@@ -571,7 +571,8 @@ class State_Data(_State_Data_Employment_and_Commands):
                     fled, BRIGAND_STRENGTH[social_class.class_name]
                 )
                 social_class.new_population -= fled
-        if self.government.soldier_revolt:
+        if self.government.soldier_revolt \
+           and self.government.soldiers_population > 0:
             soldiers_happiness = -100 * self.government.missing_food / \
                 self.government.soldiers_population
             flee_rate = State_Data._get_flee_rate(soldiers_happiness)

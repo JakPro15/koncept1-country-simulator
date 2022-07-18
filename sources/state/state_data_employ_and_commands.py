@@ -5,7 +5,8 @@ from ..auxiliaries.constants import (
     EMPTY_RESOURCES,
     RECRUITMENT_COST,
     WAGE_CHANGE,
-    INBUILT_RESOURCES
+    INBUILT_RESOURCES,
+    TAX_RATES
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class

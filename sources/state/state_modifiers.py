@@ -25,6 +25,7 @@ from ..auxiliaries.constants import (
     TAX_RATES
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
+from copy import deepcopy
 
 
 class State_Modifiers:
@@ -36,6 +37,7 @@ class State_Modifiers:
     def __init__(self, parent):
         self.parent = parent
 
+        # ALL DICT CONSTANTS HERE MUST BE COPIED, not just assigned
         self.miner_tool_usage = MINER_TOOL_USAGE
         self.iron_production = IRON_PRODUCTION
         self.stone_production = STONE_PRODUCTION
@@ -62,7 +64,7 @@ class State_Modifiers:
 
         self.worker_land_usage = WORKER_LAND_USAGE
 
-        self.tax_rates = TAX_RATES
+        self.tax_rates = deepcopy(TAX_RATES)
 
     @property
     def food_production(self):

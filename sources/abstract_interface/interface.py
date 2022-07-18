@@ -5,6 +5,7 @@ from sources.auxiliaries.constants import (
 from ..state.state_data import State_Data
 from .history import History
 import json
+from math import log10, floor
 
 
 class NotEnoughGovtResources(Exception):
@@ -213,3 +214,24 @@ class Interface:
         self.history.add_history_line(
             f"recruit {class_name} {number}"
         )
+
+    def get_brigands(self):
+        """
+        Returns the number of brigands and their strength, estimated if debug
+        mode is off.
+        """
+        brigands = self.state.brigands
+        strength = self.state.brigand_strength
+        if not self.debug:
+            estimation = max(floor(log10(brigands)), 1)
+            uncertainty = 10 ** estimation / 2
+            brigands += uncertainty
+            brigands = round(brigands, -estimation)
+            brigands -= uncertainty
+            brigands = (int(brigands - uncertainty),
+                        int(brigands + uncertainty))
+            strength *= 2
+            strength = floor(strength)
+            strength /= 2
+            strength = (strength, strength + 0.5)
+        return brigands, strength
