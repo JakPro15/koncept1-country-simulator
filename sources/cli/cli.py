@@ -19,13 +19,14 @@ from .cli_game_commands import (
     optimal,
     laws,
     promote,
-    recruit
+    recruit,
+    fight
 )
 
 
-def command_line_interface(debug, dirname):
+def command_line_interface(dirname):
     print("Loading saves/" + dirname)
-    interface = Interface(debug=debug)
+    interface = Interface()
     try:
         interface.load_data(dirname)
     except SaveAccessError:
@@ -38,7 +39,7 @@ def command_line_interface(debug, dirname):
 
     commands = {
         "help", "save", "exit", "history", "next", "state", "delete",
-        "transfer", "secure", "optimal", "laws", "promote", "recruit"
+        "transfer", "secure", "optimal", "laws", "promote", "recruit", "fight"
     }
 
     while True:
@@ -82,6 +83,8 @@ def command_line_interface(debug, dirname):
                     promote(answer, interface)
                 elif answer[0] == "recruit":
                     recruit(answer, interface)
+                elif answer[0] == "fight":
+                    fight(answer, interface)
                 else:
                     print(
                         "Invalid command. Enter help for a list of commands."

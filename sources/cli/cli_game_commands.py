@@ -7,7 +7,9 @@ from ..abstract_interface.interface import (
     Interface,
     NotEnoughClassPopulation,
     NotEnoughClassResources,
-    NotEnoughGovtResources
+    NotEnoughGovtResources,
+    check_input,
+    InvalidArgumentError
 )
 from .cli_commands import (
     InvalidCommand,
@@ -24,20 +26,20 @@ def transfer(args: list[str], interface: Interface):
     class. Negative amount signifies a reverse direction of the transfer.
     """
     try:
-        assert len(args) == 4
+        check_input(len(args) == 4)
 
         args[1] = fill_command(args[1], CLASSES)
-        assert len(args[1]) == 1
+        check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
         args[2] = fill_command(args[2], RESOURCES)
-        assert len(args[2]) == 1
+        check_input(len(args[2]) == 1)
         args[2] = args[2][0]
 
         try:
             args[3] = int(args[3])
         except ValueError:
-            raise AssertionError
+            raise InvalidArgumentError
 
         try:
             interface.transfer_resources(args[1], args[2], args[3])
@@ -47,7 +49,7 @@ def transfer(args: list[str], interface: Interface):
         except NotEnoughClassResources:
             print("The chosen class does not have enough resources for this"
                   " operation.")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of transfer command")
 
 
@@ -57,17 +59,17 @@ def secure(args: list[str], interface: Interface):
     (secured). Negative amount signifies making a resource tradeable again.
     """
     try:
-        assert len(args) in {2, 3}
+        check_input(len(args) in {2, 3})
 
         args[1] = fill_command(args[1], RESOURCES)
-        assert len(args[1]) == 1
+        check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
         if len(args) == 3:
             try:
                 args[2] = int(args[2])
             except ValueError:
-                raise AssertionError
+                raise InvalidArgumentError
         else:
             args.append(None)
 
@@ -76,7 +78,7 @@ def secure(args: list[str], interface: Interface):
         except NotEnoughGovtResources:
             print("The government does not have enough resources for this"
                   " operation.")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of secure command")
 
 
@@ -85,19 +87,19 @@ def optimal(args: list[str], interface: Interface):
     Sets government optimal amount of resource to the given value.
     """
     try:
-        assert len(args) == 3
+        check_input(len(args) == 3)
 
         args[1] = fill_command(args[1], RESOURCES)
-        assert len(args[1]) == 1
+        check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
         try:
             args[2] = int(args[2])
         except ValueError:
-            raise AssertionError
+            raise InvalidArgumentError
 
         interface.set_govt_optimal(args[1], args[2])
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of optimal command")
 
 
@@ -171,9 +173,9 @@ def laws(args: list[str], interface: Interface):
     Sets or views the current laws of the country.
     """
     try:
-        assert len(args) >= 2
+        check_input(len(args) >= 2)
         args[1] = fill_command(args[1], {"view", "set"})
-        assert len(args[1]) == 1
+        check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
         laws = {
@@ -182,7 +184,7 @@ def laws(args: list[str], interface: Interface):
         }
 
         if args[1] == "view":
-            assert len(args) in {2, 3}
+            check_input(len(args) in {2, 3})
             if len(args) == 2:
                 args.append("")
 
@@ -190,31 +192,31 @@ def laws(args: list[str], interface: Interface):
             for law in args[2]:
                 print_law(law, interface)
         elif args[1] == "set":
-            assert len(args) in {4, 5}
+            check_input(len(args) in {4, 5})
 
             args[2] = fill_command(args[2], laws)
-            assert len(args[2]) == 1
+            check_input(len(args[2]) == 1)
             args[2] = args[2][0]
 
             try:
                 args[len(args) - 1] = float(args[len(args) - 1])
             except ValueError:
-                raise AssertionError
+                raise InvalidArgumentError
 
             if args[2][:4] in {"tax_", "max_"}:
-                assert len(args) == 5
+                check_input(len(args) == 5)
                 valid_args = CLASSES if args[2][:4] == "tax_" else RESOURCES
                 args[3] = fill_command(args[3], valid_args)
-                assert len(args[3]) == 1
+                check_input(len(args[3]) == 1)
                 args[3] = args[3][0]
 
                 interface.set_law(args[2], args[3], args[4])
             else:
-                assert len(args) == 4
+                check_input(len(args) == 4)
                 interface.set_law(args[2], None, args[3])
         else:
-            raise AssertionError
-    except AssertionError:
+            raise InvalidArgumentError
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of laws command")
 
 
@@ -223,18 +225,18 @@ def promote(args: list[str], interface: Interface):
     Forces a promotion using government resources.
     """
     try:
-        assert len(args) == 3
+        check_input(len(args) == 3)
 
         valid_classes = CLASSES.copy()
         valid_classes.remove("others")
         args[1] = fill_command(args[1], valid_classes)
-        assert len(args[1]) == 1
+        check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
         try:
             args[2] = int(args[2])
         except ValueError:
-            raise AssertionError
+            raise InvalidArgumentError
 
         try:
             interface.force_promotion(args[1], args[2])
@@ -244,7 +246,7 @@ def promote(args: list[str], interface: Interface):
         except NotEnoughClassPopulation:
             print("The class from which the promotion was to be done does not"
                   " have enough population.")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of promote command")
 
 
@@ -253,16 +255,16 @@ def recruit(args: list[str], interface: Interface):
     Recruits soldiers.
     """
     try:
-        assert len(args) == 3
+        check_input(len(args) == 3)
 
         args[1] = fill_command(args[1], CLASSES)
-        assert len(args[1]) == 1
+        check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
         try:
             args[2] = int(args[2])
         except ValueError:
-            raise AssertionError
+            raise InvalidArgumentError
 
         try:
             interface.recruit(args[1], args[2])
@@ -272,5 +274,21 @@ def recruit(args: list[str], interface: Interface):
         except NotEnoughClassPopulation:
             print("The class from which the recruitment was to be done does "
                   "not have enough population.")
-    except AssertionError:
+    except InvalidArgumentError:
+        print("Invalid syntax. See help for proper usage of promote command")
+
+
+def fight(args: list[str], interface: Interface):
+    """
+    Sends all soldiers to combat.
+    """
+    try:
+        check_input(len(args) == 2)
+        arguments = {"crime", "plunder", "conquest"}
+        args[1] = fill_command(args[1], arguments)
+        check_input(len(args[1]) == 1)
+        args[1] = args[1][0]
+
+        interface.fight(args[1])
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of promote command")

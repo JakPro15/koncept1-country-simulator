@@ -673,6 +673,7 @@ class Fake_Class_2:
         self.new_population = population
         self.missing_resources = missing_resources.copy()
         self.resources = {}
+        self.class_name = "Fake"
 
     def grow_population(self, modifier: float):
         grown = self.population * modifier

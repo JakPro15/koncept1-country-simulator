@@ -5,7 +5,8 @@ from ..sources.abstract_interface.interface import (
     Interface,
     NotEnoughClassPopulation,
     NotEnoughClassResources,
-    NotEnoughGovtResources
+    NotEnoughGovtResources,
+    InvalidArgumentError
 )
 from ..sources.abstract_interface.history import History
 from ..sources.state.state_data import State_Data
@@ -168,7 +169,7 @@ def test_optimal():
         interface.history = history
 
         interface.set_govt_optimal("food", 100)
-        with raises(AssertionError):
+        with raises(InvalidArgumentError):
             interface.set_govt_optimal("wood", -100)
 
         assert state.optimals == [["food", 100]]
@@ -218,11 +219,11 @@ def test_set_law():
         interface.history = history
 
         interface.set_law("tax_personal", "nobles", 100)
-        with raises(AssertionError):
+        with raises(InvalidArgumentError):
             interface.set_law("tax_property", "nobles", 2)
-        with raises(AssertionError):
+        with raises(InvalidArgumentError):
             interface.set_law("tax_income", "nobles", -0.1)
-        with raises(AssertionError):
+        with raises(InvalidArgumentError):
             interface.set_law("wage_minimum", None, 1.2)
 
         assert state.setlaws == [["tax_personal", "nobles", 100]]
@@ -290,7 +291,7 @@ def test_force_promotion():
         interface.history = history
 
         interface.force_promotion("peasants", 60)
-        with raises(AssertionError):
+        with raises(InvalidArgumentError):
             interface.force_promotion("peasants", -1)
         with raises(NotEnoughClassPopulation):
             interface.force_promotion("nobles", 61)
@@ -369,7 +370,7 @@ def test_recruit():
         interface.history = history
 
         interface.recruit("nobles", 30)
-        with raises(AssertionError):
+        with raises(InvalidArgumentError):
             interface.recruit("peasants", -1)
         with raises(NotEnoughClassPopulation):
             interface.recruit("peasants", 61)
@@ -402,25 +403,30 @@ def test_get_brigands():
         def __init__(self, brig, strength):
             self.brigands = brig
             self.brigand_strength = strength
-    interface = Interface(None, True)
+    interface = Interface()
     interface.state = EmptyState(24, 0.7)
-    brigands, strength = interface.get_brigands()
+    brigands, strength = interface.get_brigands(True)
     assert brigands == 24
     assert strength == 0.7
 
-    interface.debug = False
-    brigands, strength = interface.get_brigands()
+    brigands, strength = interface.get_brigands(False)
     assert brigands == (20, 30)
     assert strength == (0.5, 1)
 
     interface.state.brigands = 100
     interface.state.brigand_strength = 1.999
-    brigands, strength = interface.get_brigands()
+    brigands, strength = interface.get_brigands(False)
     assert brigands == (100, 200)
     assert strength == (1.5, 2)
 
     interface.state.brigands = 6
     interface.state.brigand_strength = 2
-    brigands, strength = interface.get_brigands()
+    brigands, strength = interface.get_brigands(False)
     assert brigands == (0, 10)
     assert strength == (2, 2.5)
+
+    interface.state.brigands = 0
+    interface.state.brigand_strength = 1
+    brigands, strength = interface.get_brigands(False)
+    assert brigands == (0, 10)
+    assert strength == (1, 1.5)

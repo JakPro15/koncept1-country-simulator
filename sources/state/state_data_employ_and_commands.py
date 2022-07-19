@@ -1,12 +1,12 @@
 from ..auxiliaries.constants import (
+    BASE_BATTLE_LOSSES,
     CLASS_NAME_TO_INDEX,
     CLASS_TO_SOLDIER,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
     RECRUITMENT_COST,
     WAGE_CHANGE,
-    INBUILT_RESOURCES,
-    TAX_RATES
+    INBUILT_RESOURCES
 )
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from .social_classes.class_file import Class
@@ -379,6 +379,40 @@ class _State_Data_Employment_and_Commands:
 
         self._secure_classes()
 
+    @staticmethod
+    def _get_battle_losses(ally_to_enemy_ratio: float) -> tuple[float, float]:
+        """
+        From the ratio of allied army strength to enemy army strength
+        calculates and returns ally and enemy losses. In the tuple ally
+        losses are the first element, enemt losses second.
+        """
+        x = ally_to_enemy_ratio
+        # a is a coefficient of the function
+        # It is calculated so that a ratio of 1 gives exactly base losses
+        a = (1 - BASE_BATTLE_LOSSES) / BASE_BATTLE_LOSSES
+        # The whole function (ally losses) is designed so that:
+        # It's increasing for all nonnegative ratios
+        # For ratio 0 it returns 0
+        # For ratio approaching infinity returns approach 1
+        # Enemy losses function is the same, but the argument is reversed (1/x)
+        return x / (x + a), 1 / (a * x + 1)
+
+    def do_fight(self, target: str):
+        """
+        Executes an attack against the given target.
+        """
+        if target == "crime":
+            ally_strength = self.government.soldiers_fighting_strength
+            enemy_strength = self.brigands * self.brigand_strength
+            ratio = ally_strength / enemy_strength
+            ally_losses, enemy_losses = self._get_battle_losses(ratio)
+            self.government.soldiers *= (1 - ally_losses)
+            self.brigands *= (1 - enemy_losses)
+        elif target == "conquest":
+            raise NotImplementedError
+        elif target == "plunder":
+            raise NotImplementedError
+
     def execute_commands(self, commands: list[str]):
         """
         Executes the given commands.
@@ -408,5 +442,7 @@ class _State_Data_Employment_and_Commands:
                 self.do_force_promotion(command[1], int(command[2]))
             elif command[0] == "recruit":
                 self.do_recruit(command[1], int(command[2]))
+            elif command[0] == "fight":
+                self.do_fight(command[1])
             else:
                 raise InvalidCommandError

@@ -5,7 +5,12 @@
 
 from sources.state.state_data import EveryoneDeadError, RebellionError
 from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
-from ..abstract_interface.interface import Interface, SaveAccessError
+from ..abstract_interface.interface import (
+    Interface,
+    SaveAccessError,
+    check_input,
+    InvalidArgumentError
+)
 from math import floor, inf, log10
 from os import mkdir
 from os.path import isdir
@@ -49,6 +54,7 @@ def help_default():
     print("laws set <LAW> <VALUE> - set laws of the country")
     print("promote <CLASS> <VALUE> - force promotion to a social class")
     print("recruit <CLASS> <VALUE> - recruit soldiers from a class")
+    print("fight <TARGET> - send soldiers to battle")
 
 
 def help_command(command: str):
@@ -78,23 +84,23 @@ def help_command(command: str):
         print("Shows the history (past statistics) of the country.")
         print("    <STAT> decides which statistic to show")
         print("    Valid values:")
-        print("        population (p)")
-        print("        resources (r)")
-        print("        total_resources (tr)")
-        print("        population_change (pc)")
-        print("        resources_change (rc)")
-        print("        prices (pr)")
-        print("        modifiers (mo)")
-        print("        employment (e)")
-        print("        happiness (h)")
+        print("        population")
+        print("        resources")
+        print("        total_resources")
+        print("        population_change")
+        print("        resources_change")
+        print("        prices")
+        print("        modifiers")
+        print("        employment")
+        print("        happiness")
         print("    <CLASS> decides which class' statistics to show - it should"
               " only be given when <STAT> is resources or resources_change.")
         print("    Valid values:")
-        print("        nobles (n)")
-        print("        artisans (a)")
-        print("        peasants (p)")
-        print("        others (o)")
-        print("        government (g)")
+        print("        nobles")
+        print("        artisans")
+        print("        peasants")
+        print("        others")
+        print("        government")
         print("    <MONTHS> decides how many months of history, counting back "
               "from the current month, should be shown - if omitted entire "
               "history is shown.")
@@ -103,32 +109,32 @@ def help_command(command: str):
         print("Shows the current state of the country.")
         print("    <STAT> decides which statistic to show")
         print("    Valid values:")
-        print("        population (p)")
-        print("        resources (r)")
-        print("        total_resources (tr)")
-        print("        prices (pr)")
-        print("        modifiers (mo)")
-        print("        government (g)")
-        print("        employment (e)")
-        print("        happiness (h)")
-        print("        military (mi)")
+        print("        population")
+        print("        resources")
+        print("        total_resources")
+        print("        prices")
+        print("        modifiers")
+        print("        government")
+        print("        employment")
+        print("        happiness")
+        print("        military")
     elif command == "transfer":
         print("transfer <TARGET> <RESOURCE> <AMOUNT>")
         print("Transfers <AMOUNT> of <RESOURCE> from the government to "
               "<TARGET> social class. Negative <AMOUNT> signifies seizing "
               "resources from the social class to the government.")
         print("Valid values for <TARGET>:")
-        print("    nobles (n)")
-        print("    artisans (a)")
-        print("    peasants (p)")
-        print("    others (o)")
+        print("    nobles")
+        print("    artisans")
+        print("    peasants")
+        print("    others")
         print("Valid values for <RESOURCE>:")
-        print("    food (f)")
-        print("    wood (w)")
-        print("    stone (s)")
-        print("    iron (i)")
-        print("    tools (t)")
-        print("    land (l)")
+        print("    food")
+        print("    wood")
+        print("    stone")
+        print("    iron")
+        print("    tools")
+        print("    land")
     elif command == "secure":
         print("secure <RESOURCE> [<AMOUNT>]")
         print("Makes <AMOUNT> of tradeable <RESOURCE> from the government "
@@ -136,12 +142,12 @@ def help_command(command: str):
               "untradeable (secured) resources tradeable again. If <AMOUNT> is"
               " omitted, all of the resource will be made secure.")
         print("Valid values for <RESOURCE>:")
-        print("    food (f)")
-        print("    wood (w)")
-        print("    stone (s)")
-        print("    iron (i)")
-        print("    tools (t)")
-        print("    land (l)")
+        print("    food")
+        print("    wood")
+        print("    stone")
+        print("    iron")
+        print("    tools")
+        print("    land")
     elif command == "optimal":
         print("optimal <RESOURCE> <AMOUNT>")
         print("Sets the optimal amount of <RESOURCE> owned by the government"
@@ -150,12 +156,12 @@ def help_command(command: str):
               "towards this amount - the government will aim to purchase this"
               " amount of tradeable resources.")
         print("Valid values for <RESOURCE>:")
-        print("    food (f)")
-        print("    wood (w)")
-        print("    stone (s)")
-        print("    iron (i)")
-        print("    tools (t)")
-        print("    land (l)")
+        print("    food")
+        print("    wood")
+        print("    stone")
+        print("    iron")
+        print("    tools")
+        print("    land")
         print("<AMOUNT> must be nonnegative.")
     elif command == "laws view":
         print("laws view [<LAW>]")
@@ -195,25 +201,25 @@ def help_command(command: str):
         print("    max_prices - <VALUE> above 1, <CLASS> must not be given, "
               "<RESOURCE> must be given")
         print("Valid values for <CLASS>:")
-        print("    nobles (n)")
-        print("    artisans (a)")
-        print("    peasants (p)")
-        print("    others (o)")
+        print("    nobles")
+        print("    artisans")
+        print("    peasants")
+        print("    others")
         print("Valid values for <RESOURCE>:")
-        print("    food (f)")
-        print("    wood (w)")
-        print("    stone (s)")
-        print("    iron (i)")
-        print("    tools (t)")
-        print("    land (l)")
+        print("    food")
+        print("    wood")
+        print("    stone")
+        print("    iron")
+        print("    tools")
+        print("    land")
     elif command == "promote":
         print("promote <CLASS> <VALUE> - force promotion to a social class")
         print("Spends government resources to promote <VALUE> people to "
               "<CLASS>.")
         print("Valid values for <CLASS>:")
-        print("    nobles (n) - promotion from peasants")
-        print("    artisans (a) - promotion from others")
-        print("    peasants (p) - promotion from others")
+        print("    nobles - promotion from peasants")
+        print("    artisans - promotion from others")
+        print("    peasants - promotion from others")
         print("<VALUE> must be nonnegative and not higher than <CLASS> "
               "population.")
     elif command == "recruit":
@@ -224,6 +230,14 @@ def help_command(command: str):
               "into footmen.")
         print("<VALUE> must be nonnegative and not higher than <CLASS> "
               "population.")
+    elif command == "fight":
+        print("fight <TARGET>")
+        print("Send all soldiers to fight. "
+              "<TARGET> specifies the goal of the fighting.")
+        print("Valid values for <TARGET>:")
+        print("    crime - attack brigands in the country")
+        print("    plunder - attack neighboring lands for resources")
+        print("    conquest - attack neighboring countries for land")
     else:
         raise InvalidCommand
 
@@ -327,33 +341,35 @@ def get_modifiers_from_dict(data):
 
 def history(args: list[str], interface: Interface):
     try:
-        assert len(args) > 1
-        assert args[1] in {
+        check_input(len(args) > 1)
+        arguments = {
             "population", "resources", "prices", "modifiers",
             "population_change", "resources_change", "total_resources",
-            "employment", "happiness",
-            "p", "r", "pr", "pc", "rc", "tr", "mo", "e", "h"
+            "employment", "happiness"
         }
+        args[1] = fill_command(args[1], arguments)
+        check_input(len(args[1]) == 1)
+        args[1] = args[1][0]
 
-        if args[1] in {"resources", "r", "resources_change", "rc"}:
-            assert len(args) in {3, 4}
+        if args[1] in {"resources", "resources_change"}:
+            check_input(len(args) in {3, 4})
 
             options = {
                 "nobles", "artisans", "peasants", "others", "government"
             }
             args[2] = fill_command(args[2], options)
-            assert len(args[2]) == 1
+            check_input(len(args[2]) == 1)
             args[2] = args[2][0]
             official_class = args[2].title()
 
             if len(args) == 4:
-                assert args[3].isdigit()
+                check_input(args[3].isdigit())
                 args[3] = int(args[3])
-                assert args[3] > 0
+                check_input(args[3] > 0)
             else:
                 args.append(None)
 
-            if args[1] in {"resources", "r"}:
+            if args[1] == "resources":
                 data = interface.history.resources()
                 begin_month, data = set_months_of_history(
                     args[3], interface, data
@@ -382,16 +398,16 @@ def history(args: list[str], interface: Interface):
                         line += f"{res_to_str(res): >7}"
                     print(line)
         else:
-            assert len(args) in {2, 3}
+            check_input(len(args) in {2, 3})
 
             if len(args) == 3:
-                assert args[2].isdigit()
+                check_input(args[2].isdigit())
                 args[2] = int(args[2])
-                assert args[2] > 0
+                check_input(args[2] > 0)
             else:
                 args.append(None)
 
-            if args[1] in {"population", "p"}:
+            if args[1] == "population":
                 data = interface.history.population()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -404,7 +420,7 @@ def history(args: list[str], interface: Interface):
                           f"{month_data['artisans']: >9}"
                           f"{month_data['peasants']: >9}"
                           f"{month_data['others']: >9}")
-            elif args[1] in {"prices", "pr"}:
+            elif args[1] == "prices":
                 data = interface.history.prices()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -420,7 +436,7 @@ def history(args: list[str], interface: Interface):
                           f" {price_to_str(month_data['iron']): >7}"
                           f" {price_to_str(month_data['tools']): >7}"
                           f" {price_to_str(month_data['land']): >7}")
-            elif args[1] in {"population_change", "pc"}:
+            elif args[1] == "population_change":
                 data = interface.history.population_change()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -433,7 +449,7 @@ def history(args: list[str], interface: Interface):
                           f"{month_data['artisans']: >9}"
                           f"{month_data['peasants']: >9}"
                           f"{month_data['others']: >9}")
-            elif args[1] in {"total_resources", "tr"}:
+            elif args[1] == "total_resources":
                 data = interface.history.total_resources()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -449,7 +465,7 @@ def history(args: list[str], interface: Interface):
                           f" {res_to_str(month_data['iron']): >7}"
                           f" {res_to_str(month_data['tools']): >7}"
                           f" {res_to_str(month_data['land']): >7}")
-            elif args[1] in {"modifiers", "mo"}:
+            elif args[1] == "modifiers":
                 data = interface.history.growth_modifiers()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -466,7 +482,7 @@ def history(args: list[str], interface: Interface):
                      f"{get_modifiers_from_dict(month_data['peasants']): >9}"
                      f"{get_modifiers_from_dict(month_data['others']): >9}"
                     )
-            elif args[1] in {"employment", "e"}:
+            elif args[1] == "employment":
                 data = interface.history.employment()
                 employees = data["employees"]
                 wages = data["wages"]
@@ -495,7 +511,7 @@ def history(args: list[str], interface: Interface):
                         line += f" {month_emps[employer]: ^9}"
                         line += f" {month_wags[employer]: ^9}"
                     print(line)
-            elif args[1] in {"happiness", "h"}:
+            elif args[1] == "happiness":
                 data = interface.history.happiness()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -508,7 +524,7 @@ def history(args: list[str], interface: Interface):
                           f"{month_data['artisans']: >9}"
                           f"{month_data['peasants']: >9}"
                           f"{month_data['others']: >9}")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of history command")
 
 
@@ -516,8 +532,8 @@ def save(args: list[str], interface: Interface):
     try:
         if len(args) == 1:
             args.append(interface.save_name)
-        assert len(args) == 2
-        assert args[1].isalpha()
+        check_input(len(args) == 2)
+        check_input(args[1].isalpha())
         if args[1] == "starting":
             print('Please choose a save name different from "starting"')
             return
@@ -538,16 +554,16 @@ def save(args: list[str], interface: Interface):
             print("Failed to open the save file.")
             return
         print(f"Saved the game state into saves/{args[1]}")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of save command")
 
 
 def next(args: list[str], interface: Interface):
     try:
-        assert len(args) in {1, 2}
+        check_input(len(args) in {1, 2})
         if len(args) > 1:
-            assert args[1].isdigit()
-            assert int(args[1]) > 0
+            check_input(args[1].isdigit())
+            check_input(int(args[1]) > 0)
         if len(args) == 1:
             interface.next_month()
         else:
@@ -555,7 +571,7 @@ def next(args: list[str], interface: Interface):
                 interface.next_month()
         print(f"\nNew month: {interface.state.month} "
               f"{interface.state.year}\n")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of next command")
     except EveryoneDeadError:
         print("GAME OVER")
@@ -581,17 +597,21 @@ def get_modifiers_string(social_class):
 
 def state(args: list[str], interface: Interface):
     try:
-        assert len(args) in {2, 3}
-        assert args[1] in {
-            "population", "resources", "prices", "total_resources",
-            "modifiers", "government", "employment", "happiness", "military",
-            "p", "r", "pr", "tr", "mo", "g", "e", "h", "mi"
-        }
-        if len(args) == 3:
-            assert args[2].isdigit()
-            assert int(args[2]) > 0
+        check_input(len(args) in {2, 3})
 
-        if args[1] in {"population", "p"}:
+        arguments = {
+            "population", "resources", "prices", "total_resources",
+            "modifiers", "government", "employment", "happiness", "military"
+        }
+        args[1] = fill_command(args[1], arguments)
+        check_input(len(args[1]) == 1)
+        args[1] = args[1][0]
+
+        if len(args) == 3:
+            check_input(args[2].isdigit())
+            check_input(int(args[2]) > 0)
+
+        if args[1] == "population":
             data = [
                 round(social_class.population)
                 for social_class
@@ -600,7 +620,7 @@ def state(args: list[str], interface: Interface):
             print("Current population:")
             for index, class_name in enumerate(CLASSES):
                 print(f"{class_name: >8}: {data[index]}")
-        elif args[1] in {"resources", "r"}:
+        elif args[1] == "resources":
             data = {
                 social_class.class_name: social_class.real_resources.round(1)
                 for social_class
@@ -618,7 +638,7 @@ def state(args: list[str], interface: Interface):
                 for resource in RESOURCES:
                     line += f"{res_to_str(data[class_name][resource]): >7}"
                 print(line)
-        elif args[1] in {"prices", "pr"}:
+        elif args[1] == "prices":
             data = {
                 resource: price_to_str(price)
                 for resource, price
@@ -627,7 +647,7 @@ def state(args: list[str], interface: Interface):
             print("Current prices:")
             for resource, price in data.items():
                 print(f"{resource: >5}: {price}")
-        elif args[1] in {"total_resources", "tr"}:
+        elif args[1] == "total_resources":
             data = EMPTY_RESOURCES.copy()
             for social_class in interface.state.classes:
                 data += social_class.real_resources
@@ -635,13 +655,13 @@ def state(args: list[str], interface: Interface):
             print("Current total resources:")
             for resource, value in data.items():
                 print(f"{resource: >5}: {res_to_str(value)}")
-        elif args[1] in {"modifiers", "m"}:
+        elif args[1] == "modifiers":
             print("Current growth modifiers (S - starving, F - freezing, "
                   "P - promoted from, D - demoted from, p - promoted to, "
                   "d - demoted to):")
             for social_class in interface.state.classes:
                 print(get_modifiers_string(social_class))
-        elif args[1] in {"government", "g"}:
+        elif args[1] == "government":
             print("Government overview:")
             print("Tradeable resources:")
             print("  Food    Wood   Stone    Iron   Tools    Land")
@@ -687,7 +707,7 @@ def state(args: list[str], interface: Interface):
             line = f"Current wage for government employees: {govt_wage}"
             line += f" (autoregulation {'on' if autoreg else 'off'})"
             print(line)
-        elif args[1] in {"employment", "e"}:
+        elif args[1] == "employment":
             employees = interface.state.get_state_data(
                 "employees", True, 0
             ).round(0)
@@ -704,7 +724,7 @@ def state(args: list[str], interface: Interface):
                 line += f" {employees[class_name]: ^9}"
                 line += f" {wages[class_name]: ^9}"
                 print(line)
-        elif args[1] in {"happiness", "h"}:
+        elif args[1] == "happiness":
             data = [
                 round(social_class.happiness, 2)
                 for social_class
@@ -713,9 +733,9 @@ def state(args: list[str], interface: Interface):
             print("Current happiness:")
             for index, class_name in enumerate(CLASSES):
                 print(f"{class_name: >8}: {data[index]}")
-        elif args[1] in {"military", "mi"}:
+        elif args[1] == "military":
             data = interface.state.government.soldiers
-            if not interface.debug:
+            if not __debug__:
                 data["footmen"] = round(data["footmen"])
                 data["knights"] = round(data["knights"])
             print("Current state of the military:")
@@ -733,14 +753,14 @@ def state(args: list[str], interface: Interface):
             else:
                 print(f"Brigand strength: {strength}")
 
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of state command")
 
 
 def delete_save(args: list[str]):
     try:
-        assert len(args) == 2
-        assert args[1].isalpha()
+        check_input(len(args) == 2)
+        check_input(args[1].isalpha())
         if args[1] == "starting":
             print("Deleting this save is prohibited.")
             return
@@ -758,5 +778,5 @@ def delete_save(args: list[str]):
 
         rmtree(f"saves/{args[1]}")
         print(f"Removed the save saves/{args[1]}")
-    except AssertionError:
+    except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of delete command")

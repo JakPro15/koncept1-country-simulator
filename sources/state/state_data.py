@@ -68,7 +68,6 @@ class State_Data(_State_Data_Employment_and_Commands):
                 self.population = 0
         self._classes = [Fake_Nobles()]
         self._government = None
-        self.debug = False
 
         self.brigands = 0
         self.brigand_strength = 0.8
@@ -211,7 +210,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         for social_class in self.classes:
             old_pop = social_class.new_population
             social_class.grow_population(factor)
-            if self.debug:
+            if __debug__:
                 print(f"Grown {social_class.new_population - old_pop} "
                       f"{social_class.class_name}")
 
@@ -270,7 +269,7 @@ class State_Data(_State_Data_Employment_and_Commands):
                 social_class.new_population = 0
                 social_class.happiness += Class.starvation_happiness(1)
 
-            if self.debug:
+            if __debug__:
                 print(f"Starved {old_pop - social_class.new_population} "
                       f"{social_class.class_name}")
 
@@ -309,7 +308,7 @@ class State_Data(_State_Data_Employment_and_Commands):
                 social_class.demoted_from = True
                 lower_class.demoted_to = True
 
-            if self.debug:
+            if __debug__:
                 print(f"Demoted {moved_pop} {social_class.class_name}")
 
     def _secure_classes(self, flush=True):
@@ -371,7 +370,7 @@ class State_Data(_State_Data_Employment_and_Commands):
             class_from.promoted_from = True
             class_to.promoted_to = True
 
-        if self.debug:
+        if __debug__:
             print(f"Promoted {transferred} {class_from.class_name} to "
                   f"{class_to.class_name}")
 
@@ -407,7 +406,7 @@ class State_Data(_State_Data_Employment_and_Commands):
             class_to_1.promoted_to = True
             class_to_2.promoted_to = True
 
-        if self.debug:
+        if __debug__:
             print(f"Double promoted {transferred} {class_from.class_name} to "
                   f"{class_to_1.class_name} and {class_to_2.class_name}")
 
@@ -610,7 +609,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         Does all the needed calculations and changes to end the month and move
         on to the next. Returns a dict with data from the month.
         """
-        if self.debug:
+        if __debug__:
             print(f"Ending month {self.month} {self.year}")
         # Check for game over
         someone_alive = False

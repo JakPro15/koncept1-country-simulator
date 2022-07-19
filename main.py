@@ -15,8 +15,6 @@ def main(arguments):
                       'launch the program in the command line')
     mode.add_argument('-g', '--gui', action='store_true', help='whether to '
                       'launch the program with graphical user interface')
-    parser.add_argument('-d', '--debug', action='store_true', help='whether '
-                        'to print debug information to standard output')
     parser.add_argument('-l', '--load', help='name of the save from which to '
                         'load game state; not given means a new game is '
                         'started', nargs=1, type=str, default=['starting'])
@@ -32,7 +30,7 @@ def main(arguments):
             "Graphical user interface has not been implemented yet."
         )
     elif args.cli:
-        command_line_interface(args.debug, args.load[0])
+        command_line_interface(args.load[0])
 
 
 if __name__ == "__main__":

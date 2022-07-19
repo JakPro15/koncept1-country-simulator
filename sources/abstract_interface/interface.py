@@ -28,6 +28,15 @@ class MalformedSaveError(Exception):
     pass
 
 
+class InvalidArgumentError(Exception):
+    pass
+
+
+def check_input(condition):
+    if not condition:
+        raise InvalidArgumentError
+
+
 class Interface:
     """
     Handles State_Data and subclasses communicating with the outside world.
@@ -35,10 +44,9 @@ class Interface:
     state - the State_Data object the interface handles
     history - History of the State_Data object
     """
-    def __init__(self, dirname=None, debug=False):
+    def __init__(self, dirname=None):
         if dirname is not None:
             self.load_data(dirname)
-        self.debug = debug
 
     def load_data(self, dirname):
         """
@@ -60,7 +68,6 @@ class Interface:
 
             self.history = History(starting_state, history_lines)
             self.state.execute_commands(history_lines)
-            self.state.debug = self.debug
             self.save_name = dirname
         except IOError:
             raise SaveAccessError
@@ -135,7 +142,7 @@ class Interface:
         """
         Sets government's optimal resource to the given value.
         """
-        assert amount >= 0
+        check_input(amount >= 0)
 
         self.state.do_optimal(resource, amount)
 
@@ -163,8 +170,8 @@ class Interface:
             "max_prices": (lambda val: 1 <= val,
                            lambda arg: arg in RESOURCES),
         }
-        assert laws_conditions[law][0](value)
-        assert laws_conditions[law][1](argument)
+        check_input(laws_conditions[law][0](value))
+        check_input(laws_conditions[law][1](argument))
 
         self.state.do_set_law(law, argument, value)
 
@@ -177,7 +184,7 @@ class Interface:
         Promotes the given number of people to the given class using
         government resources.
         """
-        assert number >= 0
+        check_input(number >= 0)
         class_index = CLASS_NAME_TO_INDEX[class_name]
         lower_class = self.state.classes[class_index].lower_class
 
@@ -199,7 +206,7 @@ class Interface:
         Recruits the given number of people from the given social class to the
         military.
         """
-        assert number >= 0
+        check_input(number >= 0)
         class_index = CLASS_NAME_TO_INDEX[class_name]
         soldier_type = CLASS_TO_SOLDIER[class_name]
 
@@ -215,18 +222,18 @@ class Interface:
             f"recruit {class_name} {number}"
         )
 
-    def get_brigands(self):
+    def get_brigands(self, debug=__debug__):
         """
         Returns the number of brigands and their strength, estimated if debug
         mode is off.
         """
         brigands = self.state.brigands
         strength = self.state.brigand_strength
-        if not self.debug:
-            estimation = max(floor(log10(brigands)), 1)
+        if not debug:
+            estimation = max(floor(log10(max(1, brigands))), 1)
             uncertainty = 10 ** estimation / 2
             brigands += uncertainty
-            brigands = round(brigands, -estimation)
+            brigands = round(brigands+0.0000001, -estimation)
             brigands -= uncertainty
             brigands = (int(brigands - uncertainty),
                         int(brigands + uncertainty))
@@ -235,3 +242,13 @@ class Interface:
             strength /= 2
             strength = (strength, strength + 0.5)
         return brigands, strength
+
+    def fight(self, target: str):
+        """
+        Executes an attack against the given target.
+        """
+        self.state.do_fight(target)
+
+        self.history.add_history_line(
+            f"fight {target}"
+        )

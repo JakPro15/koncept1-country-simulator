@@ -142,7 +142,7 @@ class Government:
         )
 
     @property
-    def _soldiers_fighting_strength(self):
+    def soldiers_fighting_strength(self):
         return self.soldiers["knights"] * KNIGHT_FIGHTING_STRENGTH \
             + self.soldiers["footmen"]
 
