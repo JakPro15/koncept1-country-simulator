@@ -284,11 +284,37 @@ def fight(args: list[str], interface: Interface):
     """
     try:
         check_input(len(args) == 2)
+
+        if interface.state.government.soldiers_population < 1:
+            print("The government does not have enough soldiers for this"
+                  " operation.")
+            return
+        if interface.state.fought:
+            print("The government cannot conduct attacks more than once a"
+                  " month.")
+            return
+
         arguments = {"crime", "plunder", "conquest"}
         args[1] = fill_command(args[1], arguments)
         check_input(len(args[1]) == 1)
         args[1] = args[1][0]
 
-        interface.fight(args[1])
+        results = interface.fight(args[1])
+        dead_soldiers = results[1] if __debug__ else results[1].round()
+
+        print("The battle has been", "won." if results[0] else "lost.")
+        print(dead_soldiers["knights"],
+              f"knight{'s' if dead_soldiers['knights'] != 1 else ''} and",
+              dead_soldiers["footmen"],
+              f"footm{'e' if dead_soldiers['footmen'] != 1 else 'a'}n died.")
+        if args[1] == "crime":
+            dead_brigands = results[2] if __debug__ else round(results[2])
+            print(dead_brigands,
+                  f"brigand{'s' if dead_brigands != 1 else ''} died.")
+        elif args[1] == "conquest":
+            print("Conquered", round(results[2], 2), "land.")
+        elif args[1] == "plunder":
+            print("Plundered", round(results[2], 2),
+                  "food, wood, stone, iron and tools.")
     except InvalidArgumentError:
         print("Invalid syntax. See help for proper usage of promote command")

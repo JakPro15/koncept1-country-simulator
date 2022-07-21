@@ -32,12 +32,14 @@ def test_next_month_first():
         interface.next_month()
 
         assert state.did_month == 1
+        assert state.fought is False
         assert history.history_lines == ["next 1"]
 
 
 def test_next_month_next():
     with replace(State_Data, "do_month", fake_do_month):
         state = State_Data()
+        state.fought = True
         state.did_month = 0
 
         history = History({}, ["next 6"])
@@ -49,6 +51,7 @@ def test_next_month_next():
         interface.next_month()
 
         assert state.did_month == 1
+        assert state.fought is False
         assert history.history_lines == ["next 7"]
 
 
@@ -430,3 +433,45 @@ def test_get_brigands():
     brigands, strength = interface.get_brigands(False)
     assert brigands == (0, 10)
     assert strength == (1, 1.5)
+
+
+def test_fight():
+    def fake_do_fight(self, target, enemies):
+        self.fights.append([target, enemies])
+
+    with replace(State_Data, "do_fight", fake_do_fight):
+        state = State_Data()
+        state.fights = []
+        state.government = Government(
+            state, soldiers={"knights": 5, "footmen": 40}
+        )
+
+        history = History({}, ["next 6"])
+
+        interface = Interface()
+        interface.state = state
+        interface.history = history
+
+        interface.fight("plunder")
+
+        gauss_res = state.fights[0][1]
+        assert gauss_res > 10
+        assert isinstance(gauss_res, int)
+
+        assert state.fights == [["plunder", gauss_res]]
+        assert history.history_lines == [
+            "next 6",
+            f"fight plunder {gauss_res}"
+        ]
+
+        interface.fight("crime")
+
+        assert state.fights == [
+            ["plunder", gauss_res],
+            ["crime", None]
+        ]
+        assert history.history_lines == [
+            "next 6",
+            f"fight plunder {gauss_res}",
+            "fight crime None"
+        ]

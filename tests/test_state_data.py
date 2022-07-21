@@ -3,6 +3,7 @@ from ..sources.state.state_data import (
     State_Data, Nobles, Artisans, Peasants, Others, Government
 )
 from ..sources.auxiliaries.constants import (
+    BASE_BATTLE_LOSSES,
     BRIGAND_STRENGTH,
     DEFAULT_GROWTH_FACTOR,
     DEFAULT_PRICES,
@@ -10,8 +11,10 @@ from ..sources.auxiliaries.constants import (
     FOOD_CONSUMPTION,
     FREEZING_MORTALITY,
     INBUILT_RESOURCES,
+    KNIGHT_FIGHTING_STRENGTH,
     MAX_PRICES,
     OTHERS_MINIMUM_WAGE,
+    PLUNDER_FACTOR,
     RECRUITMENT_COST,
     RESOURCES,
     STARVATION_MORTALITY,
@@ -24,6 +27,7 @@ from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 from ..sources.auxiliaries.testing import dict_eq
 from pytest import approx, raises
 from ..sources.auxiliaries.testing import replace
+from math import inf
 
 
 def test_constructor():
@@ -32,6 +36,7 @@ def test_constructor():
     assert state.year == 3
     assert state.prices == DEFAULT_PRICES
     assert state.prices is not DEFAULT_PRICES
+    assert state.fought is False
 
 
 def test_default_constructor():
@@ -40,6 +45,7 @@ def test_default_constructor():
     assert state.year == 0
     assert state.prices == DEFAULT_PRICES
     assert state.prices is not DEFAULT_PRICES
+    assert state.fought is False
 
 
 def test_classes_setter():
@@ -2959,6 +2965,163 @@ def test_do_recruit():
     }
 
 
+def test_get_battle_losses():
+    assert State_Data._get_battle_losses(1) == \
+        (BASE_BATTLE_LOSSES, BASE_BATTLE_LOSSES)
+    assert State_Data._get_battle_losses(0) == (1, 0)
+    assert State_Data._get_battle_losses(inf) == (0, 1)
+    old_al, old_en = 1, 0
+    for i in range(1, 1000):
+        al, en = State_Data._get_battle_losses(i)
+        assert 0 < al < old_al <= 1
+        assert 0 <= old_en < en < 1
+        old_al = al
+        old_en = en
+
+
+def test_do_fight_crime():
+    state = State_Data()
+    soldiers = Arithmetic_Dict({
+        "knights": 60 / KNIGHT_FIGHTING_STRENGTH,
+        "footmen": 60
+    })
+    state.government = Government(state, soldiers=soldiers)
+    state.brigands = 50
+    state.brigand_strength = 1.2
+
+    vict, loss, gain = state.do_fight("crime")
+    assert vict
+
+    ally_loss, enemy_loss = State_Data._get_battle_losses(2)
+    dict_eq(loss, soldiers * ally_loss)
+    assert gain == approx(50 * enemy_loss)
+
+    assert state.government.soldiers == soldiers * (1 - ally_loss)
+    assert state.brigands == 50 * (1 - enemy_loss)
+
+
+def test_do_fight_conquest_defeat():
+    state = State_Data()
+    soldiers = Arithmetic_Dict({
+        "knights": 30 / KNIGHT_FIGHTING_STRENGTH,
+        "footmen": 30
+    })
+    res = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100,
+    }
+    state.government = Government(state, soldiers=soldiers, res=res)
+
+    vict, loss, gain = state.do_fight("conquest", 120)
+    assert vict is False
+
+    ally_loss, enemy_loss = State_Data._get_battle_losses(0.5)
+    dict_eq(loss, soldiers * ally_loss)
+    assert gain == 0
+
+    assert state.government.soldiers == soldiers * (1 - ally_loss)
+    assert state.government.resources == res
+
+
+def test_do_fight_conquest_victory():
+    state = State_Data()
+    soldiers = Arithmetic_Dict({
+        "knights": 60 / KNIGHT_FIGHTING_STRENGTH,
+        "footmen": 60
+    })
+    res = Arithmetic_Dict({
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100,
+    })
+    state.government = Government(state, soldiers=soldiers, res=res)
+
+    vict, loss, gain = state.do_fight("conquest", 60)
+    assert vict
+
+    ally_loss, enemy_loss = State_Data._get_battle_losses(2)
+    dict_eq(loss, soldiers * ally_loss)
+    assert gain == enemy_loss * PLUNDER_FACTOR
+
+    assert state.government.soldiers == soldiers * (1 - ally_loss)
+    assert state.government.resources == res + {"land": gain}
+
+
+def test_do_fight_plunder_defeat():
+    state = State_Data()
+    soldiers = Arithmetic_Dict({
+        "knights": 30 / KNIGHT_FIGHTING_STRENGTH,
+        "footmen": 30
+    })
+    res = {
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100,
+    }
+    state.government = Government(state, soldiers=soldiers, res=res)
+
+    vict, loss, gain = state.do_fight("plunder", 120)
+    assert vict is False
+
+    ally_loss, enemy_loss = State_Data._get_battle_losses(0.5)
+    dict_eq(loss, soldiers * ally_loss)
+    assert gain == enemy_loss * PLUNDER_FACTOR
+
+    assert state.government.soldiers == soldiers * (1 - ally_loss)
+    dict_eq(state.government.resources, {
+        "food": 100 + enemy_loss * PLUNDER_FACTOR,
+        "wood": 100 + enemy_loss * PLUNDER_FACTOR,
+        "stone": 100 + enemy_loss * PLUNDER_FACTOR,
+        "iron": 100 + enemy_loss * PLUNDER_FACTOR,
+        "tools": 100 + enemy_loss * PLUNDER_FACTOR,
+        "land": 100,
+    })
+
+
+def test_do_fight_plunder_victory():
+    state = State_Data()
+    soldiers = Arithmetic_Dict({
+        "knights": 60 / KNIGHT_FIGHTING_STRENGTH,
+        "footmen": 60
+    })
+    res = Arithmetic_Dict({
+        "food": 100,
+        "wood": 100,
+        "stone": 100,
+        "iron": 100,
+        "tools": 100,
+        "land": 100,
+    })
+    state.government = Government(state, soldiers=soldiers, res=res)
+
+    vict, loss, gain = state.do_fight("plunder", 60)
+    assert vict
+
+    ally_loss, enemy_loss = State_Data._get_battle_losses(2)
+    dict_eq(loss, soldiers * ally_loss)
+    assert gain == enemy_loss * PLUNDER_FACTOR
+
+    assert state.government.soldiers == soldiers * (1 - ally_loss)
+    dict_eq(state.government.resources, {
+        "food": 100 + enemy_loss * PLUNDER_FACTOR,
+        "wood": 100 + enemy_loss * PLUNDER_FACTOR,
+        "stone": 100 + enemy_loss * PLUNDER_FACTOR,
+        "iron": 100 + enemy_loss * PLUNDER_FACTOR,
+        "tools": 100 + enemy_loss * PLUNDER_FACTOR,
+        "land": 100,
+    })
+
+
 def test_execute_commands():
     def fake_do_month(self):
         self.did_month += 1
@@ -2978,12 +3141,20 @@ def test_execute_commands():
     def fake_force_promotion(self, social_class, value):
         self.forcepromos.append([social_class, value])
 
+    def fake_recruit(self, social_class, number):
+        self.recruits.append([social_class, number])
+
+    def fake_fight(self, target, enemies=None):
+        self.fights.append([target, enemies])
+
     with replace(State_Data, "do_month", fake_do_month), \
          replace(State_Data, "do_transfer", fake_transfer), \
          replace(State_Data, "do_secure", fake_secure), \
          replace(State_Data, "do_optimal", fake_optimal), \
          replace(State_Data, "do_set_law", fake_set_law), \
-         replace(State_Data, "do_force_promotion", fake_force_promotion):
+         replace(State_Data, "do_force_promotion", fake_force_promotion), \
+         replace(State_Data, "do_recruit", fake_recruit), \
+         replace(State_Data, "do_fight", fake_fight):
         state = State_Data()
         state.did_month = 0
         state.transfers = []
@@ -2991,6 +3162,8 @@ def test_execute_commands():
         state.optimals = []
         state.setlaws = []
         state.forcepromos = []
+        state.recruits = []
+        state.fights = []
 
         state.execute_commands(["next 2"])
         assert state.did_month == 2
@@ -2999,8 +3172,11 @@ def test_execute_commands():
         assert state.optimals == []
         assert state.setlaws == []
         assert state.forcepromos == []
+        assert state.recruits == []
+        assert state.fights == []
 
-        state.execute_commands(["next 100", "transfer nobles food 100"])
+        state.execute_commands(["next 100", "transfer nobles food 100",
+                                "fight conquer 123"])
         assert state.did_month == 102
         assert state.transfers == [
             ["nobles", "food", 100]
@@ -3009,6 +3185,10 @@ def test_execute_commands():
         assert state.optimals == []
         assert state.setlaws == []
         assert state.forcepromos == []
+        assert state.recruits == []
+        assert state.fights == [
+            ["conquer", 123]
+        ]
 
         state.execute_commands(["next 1", "next 1", "next 2",
                                 "secure food 200",
@@ -3028,11 +3208,17 @@ def test_execute_commands():
         assert state.forcepromos == [
             ["artisans", 50]
         ]
+        assert state.recruits == []
+        assert state.fights == [
+            ["conquer", 123]
+        ]
 
         state.execute_commands(["transfer nobles food -100",
                                 "transfer artisans land 50",
                                 "secure tools 340",
-                                "optimal wood 1000"])
+                                "optimal wood 1000",
+                                "fight crime None",
+                                "recruit artisans 30"])
         assert state.did_month == 106
         assert state.transfers == [
             ["nobles", "food", 100],
@@ -3052,12 +3238,20 @@ def test_execute_commands():
         assert state.forcepromos == [
             ["artisans", 50]
         ]
+        assert state.recruits == [
+            ["artisans", 30]
+        ]
+        assert state.fights == [
+            ["conquer", 123],
+            ["crime", None]
+        ]
 
         state.execute_commands(["optimal iron 0",
                                 "promote nobles 10",
                                 "laws set wage_minimum None 0",
                                 "laws set tax_income peasants 0.9",
-                                "promote peasants 34"])
+                                "promote peasants 34",
+                                "recruit nobles 2"])
         assert state.did_month == 106
         assert state.transfers == [
             ["nobles", "food", 100],
@@ -3081,4 +3275,12 @@ def test_execute_commands():
             ["artisans", 50],
             ["nobles", 10],
             ["peasants", 34]
+        ]
+        assert state.recruits == [
+            ["artisans", 30],
+            ["nobles", 2]
+        ]
+        assert state.fights == [
+            ["conquer", 123],
+            ["crime", None]
         ]

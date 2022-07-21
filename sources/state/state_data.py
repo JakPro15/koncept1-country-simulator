@@ -71,6 +71,7 @@ class State_Data(_State_Data_Employment_and_Commands):
 
         self.brigands = 0
         self.brigand_strength = 0.8
+        self.fought = False
 
     @property
     def month(self):
@@ -516,7 +517,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         if happiness > 0:
             flee_rate = 0
         else:
-            flee_rate = (happiness / 100) ** 4 / 15
+            flee_rate = (happiness / 100) ** 2 / 10
             flee_rate = min(flee_rate, 1)
         return flee_rate
 

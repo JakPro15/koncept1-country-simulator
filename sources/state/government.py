@@ -73,10 +73,10 @@ class Government:
         self.wage_autoregulation = True
 
         if soldiers is None:
-            self.soldiers = {
+            self.soldiers = Arithmetic_Dict({
                 "knights": 0,
                 "footmen": 0
-            }
+            })
         else:
             if set(soldiers.keys()) != {"knights", "footmen"}:
                 raise InvalidSoldiersDictError("Invalid keys")

@@ -6,6 +6,7 @@ from ..state.state_data import State_Data
 from .history import History
 import json
 from math import log10, floor
+from random import gauss
 
 
 class NotEnoughGovtResources(Exception):
@@ -62,9 +63,7 @@ class Interface:
 
             history_file_name = "saves/" + dirname + "/history.txt"
             with open(history_file_name, 'r') as load_file:
-                history_lines = []
-                for line in load_file:
-                    history_lines.append(line)
+                history_lines = load_file.read().splitlines()
 
             self.history = History(starting_state, history_lines)
             self.state.execute_commands(history_lines)
@@ -100,6 +99,7 @@ class Interface:
         Advances the month by one and saves it in history.
         """
         self.state.do_month()
+        self.state.fought = False
         self.history.add_history_line("next")
 
     def transfer_resources(self, class_name: str, resource: str, amount: int):
@@ -233,7 +233,7 @@ class Interface:
             estimation = max(floor(log10(max(1, brigands))), 1)
             uncertainty = 10 ** estimation / 2
             brigands += uncertainty
-            brigands = round(brigands+0.0000001, -estimation)
+            brigands = round(brigands + 0.0000001, -estimation)
             brigands -= uncertainty
             brigands = (int(brigands - uncertainty),
                         int(brigands + uncertainty))
@@ -247,8 +247,11 @@ class Interface:
         """
         Executes an attack against the given target.
         """
-        self.state.do_fight(target)
+        enemies = max(floor(gauss(100, 20)), 10) if target != "crime" else None
+        results = self.state.do_fight(target, enemies)
+        self.state.fought = True
 
         self.history.add_history_line(
-            f"fight {target}"
+            f"fight {target} {enemies}"
         )
+        return results

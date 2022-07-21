@@ -1,9 +1,11 @@
+from math import inf
 from ..auxiliaries.constants import (
     BASE_BATTLE_LOSSES,
     CLASS_NAME_TO_INDEX,
     CLASS_TO_SOLDIER,
     DEFAULT_PRICES,
     EMPTY_RESOURCES,
+    PLUNDER_FACTOR,
     RECRUITMENT_COST,
     WAGE_CHANGE,
     INBUILT_RESOURCES
@@ -383,35 +385,84 @@ class _State_Data_Employment_and_Commands:
     def _get_battle_losses(ally_to_enemy_ratio: float) -> tuple[float, float]:
         """
         From the ratio of allied army strength to enemy army strength
-        calculates and returns ally and enemy losses. In the tuple ally
-        losses are the first element, enemt losses second.
+        calculates and returns ally and enemy losses.
+        Return: (ally_losses, enemy_losses)
+        Losses are given as a fraction of the beginning army, between 0 and 1.
         """
         x = ally_to_enemy_ratio
+
+        def div(y, z):
+            if z != 0:
+                return y / z
+            else:
+                return inf
+
         # a is a coefficient of the function
         # It is calculated so that a ratio of 1 gives exactly base losses
         a = (1 - BASE_BATTLE_LOSSES) / BASE_BATTLE_LOSSES
         # The whole function (ally losses) is designed so that:
         # It's increasing for all nonnegative ratios
-        # For ratio 0 it returns 0
-        # For ratio approaching infinity returns approach 1
+        # For ratio 0 it returns 1
+        # For ratio float positive infinity returns 0
         # Enemy losses function is the same, but the argument is reversed (1/x)
-        return x / (x + a), 1 / (a * x + 1)
+        return 1 / (a * x + 1), 1 / (div(a, x) + 1)
 
-    def do_fight(self, target: str):
+    def do_fight(self, target: str, enemies: int = None)\
+            -> tuple[bool, Arithmetic_Dict[str, float], float]:
         """
         Executes an attack against the given target.
+        Return is a 3-tuple: (victory?, dead_soldiers, profits)
+        Meaning of profits float depends on the target:
+            crime - profits is number of dead brigands
+            conquest - profits is amount of land conquered
+            plunder - profits is amount of resources (except land) gained
         """
+        ally_strength = self.government.soldiers_fighting_strength
         if target == "crime":
-            ally_strength = self.government.soldiers_fighting_strength
             enemy_strength = self.brigands * self.brigand_strength
-            ratio = ally_strength / enemy_strength
+            ratio = ally_strength / enemy_strength \
+                if enemy_strength > 0 else inf
             ally_losses, enemy_losses = self._get_battle_losses(ratio)
+
+            dead_soldiers = self.government.soldiers * ally_losses
             self.government.soldiers *= (1 - ally_losses)
+            dead_brigands = self.brigands * enemy_losses
             self.brigands *= (1 - enemy_losses)
+
+            return ally_losses < enemy_losses, dead_soldiers, dead_brigands
+
         elif target == "conquest":
-            raise NotImplementedError
+            ratio = ally_strength / enemies
+            ally_losses, enemy_losses = self._get_battle_losses(ratio)
+
+            dead_soldiers = self.government.soldiers * ally_losses
+            self.government.soldiers *= (1 - ally_losses)
+            gains = EMPTY_RESOURCES.copy()
+            if enemy_losses > ally_losses:
+                gains["land"] = enemy_losses * PLUNDER_FACTOR
+            self.government.new_resources += gains
+            self.government.flush()
+
+            return ally_losses < enemy_losses, dead_soldiers, gains["land"]
+
         elif target == "plunder":
-            raise NotImplementedError
+            ratio = ally_strength / enemies
+            ally_losses, enemy_losses = self._get_battle_losses(ratio)
+
+            dead_soldiers = self.government.soldiers * ally_losses
+            self.government.soldiers *= (1 - ally_losses)
+            gains = {
+                "food": enemy_losses * PLUNDER_FACTOR,
+                "wood": enemy_losses * PLUNDER_FACTOR,
+                "stone": enemy_losses * PLUNDER_FACTOR,
+                "iron": enemy_losses * PLUNDER_FACTOR,
+                "tools": enemy_losses * PLUNDER_FACTOR,
+                "land": 0
+            }
+            self.government.new_resources += gains
+            self.government.flush()
+
+            return ally_losses < enemy_losses, dead_soldiers, gains["food"]
 
     def execute_commands(self, commands: list[str]):
         """
@@ -443,6 +494,10 @@ class _State_Data_Employment_and_Commands:
             elif command[0] == "recruit":
                 self.do_recruit(command[1], int(command[2]))
             elif command[0] == "fight":
-                self.do_fight(command[1])
+                if command[2] == "None":
+                    command[2] = None
+                else:
+                    command[2] = int(command[2])
+                self.do_fight(command[1], command[2])
             else:
                 raise InvalidCommandError
