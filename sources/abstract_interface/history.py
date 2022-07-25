@@ -18,8 +18,8 @@ class History:
             # "key": (double_dict?, round_digits, new_key_if_total)
             "population_after": (False, 0, None),
             "resources_after": (True, 1, None),
-            "population_change": (False, 0, None),
-            "resources_change": (True, 1, None),
+            "change_population": (False, 0, None),
+            "change_resources": (True, 1, None),
             "prices": (False, 4, None),
             "total_resources": (False, 1, "resources_after"),
             "growth_modifiers": (None, 0, None),
@@ -91,10 +91,10 @@ class History:
         return self.obtain_data(["resources_after"])["resources_after"]
 
     def population_change(self):
-        return self.obtain_data(["population_change"])["population_change"]
+        return self.obtain_data(["change_population"])["change_population"]
 
     def resources_change(self):
-        return self.obtain_data(["resources_change"])["resources_change"]
+        return self.obtain_data(["change_resources"])["change_resources"]
 
     def prices(self):
         return self.obtain_data(["prices"])["prices"]

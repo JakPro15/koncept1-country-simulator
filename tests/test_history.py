@@ -38,7 +38,7 @@ class Fake_State_Data:
                 },
                 "others": EMPTY_RESOURCES.copy()
             },
-            "population_change": {
+            "change_population": {
                 "a": 3.4635635,
                 "b": -13.4563544524,
                 "c": 4.45324,
@@ -56,7 +56,7 @@ class Fake_State_Data:
                 "d": 0.2,
                 "e": 1
             },
-            "resources_change": {
+            "change_resources": {
                 "nobles": EMPTY_RESOURCES.copy(),
                 "artisans": EMPTY_RESOURCES.copy(),
                 "peasants": {"a": 3636.363636},

@@ -33,9 +33,9 @@ class InvalidArgumentError(Exception):
     pass
 
 
-def check_input(condition):
+def check_input(condition, desc):
     if not condition:
-        raise InvalidArgumentError
+        raise InvalidArgumentError(desc)
 
 
 class Interface:
@@ -142,7 +142,7 @@ class Interface:
         """
         Sets government's optimal resource to the given value.
         """
-        check_input(amount >= 0)
+        check_input(amount >= 0, "negative optimal resources")
 
         self.state.do_optimal(resource, amount)
 
@@ -170,8 +170,8 @@ class Interface:
             "max_prices": (lambda val: 1 <= val,
                            lambda arg: arg in RESOURCES),
         }
-        check_input(laws_conditions[law][0](value))
-        check_input(laws_conditions[law][1](argument))
+        check_input(laws_conditions[law][0](value), "invalid law value")
+        check_input(laws_conditions[law][1](argument), "invalid law argument")
 
         self.state.do_set_law(law, argument, value)
 
@@ -184,7 +184,7 @@ class Interface:
         Promotes the given number of people to the given class using
         government resources.
         """
-        check_input(number >= 0)
+        check_input(number >= 0, "negative number of people")
         class_index = CLASS_NAME_TO_INDEX[class_name]
         lower_class = self.state.classes[class_index].lower_class
 
@@ -206,7 +206,7 @@ class Interface:
         Recruits the given number of people from the given social class to the
         military.
         """
-        check_input(number >= 0)
+        check_input(number >= 0, "negative number of people")
         class_index = CLASS_NAME_TO_INDEX[class_name]
         soldier_type = CLASS_TO_SOLDIER[class_name]
 

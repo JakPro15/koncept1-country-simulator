@@ -26,20 +26,20 @@ def transfer(args: list[str], interface: Interface):
     class. Negative amount signifies a reverse direction of the transfer.
     """
     try:
-        check_input(len(args) == 4)
+        check_input(len(args) == 4, "invalid number of arguments")
 
         args[1] = fill_command(args[1], CLASSES)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         args[2] = fill_command(args[2], RESOURCES)
-        check_input(len(args[2]) == 1)
+        check_input(len(args[2]) == 1, "argument 2 ambiguous or invalid")
         args[2] = args[2][0]
 
         try:
-            args[3] = int(args[3])
+            args[3] = float(args[3])
         except ValueError:
-            raise InvalidArgumentError
+            raise InvalidArgumentError("amount of resources not a number")
 
         try:
             interface.transfer_resources(args[1], args[2], args[3])
@@ -49,8 +49,9 @@ def transfer(args: list[str], interface: Interface):
         except NotEnoughClassResources:
             print("The chosen class does not have enough resources for this"
                   " operation.")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of transfer command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of transfer"
+              " command")
 
 
 def secure(args: list[str], interface: Interface):
@@ -59,17 +60,17 @@ def secure(args: list[str], interface: Interface):
     (secured). Negative amount signifies making a resource tradeable again.
     """
     try:
-        check_input(len(args) in {2, 3})
+        check_input(len(args) in {2, 3}, "invalid number of arguments")
 
         args[1] = fill_command(args[1], RESOURCES)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         if len(args) == 3:
             try:
-                args[2] = int(args[2])
+                args[2] = float(args[2])
             except ValueError:
-                raise InvalidArgumentError
+                raise InvalidArgumentError("amount of resources not a number")
         else:
             args.append(None)
 
@@ -78,8 +79,9 @@ def secure(args: list[str], interface: Interface):
         except NotEnoughGovtResources:
             print("The government does not have enough resources for this"
                   " operation.")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of secure command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of secure"
+              " command")
 
 
 def optimal(args: list[str], interface: Interface):
@@ -87,10 +89,10 @@ def optimal(args: list[str], interface: Interface):
     Sets government optimal amount of resource to the given value.
     """
     try:
-        check_input(len(args) == 3)
+        check_input(len(args) == 3, "invalid number of arguments")
 
         args[1] = fill_command(args[1], RESOURCES)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         try:
@@ -99,8 +101,9 @@ def optimal(args: list[str], interface: Interface):
             raise InvalidArgumentError
 
         interface.set_govt_optimal(args[1], args[2])
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of optimal command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of optimal"
+              " command")
 
 
 def print_law(law: str, interface: Interface):
@@ -173,9 +176,9 @@ def laws(args: list[str], interface: Interface):
     Sets or views the current laws of the country.
     """
     try:
-        check_input(len(args) >= 2)
+        check_input(len(args) >= 2, "too few arguments")
         args[1] = fill_command(args[1], {"view", "set"})
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         laws = {
@@ -184,7 +187,7 @@ def laws(args: list[str], interface: Interface):
         }
 
         if args[1] == "view":
-            check_input(len(args) in {2, 3})
+            check_input(len(args) in {2, 3}, "invalid number of arguments")
             if len(args) == 2:
                 args.append("")
 
@@ -192,32 +195,34 @@ def laws(args: list[str], interface: Interface):
             for law in args[2]:
                 print_law(law, interface)
         elif args[1] == "set":
-            check_input(len(args) in {4, 5})
+            check_input(len(args) in {4, 5}, "invalid number of arguments")
 
             args[2] = fill_command(args[2], laws)
-            check_input(len(args[2]) == 1)
+            check_input(len(args[2]) == 1, "argument 2 ambiguous or invalid")
             args[2] = args[2][0]
 
             try:
                 args[len(args) - 1] = float(args[len(args) - 1])
             except ValueError:
-                raise InvalidArgumentError
+                raise InvalidArgumentError("law value not a number")
 
             if args[2][:4] in {"tax_", "max_"}:
-                check_input(len(args) == 5)
+                check_input(len(args) == 5, "invalid number of arguments")
                 valid_args = CLASSES if args[2][:4] == "tax_" else RESOURCES
                 args[3] = fill_command(args[3], valid_args)
-                check_input(len(args[3]) == 1)
+                check_input(len(args[3]) == 1,
+                            "argument 3 ambiguous or invalid")
                 args[3] = args[3][0]
 
                 interface.set_law(args[2], args[3], args[4])
             else:
-                check_input(len(args) == 4)
+                check_input(len(args) == 4, "invalid number of arguments")
                 interface.set_law(args[2], None, args[3])
         else:
-            raise InvalidArgumentError
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of laws command")
+            raise InvalidArgumentError("argument 1 invalid")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of laws"
+              " command")
 
 
 def promote(args: list[str], interface: Interface):
@@ -225,12 +230,12 @@ def promote(args: list[str], interface: Interface):
     Forces a promotion using government resources.
     """
     try:
-        check_input(len(args) == 3)
+        check_input(len(args) == 3, "invalid number of arguments")
 
         valid_classes = CLASSES.copy()
         valid_classes.remove("others")
         args[1] = fill_command(args[1], valid_classes)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         try:
@@ -246,8 +251,9 @@ def promote(args: list[str], interface: Interface):
         except NotEnoughClassPopulation:
             print("The class from which the promotion was to be done does not"
                   " have enough population.")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of promote command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of promote"
+              " command")
 
 
 def recruit(args: list[str], interface: Interface):
@@ -255,10 +261,10 @@ def recruit(args: list[str], interface: Interface):
     Recruits soldiers.
     """
     try:
-        check_input(len(args) == 3)
+        check_input(len(args) == 3, "invalid number of arguments")
 
         args[1] = fill_command(args[1], CLASSES)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         try:
@@ -274,8 +280,9 @@ def recruit(args: list[str], interface: Interface):
         except NotEnoughClassPopulation:
             print("The class from which the recruitment was to be done does "
                   "not have enough population.")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of promote command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of promote"
+              " command")
 
 
 def fight(args: list[str], interface: Interface):
@@ -283,7 +290,7 @@ def fight(args: list[str], interface: Interface):
     Sends all soldiers to combat.
     """
     try:
-        check_input(len(args) == 2)
+        check_input(len(args) == 2, "invalid number of arguments")
 
         if interface.state.government.soldiers_population < 1:
             print("The government does not have enough soldiers for this"
@@ -296,7 +303,7 @@ def fight(args: list[str], interface: Interface):
 
         arguments = {"crime", "plunder", "conquest"}
         args[1] = fill_command(args[1], arguments)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
         results = interface.fight(args[1])
@@ -316,5 +323,6 @@ def fight(args: list[str], interface: Interface):
         elif args[1] == "plunder":
             print("Plundered", round(results[2], 2),
                   "food, wood, stone, iron and tools.")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of promote command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of promote"
+              " command")

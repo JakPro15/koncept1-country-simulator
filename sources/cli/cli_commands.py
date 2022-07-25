@@ -242,7 +242,7 @@ def help_command(command: str):
         raise InvalidCommand
 
 
-def help(args: list[str], commands: set):
+def help(args: list[str], commands):
     if len(args) >= 2:
         args[1] = fill_command(args[1], commands)
         if "laws" in args[1]:
@@ -341,31 +341,32 @@ def get_modifiers_from_dict(data):
 
 def history(args: list[str], interface: Interface):
     try:
-        check_input(len(args) > 1)
+        check_input(len(args) > 1, "too few arguments")
         arguments = {
             "population", "resources", "prices", "modifiers",
-            "population_change", "resources_change", "total_resources",
+            "change_population", "change_resources", "total_resources",
             "employment", "happiness"
         }
         args[1] = fill_command(args[1], arguments)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
 
-        if args[1] in {"resources", "resources_change"}:
-            check_input(len(args) in {3, 4})
+        if args[1] in {"resources", "change_resources"}:
+            check_input(len(args) in {3, 4}, "invalid number of arguments")
 
             options = {
                 "nobles", "artisans", "peasants", "others", "government"
             }
             args[2] = fill_command(args[2], options)
-            check_input(len(args[2]) == 1)
+            check_input(len(args[2]) == 1, "argument 2 ambiguous or invalid")
             args[2] = args[2][0]
             official_class = args[2].title()
 
             if len(args) == 4:
-                check_input(args[3].isdigit())
+                check_input(args[3].isdigit(),
+                            "number of months contains a non-digit")
                 args[3] = int(args[3])
-                check_input(args[3] > 0)
+                check_input(args[3] > 0, "number of months not positive")
             else:
                 args.append(None)
 
@@ -398,12 +399,13 @@ def history(args: list[str], interface: Interface):
                         line += f"{res_to_str(res): >7}"
                     print(line)
         else:
-            check_input(len(args) in {2, 3})
+            check_input(len(args) in {2, 3}, "invalid number of arguments")
 
             if len(args) == 3:
-                check_input(args[2].isdigit())
+                check_input(args[2].isdigit(),
+                            "number of months contains a non-digit")
                 args[2] = int(args[2])
-                check_input(args[2] > 0)
+                check_input(args[2] > 0, "number of months not positive")
             else:
                 args.append(None)
 
@@ -436,7 +438,7 @@ def history(args: list[str], interface: Interface):
                           f" {price_to_str(month_data['iron']): >7}"
                           f" {price_to_str(month_data['tools']): >7}"
                           f" {price_to_str(month_data['land']): >7}")
-            elif args[1] == "population_change":
+            elif args[1] == "change_population":
                 data = interface.history.population_change()
                 begin_month, data = set_months_of_history(
                     args[2], interface, data
@@ -524,16 +526,18 @@ def history(args: list[str], interface: Interface):
                           f"{month_data['artisans']: >9}"
                           f"{month_data['peasants']: >9}"
                           f"{month_data['others']: >9}")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of history command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of history"
+              " command")
 
 
 def save(args: list[str], interface: Interface):
     try:
         if len(args) == 1:
             args.append(interface.save_name)
-        check_input(len(args) == 2)
-        check_input(args[1].isalpha())
+        check_input(len(args) == 2, "invalid number of arguments")
+        check_input(args[1].isalpha(),
+                    "save name contains invalid character(s)")
         if args[1] == "starting":
             print('Please choose a save name different from "starting"')
             return
@@ -554,16 +558,18 @@ def save(args: list[str], interface: Interface):
             print("Failed to open the save file.")
             return
         print(f"Saved the game state into saves/{args[1]}")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of save command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of save"
+              " command")
 
 
 def next(args: list[str], interface: Interface):
     try:
-        check_input(len(args) in {1, 2})
+        check_input(len(args) in {1, 2}, "invalid number of arguments")
         if len(args) > 1:
-            check_input(args[1].isdigit())
-            check_input(int(args[1]) > 0)
+            check_input(args[1].isdigit(),
+                        "number of months contains a non-digit")
+            check_input(int(args[1]) > 0, "number of months not positive")
         if len(args) == 1:
             interface.next_month()
         else:
@@ -571,8 +577,9 @@ def next(args: list[str], interface: Interface):
                 interface.next_month()
         print(f"\nNew month: {interface.state.month} "
               f"{interface.state.year}\n")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of next command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of next"
+              " command")
     except EveryoneDeadError:
         print("GAME OVER")
         print("There is not a living person left in your country.")
@@ -597,19 +604,15 @@ def get_modifiers_string(social_class):
 
 def state(args: list[str], interface: Interface):
     try:
-        check_input(len(args) in {2, 3})
+        check_input(len(args) == 2, "invalid number of arguments")
 
         arguments = {
             "population", "resources", "prices", "total_resources",
             "modifiers", "government", "employment", "happiness", "military"
         }
         args[1] = fill_command(args[1], arguments)
-        check_input(len(args[1]) == 1)
+        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
         args[1] = args[1][0]
-
-        if len(args) == 3:
-            check_input(args[2].isdigit())
-            check_input(int(args[2]) > 0)
 
         if args[1] == "population":
             data = [
@@ -753,14 +756,16 @@ def state(args: list[str], interface: Interface):
             else:
                 print(f"Brigand strength: {strength}")
 
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of state command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of state"
+              " command")
 
 
-def delete_save(args: list[str]):
+def delete_save(args: list[str], *other_args):
     try:
-        check_input(len(args) == 2)
-        check_input(args[1].isalpha())
+        check_input(len(args) == 2, "invalid number of arguments")
+        check_input(args[1].isalpha(),
+                    "save name contains invalid character(s)")
         if args[1] == "starting":
             print("Deleting this save is prohibited.")
             return
@@ -778,5 +783,18 @@ def delete_save(args: list[str]):
 
         rmtree(f"saves/{args[1]}")
         print(f"Removed the save saves/{args[1]}")
-    except InvalidArgumentError:
-        print("Invalid syntax. See help for proper usage of delete command")
+    except InvalidArgumentError as e:
+        print(f"Invalid syntax: {e}. See help for proper usage of delete"
+              " command")
+
+
+def exit_game(*args):
+    print("Are you sure you want to quit? Unsaved game state will be lost.")
+    while True:
+        ans = input("Enter 1 to confirm, 0 to abort: ").strip()
+        if ans == "1":
+            raise ShutDownCommand
+        elif ans == "0":
+            break
+        else:
+            print("Invalid choice.")

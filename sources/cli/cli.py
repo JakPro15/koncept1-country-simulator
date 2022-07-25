@@ -11,7 +11,8 @@ from .cli_commands import (
     history,
     next,
     state,
-    delete_save
+    delete_save,
+    exit_game
 )
 from .cli_game_commands import (
     transfer,
@@ -39,70 +40,10 @@ def command_line_interface(dirname):
                   " file. Probably the file format is invalid. Shutting down.")
             return
 
-        commands = {
-            "help", "save", "exit", "history", "next", "state", "delete",
-            "transfer", "secure", "optimal", "laws", "promote", "recruit",
-            "fight"
-        }
-
         while True:
             try:
                 print("Enter a command. Enter help for a list of commands.")
-                answer = input().strip().split(' ')
-                answer[0] = fill_command(answer[0], commands)
-                if len(answer[0]) == 0:
-                    print("Invalid command. Enter help for a list of"
-                          " commands.")
-                elif len(answer[0]) > 1:
-                    strin = ""
-                    for command in answer[0]:
-                        strin += command
-                        strin += " "
-                    print(strin)
-                else:
-                    answer[0] = answer[0][0]
-                    if answer[0] == "help":
-                        help(answer, commands)
-                    elif answer[0] == "save":
-                        save(answer, interface)
-                    elif answer[0] == "exit":
-                        print("Are you sure you want to quit? Unsaved game"
-                              " state will be lost.")
-                        while True:
-                            ans = input(
-                                "Enter 1 to confirm, 0 to abort: "
-                            ).strip()
-                            if ans == "1":
-                                raise ShutDownCommand
-                            elif ans == "0":
-                                break
-                            else:
-                                print("Invalid choice.")
-                    elif answer[0] == "history":
-                        history(answer, interface)
-                    elif answer[0] == "next":
-                        next(answer, interface)
-                    elif answer[0] == "state":
-                        state(answer, interface)
-                    elif answer[0] == "delete":
-                        delete_save(answer)
-                    elif answer[0] == "transfer":
-                        transfer(answer, interface)
-                    elif answer[0] == "secure":
-                        secure(answer, interface)
-                    elif answer[0] == "optimal":
-                        optimal(answer, interface)
-                    elif answer[0] == "laws":
-                        laws(answer, interface)
-                    elif answer[0] == "promote":
-                        promote(answer, interface)
-                    elif answer[0] == "recruit":
-                        recruit(answer, interface)
-                    elif answer[0] == "fight":
-                        fight(answer, interface)
-                    else:
-                        print("Invalid command. Enter help for a list of"
-                              " commands.")
+                execute(input().strip(), interface)
             except ShutDownCommand:
                 print("Shutting down.")
                 return
@@ -111,3 +52,41 @@ def command_line_interface(dirname):
               " be terminated.")
         traceback.print_exc()
         print("Shutting down.")
+
+
+def execute(command: str, interface: Interface):
+    commands = {
+        "save": (save, interface),
+        "exit": (exit_game, None),
+        "history": (history, interface),
+        "next": (next, interface),
+        "state": (state, interface),
+        "delete": (delete_save, None),
+        "transfer": (transfer, interface),
+        "secure": (secure, interface),
+        "optimal": (optimal, interface),
+        "laws": (laws, interface),
+        "promote": (promote, interface),
+        "recruit": (recruit, interface),
+        "fight": (fight, interface)
+    }
+    commands["help"] = (help, commands.keys())
+
+    answer = command.split(' ')
+    answer[0] = fill_command(answer[0], commands.keys())
+    if len(answer[0]) == 0:
+        print("Invalid command. Enter help for a list of"
+              " commands.")
+    elif len(answer[0]) > 1:
+        strin = ""
+        for option in answer[0]:
+            strin += option
+            strin += " "
+        print(strin)
+    else:
+        answer[0] = answer[0][0]
+        if answer[0] in commands:
+            commands[answer[0]][0](answer, commands[answer[0]][1])
+        else:
+            print("Invalid command. Enter help for a list of"
+                  " commands.")

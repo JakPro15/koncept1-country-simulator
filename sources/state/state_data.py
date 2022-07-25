@@ -691,9 +691,9 @@ class State_Data(_State_Data_Employment_and_Commands):
         month_data["population_after"] = self.get_state_data(
             "population", False
         )
-        month_data["resources_change"] = \
+        month_data["change_resources"] = \
             month_data["resources_after"] - old_resources
-        month_data["population_change"] = \
+        month_data["change_population"] = \
             month_data["population_after"].round() - old_population.round()
 
         month_data["growth_modifiers"] = {

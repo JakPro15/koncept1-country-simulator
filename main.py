@@ -1,4 +1,5 @@
 from sources.cli.cli import command_line_interface
+from sources.gui.gui import gui
 from sys import argv
 import argparse
 from os.path import isfile
@@ -26,9 +27,7 @@ def main(arguments):
         return
 
     if args.gui:
-        raise NotImplementedError(
-            "Graphical user interface has not been implemented yet."
-        )
+        gui()
     elif args.cli:
         command_line_interface(args.load[0])
 
