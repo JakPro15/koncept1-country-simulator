@@ -694,8 +694,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         month_data["change_resources"] = \
             month_data["resources_after"] - old_resources
         month_data["change_population"] = \
-            month_data["population_after"].round() - old_population.round()
-
+            round(month_data["population_after"]) - round(old_population)
         month_data["growth_modifiers"] = {
             class_name: {
                 "starving": self.classes[index].starving,

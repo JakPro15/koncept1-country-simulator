@@ -146,7 +146,7 @@ class Arithmetic_Dict(dict):
             {element: exp(value) for element, value in self.items()}
         )
 
-    def round(self, ndigits=0):
+    def __round__(self, ndigits=0):
         result = self.copy()
         for key in result:
             result[key] = round(result[key], ndigits)

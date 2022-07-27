@@ -307,8 +307,7 @@ def fight(args: list[str], interface: Interface):
         args[1] = args[1][0]
 
         results = interface.fight(args[1])
-        dead_soldiers = results[1] if __debug__ else results[1].round()
-
+        dead_soldiers = results[1] if __debug__ else round(results[1])
         print("The battle has been", "won." if results[0] else "lost.")
         print(dead_soldiers["knights"],
               f"knight{'s' if dead_soldiers['knights'] != 1 else ''} and",

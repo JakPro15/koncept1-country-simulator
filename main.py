@@ -1,8 +1,7 @@
 from sources.cli.cli import command_line_interface
-from sources.gui.gui import gui
+from sources.gui.gui import graphical_user_interface
 from sys import argv
 import argparse
-from os.path import isfile
 
 
 def main(arguments):
@@ -21,13 +20,8 @@ def main(arguments):
                         'started', nargs=1, type=str, default=['starting'])
     args = parser.parse_args(arguments[1:])
 
-    if not (isfile(f"saves/{args.load[0]}/history.txt") and
-            isfile(f"saves/{args.load[0]}/starting_state.json")):
-        print(f"{args.load[0]} is not a valid save name")
-        return
-
     if args.gui:
-        gui()
+        graphical_user_interface(args.load[0])
     elif args.cli:
         command_line_interface(args.load[0])
 

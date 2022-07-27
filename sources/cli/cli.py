@@ -4,24 +4,11 @@ from ..abstract_interface.interface import (
     SaveAccessError
 )
 from .cli_commands import (
-    ShutDownCommand,
-    fill_command,
-    help,
-    save,
-    history,
-    next,
-    state,
-    delete_save,
-    exit_game
+    ShutDownCommand, fill_command, help, save, history, next, state,
+    delete_save, exit_game
 )
 from .cli_game_commands import (
-    transfer,
-    secure,
-    optimal,
-    laws,
-    promote,
-    recruit,
-    fight
+    transfer, secure, optimal, laws, promote, recruit, fight
 )
 import traceback
 

@@ -558,7 +558,7 @@ def test_round():
         "tools": 14.2
     })
 
-    resources2 = resources1.round()
+    resources2 = round(resources1)
     assert isinstance(resources2, Arithmetic_Dict)
     assert resources2 == {
         "food": 0,
@@ -568,7 +568,7 @@ def test_round():
         "tools": 14
     }
 
-    resources2 = resources1.round(2)
+    resources2 = round(resources1, 2)
     assert isinstance(resources2, Arithmetic_Dict)
     assert resources2 == {
         "food": 0,

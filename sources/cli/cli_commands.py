@@ -15,6 +15,7 @@ from math import floor, inf, log10
 from os import mkdir
 from os.path import isdir
 from shutil import rmtree
+import re
 
 
 class ShutDownCommand(Exception):
@@ -536,8 +537,10 @@ def save(args: list[str], interface: Interface):
         if len(args) == 1:
             args.append(interface.save_name)
         check_input(len(args) == 2, "invalid number of arguments")
-        check_input(args[1].isalpha(),
-                    "save name contains invalid character(s)")
+        check_input(
+            re.search(r"^\w+$", args[1]),
+            "save name can only contain letters, digits and underscores"
+        )
         if args[1] == "starting":
             print('Please choose a save name different from "starting"')
             return
@@ -625,12 +628,12 @@ def state(args: list[str], interface: Interface):
                 print(f"{class_name: >8}: {data[index]}")
         elif args[1] == "resources":
             data = {
-                social_class.class_name: social_class.real_resources.round(1)
+                social_class.class_name: round(social_class.real_resources, 1)
                 for social_class
                 in interface.state.classes
             }
             data["government"] = \
-                interface.state.government.real_resources.round(1)
+                round(interface.state.government.real_resources, 1)
             print("Current resources:")
             line = " " * 10
             for resource in RESOURCES:
@@ -711,12 +714,12 @@ def state(args: list[str], interface: Interface):
             line += f" (autoregulation {'on' if autoreg else 'off'})"
             print(line)
         elif args[1] == "employment":
-            employees = interface.state.get_state_data(
+            employees = round(interface.state.get_state_data(
                 "employees", True, 0
-            ).round(0)
-            wages = interface.state.get_state_data(
+            ))
+            wages = round(interface.state.get_state_data(
                 "old_wage", True, interface.state.sm.others_minimum_wage
-            ).round(2)
+            ), 2)
             print("Current employment information:")
             line = " " * 10
             for resource in RESOURCES:
@@ -764,8 +767,10 @@ def state(args: list[str], interface: Interface):
 def delete_save(args: list[str], *other_args):
     try:
         check_input(len(args) == 2, "invalid number of arguments")
-        check_input(args[1].isalpha(),
-                    "save name contains invalid character(s)")
+        check_input(
+            re.search(r"^\w+$", args[1]),
+            "save name can only contain letters, digits and underscores"
+        )
         if args[1] == "starting":
             print("Deleting this save is prohibited.")
             return

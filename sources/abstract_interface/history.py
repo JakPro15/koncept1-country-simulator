@@ -69,7 +69,7 @@ class History:
                                 )
                             else:
                                 key_data = Arithmetic_Dict(key_data)
-                                key_data = key_data.round(ndigits)
+                                key_data = round(key_data, ndigits)
 
                         result[old_key].append(key_data)
             else:
@@ -81,7 +81,7 @@ class History:
         result = dictionary.copy()
         for key in result:
             result[key] = Arithmetic_Dict(result[key])
-            result[key] = result[key].round(ndigits)
+            result[key] = round(result[key], ndigits)
         return result
 
     def population(self):
