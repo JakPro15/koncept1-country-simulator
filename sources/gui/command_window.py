@@ -54,12 +54,18 @@ class Command_Window(GUI_Commands):
         self.top_labels_layout.addSpacing(10)
         for label in self.top_labels:
             self.top_labels_layout.addWidget(label)
+
         self.next_month_button = QPushButton("End month")
         self.next_month_button.clicked.connect(self.next_month)
+        self.top_labels_layout.addWidget(self.next_month_button)
+
         self.save_button = QPushButton("Save game")
         self.save_button.clicked.connect(self.save_game)
-        self.top_labels_layout.addWidget(self.next_month_button)
         self.top_labels_layout.addWidget(self.save_button)
+
+        self.del_button = QPushButton("Delete save")
+        self.del_button.clicked.connect(self.delete_save)
+        self.top_labels_layout.addWidget(self.del_button)
 
         self.main_layout = QVBoxLayout()
         self.main_layout.addLayout(self.top_labels_layout)
@@ -68,4 +74,4 @@ class Command_Window(GUI_Commands):
         self.setLayout(self.main_layout)
 
         self.update_labels()
-        self.setMinimumSize(700, 500)
+        self.setMinimumSize(800, 500)

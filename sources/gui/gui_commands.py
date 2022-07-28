@@ -53,5 +53,10 @@ class GUI_Commands(QDialog):
 
     @crashing_slot
     def save_game(self):
-        save_dialog = Save_Dialog(self)
+        save_dialog = Save_Dialog(False, self)
+        save_dialog.exec()
+
+    @crashing_slot
+    def delete_save(self):
+        save_dialog = Save_Dialog(True, self)
         save_dialog.exec()
