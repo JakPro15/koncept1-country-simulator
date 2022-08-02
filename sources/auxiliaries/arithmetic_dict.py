@@ -146,10 +146,28 @@ class Arithmetic_Dict(dict):
             {element: exp(value) for element, value in self.items()}
         )
 
+    def int(self):
+        return Arithmetic_Dict({
+            element: value.int()
+            if isinstance(value, Arithmetic_Dict)
+            else int(value)
+            for element, value in self.items()
+        })
+
+    def float(self):
+        return Arithmetic_Dict({
+            element: value.float()
+            if isinstance(value, Arithmetic_Dict)
+            else float(value)
+            for element, value in self.items()
+        })
+
     def __round__(self, ndigits=0):
         result = self.copy()
         for key in result:
             result[key] = round(result[key], ndigits)
-            if ndigits <= 0 and not (isnan(result[key]) or isinf(result[key])):
-                result[key] = int(result[key])
+        if ndigits <= 0 and not (isnan(result[key]) or isinf(result[key])):
+            result = result.int()
+        else:
+            result = result.float()
         return result

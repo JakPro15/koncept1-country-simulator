@@ -1,41 +1,17 @@
 from PySide6.QtWidgets import (
-    QApplication, QDialog, QMessageBox
+    QDialog, QMessageBox
 )
 from ..state.state_data import (
     EveryoneDeadError,
     RebellionError
 )
+from .transfer_dialog import Transfer_Dialog
 from ..cli.cli_commands import ShutDownCommand
 from .save_dialog import Save_Dialog
-import traceback
-
-
-def crashing_slot(inner):
-    def crashing_inner(*args, **kwargs):
-        try:
-            inner(*args, **kwargs)
-        except BaseException:
-            if __debug__:
-                traceback.print_exc()
-            QApplication.exit()
-    return crashing_inner
+from .auxiliaries import crashing_slot
 
 
 class GUI_Commands(QDialog):
-    def update_labels(self):
-        resources = round(
-            self.interface.state.get_state_data("resources", True), 2
-        )
-        for label, res in zip(self.top_labels,
-                              resources["government"].values()):
-            label.setText(
-                f"{label.text().split(' ')[0]} {res}"
-            )
-        self.top_labels[6].setText(
-            f"{self.top_labels[6].text().split(' ')[0]} "
-            f"{round(self.interface.state.total_population)}"
-        )
-
     @crashing_slot
     def next_month(self):
         try:
@@ -49,7 +25,7 @@ class GUI_Commands(QDialog):
             QMessageBox.information(self, "Game Over", "GAME OVER\n"
                                     f"{str(e).title()} have rebelled.")
             raise ShutDownCommand
-        self.update_labels()
+        self.update()
 
     @crashing_slot
     def save_game(self):
@@ -60,3 +36,8 @@ class GUI_Commands(QDialog):
     def delete_save(self):
         save_dialog = Save_Dialog(True, self)
         save_dialog.exec()
+
+    @crashing_slot
+    def transfer(self, class_name: str):
+        transfer_dialog = Transfer_Dialog(class_name, self)
+        transfer_dialog.exec()

@@ -193,3 +193,9 @@ KNIGHT_FIGHTING_STRENGTH = 3
 BASE_BATTLE_LOSSES = 0.2
 
 PLUNDER_FACTOR = 500
+
+GOVT_LEFT_LABELS = [
+    "Available resources",
+    "Secure resources",
+    "Optimal resources"
+]

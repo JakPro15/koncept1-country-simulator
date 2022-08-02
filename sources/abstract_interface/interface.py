@@ -67,7 +67,7 @@ class Interface:
 
             self.history = History(starting_state, history_lines)
             self.state.execute_commands(history_lines)
-            self.save_name = dirname
+            self.save_name = dirname if dirname != "starting" else ""
         except IOError:
             raise SaveAccessError
         except Exception:

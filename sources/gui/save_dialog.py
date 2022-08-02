@@ -17,17 +17,22 @@ class Save_Dialog(QDialog):
 
         self.dirname_input = QLineEdit()
         self.dirname_input.setPlaceholderText("Enter the name of the save")
-        validator = QRegularExpressionValidator(r"^\w+$")
-        self.dirname_input.setValidator(validator)
+        if not self.delete:
+            self.dirname_input.setText(self.parent().interface.save_name)
+        self.dirname_input.setValidator(QRegularExpressionValidator(r"^\w+$"))
 
         self.confirm_button = QPushButton("Confirm")
-        self.confirm_button.clicked.connect(self.confirmed)
+        self.confirm_button.clicked[None].connect(self.confirmed)
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.dirname_input)
-        self.layout.addWidget(self.confirm_button)
+        self.layout_ = QVBoxLayout()
+        self.layout_.addWidget(self.dirname_input)
+        self.layout_.addWidget(self.confirm_button)
 
-        self.setLayout(self.layout)
+        self.setLayout(self.layout_)
+        if self.delete:
+            self.setWindowTitle("Delete")
+        else:
+            self.setWindowTitle("Save")
 
     def confirmed(self):
         if not re.search(r"^\w+$", self.dirname_input.text()):

@@ -591,7 +591,7 @@ class State_Data(_State_Data_Employment_and_Commands):
         # Increase of number of criminals
         self._make_new_brigands()
 
-    def get_state_data(self, attribute: str, govt: bool, default=None):
+    def get_state_data(self, attribute: str, govt: bool = False, default=None):
         """
         Returns a dict with the given name containing the chosen attribute to
         month_data.

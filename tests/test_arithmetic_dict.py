@@ -549,6 +549,83 @@ def test_copy():
     }
 
 
+def test_int():
+    res = Arithmetic_Dict({
+        "a": 2.3,
+        "b": 5.0,
+        "c": -1.2
+    })
+    assert res.int() == {
+        "a": 2,
+        "b": 5,
+        "c": -1
+    }
+
+    res = Arithmetic_Dict({
+        "a": 2.333333,
+        "b": 5,
+        "c": "23",
+        "d": Arithmetic_Dict({
+            "e": -3.01,
+            "f": 0.0
+        })
+    })
+    assert res.int() == {
+        "a": 2,
+        "b": 5,
+        "c": 23,
+        "d": {
+            "e": -3,
+            "f": 0
+        }
+    }
+
+
+def test_float():
+    res = Arithmetic_Dict({
+        "a": 2.3,
+        "b": 5,
+        "c": -1.2
+    })
+    res = res.float()
+    assert res == {
+        "a": 2.3,
+        "b": 5.0,
+        "c": -1.2
+    }
+    assert isinstance(res["a"], float)
+    assert isinstance(res["b"], float)
+    assert isinstance(res["c"], float)
+
+    res = Arithmetic_Dict({
+        "a": 2.333333,
+        "b": 5,
+        "c": "2.3",
+        "d": Arithmetic_Dict({
+            "e": -3.01,
+            "f": 0,
+            "g": "-1"
+        })
+    })
+    res = res.float()
+    assert res == {
+        "a": 2.333333,
+        "b": 5,
+        "c": 2.3,
+        "d": {
+            "e": -3.01,
+            "f": 0.0,
+            "g": -1.0
+        }
+    }
+    assert isinstance(res["a"], float)
+    assert isinstance(res["b"], float)
+    assert isinstance(res["c"], float)
+    assert isinstance(res["d"]["e"], float)
+    assert isinstance(res["d"]["f"], float)
+    assert isinstance(res["d"]["g"], float)
+
+
 def test_round():
     resources1 = Arithmetic_Dict({
         "food": 0,
@@ -578,7 +655,7 @@ def test_round():
         "tools": 14.2
     }
 
-    resources2 = resources1.round(-1)
+    resources2 = round(resources1, -1)
     assert isinstance(resources2, Arithmetic_Dict)
     assert resources2 == {
         "food": 0,
