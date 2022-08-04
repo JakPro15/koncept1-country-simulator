@@ -4,6 +4,7 @@
 
 
 from ..abstract_interface.interface import (
+    EmptyClassError,
     Interface,
     NotEnoughClassPopulation,
     NotEnoughClassResources,
@@ -49,6 +50,8 @@ def transfer(args: list[str], interface: Interface):
         except NotEnoughClassResources:
             print("The chosen class does not have enough resources for this"
                   " operation.")
+        except EmptyClassError:
+            print("The chosen class is empty.")
     except InvalidArgumentError as e:
         print(f"Invalid syntax: {e}. See help for proper usage of transfer"
               " command")

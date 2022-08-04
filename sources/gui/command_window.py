@@ -12,6 +12,11 @@ from .gui_commands import GUI_Commands
 from ..auxiliaries.constants import CLASSES, GOVT_LEFT_LABELS, RESOURCES
 
 
+# @TODO: Fix: seizing all resources from artisans causes
+# NotEnoughClassResources exception
+# @TODO: Make transfer happiness depend on population, remove exploits
+
+
 class Scene_Classes(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -72,6 +77,11 @@ class Scene_Classes(QWidget):
                     label.setText(f"{haps[class_name]}")
                 else:
                     label.setText(f"{ress[class_name][RESOURCES[j]]}")
+
+        for i, button in enumerate(self.transfer_buttons):
+            button.setEnabled(
+                self.parent().interface.state.classes[i].population > 0
+            )
 
 
 class Scene_Govt(QWidget):

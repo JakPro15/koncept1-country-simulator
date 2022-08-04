@@ -56,8 +56,8 @@ def test_next_month_next():
 
 
 def test_transfer():
-    def fake_do_transfer(self, class_name, resource, amount):
-        self.transfers.append([class_name, resource, amount])
+    def fake_do_transfer(self, class_name, resource, amount, demote):
+        self.transfers.append([class_name, resource, amount, demote])
 
     with replace(State_Data, "do_transfer", fake_do_transfer):
         state = State_Data()
@@ -94,7 +94,7 @@ def test_transfer():
         with raises(NotEnoughClassResources):
             interface.transfer_resources("nobles", "food", -150)
 
-        assert state.transfers == [["nobles", "food", 100]]
+        assert state.transfers == [["nobles", "food", 100, True]]
         assert history.history_lines == [
             "next 6",
             "transfer nobles food 100"

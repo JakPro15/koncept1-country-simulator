@@ -21,6 +21,10 @@ class NotEnoughClassPopulation(Exception):
     pass
 
 
+class EmptyClassError(Exception):
+    pass
+
+
 class SaveAccessError(Exception):
     pass
 
@@ -102,18 +106,21 @@ class Interface:
         self.state.fought = False
         self.history.add_history_line("next")
 
-    def transfer_resources(self, class_name: str, resource: str, amount: int):
+    def transfer_resources(self, class_name: str, resource: str, amount: int,
+                           demote: bool = True):
         """
         Transfers the given amount of a resource from government to the given
         class. Negative amount signifies a reverse direction of the transfer.
         """
         class_index = CLASS_NAME_TO_INDEX[class_name]
+        if self.state.classes[class_index].population == 0:
+            raise EmptyClassError
         if self.state.government.real_resources[resource] < amount:
             raise NotEnoughGovtResources
         if self.state.classes[class_index].real_resources[resource] < -amount:
             raise NotEnoughClassResources
 
-        self.state.do_transfer(class_name, resource, amount)
+        self.state.do_transfer(class_name, resource, amount, demote)
 
         self.history.add_history_line(
             f"transfer {class_name} {resource} {amount}"

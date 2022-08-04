@@ -352,11 +352,9 @@ class Class:
         return (percent_dead ** 2.5) / (percent_dead - 100.01) - percent_dead
 
     @staticmethod
-    def resources_seized_happiness(part_seized):
+    def resources_seized_happiness(net_worth_seized_per_capita):
         """
         Returns the change in happiness of a social class whose given part
         of resources was seized by the government.
         """
-        percent_seized = abs(part_seized) * 100
-        return ((percent_seized ** 1.5) / (percent_seized - 100.01) -
-                percent_seized) * (1 if part_seized > 0 else -1)
+        return net_worth_seized_per_capita * 15

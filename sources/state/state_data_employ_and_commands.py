@@ -271,7 +271,8 @@ class _State_Data_Employment_and_Commands:
         )
         self._set_new_wages(employers_classes)
 
-    def do_transfer(self, class_name: str, resource: str, amount: int):
+    def do_transfer(self, class_name: str, resource: str, amount: int,
+                    demote: bool = True):
         """
         Moves resources between the government and a social class.
         """
@@ -286,12 +287,14 @@ class _State_Data_Employment_and_Commands:
         self.classes[class_index].new_resources = res
 
         res_price = -amount * self.prices[resource]
-        part_seized = res_price / self.classes[class_index].net_worth
-
-        self._do_demotions()
 
         self.classes[class_index].happiness += \
-            Class.resources_seized_happiness(part_seized)
+            Class.resources_seized_happiness(
+                res_price / self.classes[class_index].population
+            )
+
+        if demote:
+            self._do_demotions()
 
         self._secure_classes()
 

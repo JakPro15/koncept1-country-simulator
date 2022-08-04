@@ -110,7 +110,8 @@ class Transfer_Dialog(QDialog):
         for row in self.rows:
             if row.transferred != 0:
                 self.parent().interface.transfer_resources(
-                    self.class_name, row.resource, row.transferred
+                    self.class_name, row.resource, row.transferred,
+                    demote=(row.resource == "land")
                 )
         self.parent().update()
         self.accept()

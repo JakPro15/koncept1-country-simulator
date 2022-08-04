@@ -1547,14 +1547,22 @@ def test_do_taxes():
     assert state.classes[3].new_resources == other_after
     assert state.government.new_resources == govt_after
 
-    assert state.classes[0].happiness == \
-        Class.resources_seized_happiness(rel_tax["nobles"])
-    assert state.classes[1].happiness == \
-        Class.resources_seized_happiness(1)
-    assert state.classes[2].happiness == \
-        Class.resources_seized_happiness(rel_tax["peasants"])
-    assert state.classes[3].happiness == \
-        Class.resources_seized_happiness(rel_tax["others"])
+    assert state.classes[0].happiness == approx(
+        Class.resources_seized_happiness(
+            rel_tax["nobles"] * net_worths["nobles"] / 20
+        ))
+    assert state.classes[1].happiness == approx(
+        Class.resources_seized_happiness(
+            net_worths["artisans"] / 30
+        ))
+    assert state.classes[2].happiness == approx(
+        Class.resources_seized_happiness(
+            rel_tax["peasants"] * net_worths["peasants"] / 40
+        ))
+    assert state.classes[3].happiness == approx(
+        Class.resources_seized_happiness(
+            rel_tax["others"] * net_worths["others"] / 50
+        ))
 
 
 def test_get_crime_rate():
@@ -1809,7 +1817,6 @@ def test_do_transfer_from_government():
         }
     }
     state = State_Data.from_dict(data)
-    part_seized = -10 / state.classes[0].net_worth
     state.do_transfer("nobles", "food", 10)
     assert state.classes[0].resources == {
         "food": 20,
@@ -1820,7 +1827,7 @@ def test_do_transfer_from_government():
         "land": 10
     }
     assert state.classes[0].happiness == Class.resources_seized_happiness(
-        part_seized
+        -0.5
     )
     assert state.government.resources == {
         "food": 0,
@@ -1918,7 +1925,6 @@ def test_do_transfer_to_government():
         }
     }
     state = State_Data.from_dict(data)
-    part_seized = 75 / state.classes[1].net_worth
     state.do_transfer("artisans", "tools", -15)
     assert state.classes[1].resources == {
         "food": 20,
@@ -1929,7 +1935,7 @@ def test_do_transfer_to_government():
         "land": 20
     }
     assert state.classes[1].happiness == Class.resources_seized_happiness(
-        part_seized
+        75 / 30
     )
     assert state.government.resources == {
         "food": 10,
@@ -2027,11 +2033,10 @@ def test_do_transfer_to_government_demotion():
         }
     }
     state = State_Data.from_dict(data)
-    part_seized = 125 / state.classes[1].net_worth
     state.do_transfer("artisans", "tools", -25)
     assert state.classes[1].demoted_from
     assert state.classes[1].happiness == Class.resources_seized_happiness(
-        part_seized
+        125 / 30
     )
     assert state.classes[3].demoted_to
     assert state.government.resources == {
