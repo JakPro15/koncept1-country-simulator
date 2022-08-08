@@ -275,6 +275,7 @@ class _State_Data_Employment_and_Commands:
                     demote: bool = True):
         """
         Moves resources between the government and a social class.
+        demote should be given False only if another transfer is coming up.
         """
         class_index = CLASS_NAME_TO_INDEX[class_name]
 
@@ -295,8 +296,7 @@ class _State_Data_Employment_and_Commands:
 
         if demote:
             self._do_demotions()
-
-        self._secure_classes()
+            self._secure_classes()
 
     def do_secure(self, resource: str, amount: int):
         """
@@ -483,7 +483,7 @@ class _State_Data_Employment_and_Commands:
                 for _ in range(amount):
                     self.do_month()
             elif command[0] == "transfer":
-                self.do_transfer(command[1], command[2], int(command[3]))
+                self.do_transfer(command[1], command[2], float(command[3]))
             elif command[0] == "secure":
                 self.do_secure(command[1], int(command[2]))
             elif command[0] == "optimal":

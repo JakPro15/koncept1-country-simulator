@@ -53,14 +53,12 @@ class Transfer_Row(QWidget):
         self.setLayout(self.layout_)
 
     @crashing_slot
-    def slider_changed(self, sliderValue: int):
-        print("sloider shanged")
-        self.left_edit.setText(str(self.old_class - sliderValue))
-        self.right_edit.setText(str(self.old_govt + sliderValue))
+    def slider_changed(self, slider_value: int):
+        self.left_edit.setText(str(self.old_class - slider_value))
+        self.right_edit.setText(str(self.old_govt + slider_value))
 
     @crashing_slot
     def left_edit_changed(self, text):
-        print("left yedit shanged")
         if text:
             max = self.slider.maximum() - self.slider.minimum()
             if int(text) > max:
@@ -70,7 +68,6 @@ class Transfer_Row(QWidget):
 
     @crashing_slot
     def right_edit_changed(self, text):
-        print("roight yedit shanged")
         if text:
             max = self.slider.maximum() - self.slider.minimum()
             if int(text) > max:
@@ -108,10 +105,9 @@ class Transfer_Dialog(QDialog):
     @crashing_slot
     def confirmed(self):
         for row in self.rows:
-            if row.transferred != 0:
-                self.parent().interface.transfer_resources(
-                    self.class_name, row.resource, row.transferred,
-                    demote=(row.resource == "land")
-                )
+            self.parent().interface.transfer_resources(
+                self.class_name, row.resource, row.transferred,
+                demote=(row.resource == "land")
+            )
         self.parent().update()
         self.accept()

@@ -507,9 +507,10 @@ class State_Data(_State_Data_Employment_and_Commands):
             social_class.new_resources -= tax
 
             value_of_tax = self._get_monetary_value(tax)
-            social_class.happiness += Class.resources_seized_happiness(
-                value_of_tax / social_class.population
-            )
+            if social_class.population > 0:
+                social_class.happiness += Class.resources_seized_happiness(
+                    value_of_tax / social_class.population
+                )
 
     @staticmethod
     def _get_flee_rate(happiness):
@@ -555,7 +556,7 @@ class State_Data(_State_Data_Employment_and_Commands):
             social_class.new_resources -= stolen
             if social_class.net_worth > 0:
                 social_class.happiness += Class.resources_seized_happiness(
-                    -self._get_monetary_value(stolen) / social_class.population
+                    self._get_monetary_value(stolen) / social_class.population
                 )
         stolen = self.government.real_resources * (crime_rate / 2)
         stolen["land"] = 0

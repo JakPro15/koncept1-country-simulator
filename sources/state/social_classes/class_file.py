@@ -357,4 +357,4 @@ class Class:
         Returns the change in happiness of a social class whose given part
         of resources was seized by the government.
         """
-        return net_worth_seized_per_capita * 15
+        return net_worth_seized_per_capita * -5

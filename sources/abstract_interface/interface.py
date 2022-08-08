@@ -106,7 +106,7 @@ class Interface:
         self.state.fought = False
         self.history.add_history_line("next")
 
-    def transfer_resources(self, class_name: str, resource: str, amount: int,
+    def transfer_resources(self, class_name: str, resource: str, amount: float,
                            demote: bool = True):
         """
         Transfers the given amount of a resource from government to the given

@@ -10,7 +10,7 @@
                 "stone": 150,
                 "iron": 0,
                 "tools": 400,
-                "land": 2000
+                "land": 500
             },
             "happiness": 0
         },
@@ -58,7 +58,7 @@
             "stone": 100,
             "iron": 100,
             "tools": 100,
-            "land": 500
+            "land": 2000
         },
         "optimal_resources": {
             "food": 100,
