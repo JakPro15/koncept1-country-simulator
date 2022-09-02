@@ -1,20 +1,14 @@
-from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
-from ..auxiliaries.constants import (
-    EMPTY_RESOURCES,
-    KNIGHT_FIGHTING_STRENGTH,
-    KNIGHT_FOOD_CONSUMPTION,
-    RESOURCES,
-    MONTHS
-)
-from .social_classes.class_file import (
-    InvalidResourcesDictError,
-    InvalidParentError,
-    NegativeResourcesError
-)
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
 
-class InvalidSoldiersDictError(Exception):
-    pass
+from ..auxiliaries.constants import OTHERS_MINIMUM_WAGE
+from ..auxiliaries.resources import Resources
+from ..auxiliaries.soldiers import Soldiers
+from .social_classes.class_file import InvalidInputError, ValidationError
+
+if TYPE_CHECKING:
+    from .state_data import State_Data
 
 
 class Government:
@@ -30,195 +24,137 @@ class Government:
     optimal_resources - how much resources the govt wants to own
     max_employees - how many employees can the govt employ
     """
-    def __init__(self, parent, res: dict = None, optimal_res: dict = None,
-                 secure_res: dict = None, soldiers: dict = None):
+    def __init__(self, parent: State_Data, res: Resources = Resources(),
+                 optimal_res: Resources = Resources(),
+                 secure_res: Resources = Resources(),
+                 soldiers: Soldiers = Soldiers()):
         """
         Creates an object of type Government.
         Parent is the State_Data object this belongs to.
         """
-        self.parent = parent
-        if res is None:
-            self._resources = EMPTY_RESOURCES
+        self.parent: State_Data = parent
+
+        if res < 0:
+            raise ValueError("resources cannot be negative")
         else:
-            if set(res.keys()) != set(RESOURCES):
-                raise InvalidResourcesDictError
-            for value in res.values():
-                if value < 0:
-                    raise NegativeResourcesError
-            self._resources = Arithmetic_Dict(res)
+            self.resources: Resources = res.copy()
 
-        self._new_resources = self.resources.copy()
-
-        if optimal_res is None:
-            self.optimal_resources = EMPTY_RESOURCES
+        if optimal_res < 0:
+            raise ValueError("optimal resources cannot be negative")
         else:
-            if set(optimal_res.keys()) != set(RESOURCES):
-                raise InvalidResourcesDictError
-            for value in optimal_res.values():
-                if value < 0:
-                    raise NegativeResourcesError
-            self.optimal_resources = Arithmetic_Dict(optimal_res)
+            self.optimal_resources: Resources = optimal_res.copy()
 
-        if secure_res is None:
-            self._secure_resources = EMPTY_RESOURCES
+        if secure_res < 0:
+            raise ValueError("secure resources cannot be negative")
         else:
-            if set(secure_res.keys()) != set(RESOURCES):
-                raise InvalidResourcesDictError
-            for value in secure_res.values():
-                if value < 0:
-                    raise NegativeResourcesError
-            self._secure_resources = Arithmetic_Dict(secure_res)
+            self.secure_resources: Resources = secure_res.copy()
 
-        self.wage = self.parent.sm.others_minimum_wage
-        self.wage_autoregulation = True
+        self.wage: float = self.parent.sm.others_minimum_wage
+        self.wage_autoregulation: bool = True
 
-        if soldiers is None:
-            self.soldiers = Arithmetic_Dict({
-                "knights": 0,
-                "footmen": 0
-            })
+        if soldiers < 0:
+            raise ValueError("soldiers cannot be negative")
         else:
-            if set(soldiers.keys()) != {"knights", "footmen"}:
-                raise InvalidSoldiersDictError("Invalid keys")
-            for value in soldiers.values():
-                if value < 0:
-                    raise InvalidSoldiersDictError("Invalid values")
-            self.soldiers = Arithmetic_Dict(soldiers)
-        self.missing_food = 0
+            self.soldiers: Soldiers = soldiers.copy()
+
+        self.missing_food: float = 0
+
+        # Attributes used only during employment calculation and history
+        self.employees: float = 0
+        self.increase_wage: bool
+        self.profit_share: float
+        self.old_wage: float = OTHERS_MINIMUM_WAGE
+
+        # Attributes used only when trading
+        self.market_res: Resources
+        self.money: float
+
+        self.fought: bool = False
 
     @property
-    def parent(self):
-        return self._parent
-
-    @parent.setter
-    def parent(self, new_parent):
-        if not hasattr(new_parent, "month"):
-            raise InvalidParentError
-        if new_parent.month not in MONTHS:
-            raise InvalidParentError
-        self._parent = new_parent
-
-    @property
-    def resources(self):
-        return self._resources.copy()
-
-    @property
-    def new_resources(self):
-        return self._new_resources.copy()
-
-    @new_resources.setter
-    def new_resources(self, new_new_resources: dict | Arithmetic_Dict):
-        """
-        Does not modify the actual resources, saves the changes in temporary
-        _new_resources. Use flush() to confirm the changes.
-        """
-        if set(new_new_resources.keys()) != set(RESOURCES):
-            raise InvalidResourcesDictError
-        self._new_resources = Arithmetic_Dict(new_new_resources.copy())
-
-    @property
-    def secure_resources(self):
-        return self._secure_resources.copy()
-
-    @secure_resources.setter
-    def secure_resources(self, new_secure_resources: dict | Arithmetic_Dict):
-        if set(new_secure_resources.keys()) != set(RESOURCES):
-            raise InvalidResourcesDictError
-        for value in new_secure_resources.values():
-            if value < 0:
-                raise NegativeResourcesError
-        self._secure_resources = Arithmetic_Dict(new_secure_resources.copy())
-
-    @property
-    def real_resources(self):
+    def real_resources(self) -> Resources:
         return self.resources + self.secure_resources
 
     @property
-    def max_employees(self):
-        land_owned = self.resources["land"]
+    def max_employees(self) -> float:
+        land_owned = self.resources.land
         return min(
-            self.resources["tools"] / 3,
+            self.resources.tools / 3,
             land_owned / self.parent.sm.worker_land_usage,
         )
 
     @property
-    def soldiers_fighting_strength(self):
-        return self.soldiers["knights"] * KNIGHT_FIGHTING_STRENGTH \
-            + self.soldiers["footmen"]
-
-    @property
-    def soldiers_population(self):
-        return self.soldiers["knights"] + self.soldiers["footmen"]
-
-    @property
-    def soldier_revolt(self):
+    def soldier_revolt(self) -> bool:
         return self.missing_food > 0
 
-    def consume(self):
+    def consume(self) -> None:
         """
         Removes resources the government's soldiers consumed this month.
         """
-        self._new_resources["food"] -= self.soldiers["footmen"] + \
-            self.soldiers["knights"] * KNIGHT_FOOD_CONSUMPTION
-        if self.new_resources["food"] < 0:
-            self.handle_soldier_bankruptcy()
+        self.resources.food -= self.soldiers.food_consumption
+        if self.resources.food < 0:
+            self.missing_food = -self.resources.food
+            self.resources.food = 0
         else:
             self.missing_food = 0
 
-    def handle_soldier_bankruptcy(self):
+    def to_dict(self) -> dict[str, Any]:
         """
-        Handles the government being unable to pay the soldiers.
+        Converts the government object to a dict.
         """
-        # Missing food will cause soldiers to rebel
-        self.missing_food = -self.new_resources["food"]
-        self._new_resources["food"] = 0
-        # A soldier rebellion could be done here
-
-    def to_dict(self):
-        """
-        Converts the government object to a dict. Does not save temporary
-        attributes (new_resources).
-        """
-        data = {
-            "resources": dict(self.resources),
-            "optimal_resources": dict(self.optimal_resources),
-            "secure_resources": dict(self.secure_resources)
+        return {
+            "resources": self.resources.to_raw_dict(),
+            "optimal_resources": self.optimal_resources.to_raw_dict(),
+            "secure_resources": self.secure_resources.to_raw_dict(),
+            "wage": self.wage,
+            "wage_autoregulation": self.wage_autoregulation,
+            "soldiers": self.soldiers.to_raw_dict(),
+            "fought": self.fought,
+            "missing_food": self.missing_food
         }
-        return data
 
     @classmethod
-    def from_dict(cls, parent, data):
+    def from_dict(cls, parent: State_Data, data: dict[str, Any]) -> Government:
         """
         Creates a government object from the given dict.
         """
-        return cls(parent, data["resources"], data["optimal_resources"],
-                   data["secure_resources"])
+        try:
+            new = cls(
+                parent, Resources(data["resources"]),
+                Resources(data["optimal_resources"]),
+                Resources(data["secure_resources"]), Soldiers(data["soldiers"])
+            )
 
-    def handle_negative_resources(self):
-        """
-        Handles minimal negative resources resulting from floating-point
-        rounding errors.
-        """
-        for resource in self._new_resources:
-            if self._new_resources[resource] < 0 and \
-                 abs(self._new_resources[resource]) < 0.001:
-                self._new_resources[resource] = 0
+            new.wage = float(data["wage"])
+            new.wage_autoregulation = bool(data["wage_autoregulation"])
+            new.fought = bool(data["fought"])
+            new.missing_food = float(data["missing_food"])
+        except (KeyError, ValueError) as e:
+            raise InvalidInputError from e
+        return new
 
-    def flush(self):
+    def validate(self) -> None:
         """
-        To be run after multifunctional calculations - to save the temporary
-        changes, after checking validity.
+        Handles very small amounts of negative resources or soldiers resulting
+        from floating-point math. Raises ValidationError if resources or
+        soldiers is negative after that.
         """
-        if set(self._new_resources.keys()) != set(RESOURCES):
-            raise InvalidResourcesDictError
+        for name in ("resources", "optimal_resources", "secure_resources"):
+            resources = getattr(self, name)
+            for res in resources:
+                if resources[res] < 0:
+                    if -0.0001 < resources[res]:
+                        resources[res] = 0
+                    else:
+                        raise ValidationError(
+                            f"{res} in government's {name} negative"
+                        )
 
-        self.handle_negative_resources()
-        for key, value in self._new_resources.items():
-            if value < 0:
-                if self._secure_resources[key] >= -value:
-                    self._secure_resources[key] += value
-                    self._new_resources[key] = 0
+        for sol in self.soldiers:
+            if self.soldiers[sol] < 0:
+                if -0.0001 < self.soldiers[sol]:
+                    self.soldiers[sol] = 0
                 else:
-                    raise NegativeResourcesError
-
-        self._resources = self._new_resources.copy()
+                    raise ValidationError(
+                        f"{sol} in government's soldiers negative"
+                    )

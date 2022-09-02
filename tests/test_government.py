@@ -1,4 +1,4 @@
-from sources.auxiliaries.constants import (
+from ..sources.auxiliaries.constants import (
     KNIGHT_FIGHTING_STRENGTH,
     KNIGHT_FOOD_CONSUMPTION
 )

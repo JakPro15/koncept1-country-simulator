@@ -1,188 +1,122 @@
-from ...auxiliaries.constants import (
-    EMPTY_RESOURCES,
-    FOOD_CONSUMPTION,
-    INBUILT_RESOURCES,
-    MONTHS,
-    RESOURCES,
-    WOOD_CONSUMPTION
-)
-from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
+
+from ...auxiliaries.constants import (FOOD_CONSUMPTION, INBUILT_RESOURCES,
+                                      OTHERS_MINIMUM_WAGE, WOOD_CONSUMPTION)
+from ...auxiliaries.enums import Class_Name, Resource
+from ...auxiliaries.resources import Resources
+
+if TYPE_CHECKING:
+    from ..state_data import State_Data
 
 
-class NegativeResourcesError(Exception):
-    pass
+class ValidationError(Exception):
+    """
+    Raised when social class validation fails.
+    """
 
 
-class NegativePopulationError(Exception):
-    pass
+class InvalidInputError(ValueError):
+    """
+    Raised when attempting to create a government or a social class from
+    an invalid dict.
+    """
 
 
-class InvalidParentError(Exception):
-    pass
-
-
-class InvalidResourcesDictError(Exception):
-    pass
-
-
-class Class:
+class Class(ABC):
     """
     Represents one social class of the country.
-    Properties:
-    parent - state this class is part of
-    employable - whether the class can be hired as employees
-    population - population of the class
-    resources - dictionary containing info on the resources the class owns
-    new_resources - dictionary containing current (temporary) info on the
-                    resources the class owns
-    real_resources - dictionary containing info on the resources the class
-                     owns, including inbuilt resources
-    optimal_resources - how much resources the class wants to own
-    missing_resources - how much resources the class needs to own to not die
-                        or get demoted
-    class_overpopulation - how many of the class need to be demoted because of
-                           no resources
-    net_worth - monetary worth of the class' resources, based on the current
-                prices in parent
-    max_employees - how many employees can the class employ
     """
-    def __init__(self, parent, population: int,
-                 resources: dict = None):
+    def __init__(self, parent: State_Data, population: float = 0,
+                 resources: Resources = Resources()) -> None:
         """
-        Creates an object of type Class or a derived class.
-        Parent is the State_Data object this belongs to.
+        Creates an Class object. Resources default to zero.
         """
-        self.parent = parent
+        self.parent: State_Data = parent
+
         if population < 0:
-            self._population = 0
+            raise ValueError("population cannot be negative")
         else:
-            self._population = population
-        if resources is None:
-            self._resources = Arithmetic_Dict({
-                resource: 0 for resource in RESOURCES
-            })
+            self.population: float = population
+
+        if resources < 0:
+            raise ValueError("resources cannot be negative")
         else:
-            if set(resources.keys()) != set(RESOURCES):
-                raise InvalidResourcesDictError
-            for value in resources.values():
-                if value < 0:
-                    raise NegativeResourcesError
-            self._resources = Arithmetic_Dict(resources)
+            self.resources: Resources = resources.copy()
 
-        self._new_population = self.population
-        self._new_resources = self.resources.copy()
+        self.starving: bool = False
+        self.freezing: bool = False
+        self.demoted_from: bool = False
+        self.demoted_to: bool = False
+        self.promoted_from: bool = False
+        self.promoted_to: bool = False
 
-        self.is_temp = False
-        self.temp = {"population": 0, "resources": EMPTY_RESOURCES.copy()}
+        self.happiness: float = 0
 
-        self.starving = False
-        self.freezing = False
-        self.demoted_from = False
-        self.demoted_to = False
-        self.promoted_from = False
-        self.promoted_to = False
+        # Attributes used only during employment calculation and history
+        self.employees: float = 0
+        self.wage: float = 0
+        self.wage_share: float
+        self.increase_wage: bool
+        self.profit_share: float
+        self.old_wage: float = OTHERS_MINIMUM_WAGE
 
-        self.happiness = 0
-        self.happiness_plateau = 0
+        # Attributes used only when trading
+        self.market_res: Resources
+        self.money: float
+
+        # This is assigned by State_Data in classes setter. It should be
+        # assigned before the object is used.
+        self.lower_class: Class = None  # type: ignore
 
     @property
-    def parent(self):
-        return self._parent
-
-    @parent.setter
-    def parent(self, new_parent):
-        if not hasattr(new_parent, "month"):
-            raise InvalidParentError
-        if new_parent.month not in MONTHS:
-            raise InvalidParentError
-        self._parent = new_parent
-
-    @property
-    def class_name(self):
+    @abstractmethod
+    def class_name(self) -> Class_Name:
         """
-        Returns the name of the class as a string.
+        Returns the name of the class as an enumerator (Class_Name).
         Should never be used on the base Class, only on derived classes.
         """
-        return "base class"
 
     @property
-    def employable(self):
+    def employable(self) -> bool:
         return False
 
     @property
-    def population(self):
-        return self._population
-
-    @property
-    def new_population(self):
-        return self._new_population
-
-    @new_population.setter
-    def new_population(self, number):
-        """
-        Does not modify the actual population, saves the changes in temporary
-        _new_population. Use flush() to confirm the changes.
-        """
-        if number < 0:
-            raise NegativePopulationError
-        difference = number - self._new_population
-        self.new_resources -= INBUILT_RESOURCES[self.class_name] * difference
-        self._new_population = number
-
-    @property
-    def resources(self):
-        return self._resources.copy()
-
-    @property
-    def new_resources(self):
-        return self._new_resources.copy()
-
-    @new_resources.setter
-    def new_resources(self, new_new_resources: dict | Arithmetic_Dict):
-        """
-        Does not modify the actual resources, saves the changes in temporary
-        _new_resources. Use flush() to confirm the changes.
-        """
-        if set(new_new_resources.keys()) != set(RESOURCES):
-            raise InvalidResourcesDictError
-        self._new_resources = Arithmetic_Dict(new_new_resources.copy())
-
-    @property
-    def real_resources(self):
+    def real_resources(self) -> Resources:
         return self.resources + (
             INBUILT_RESOURCES[self.class_name] * self.population
         )
 
     @property
-    def optimal_resources(self):
+    def optimal_resources(self) -> Resources:
         """
-        Returns optimal resources dict for the given social class object, for
+        Returns optimal resources for the given social class object, for
         trade purposes.
         """
-        opt_res = \
-            self.parent.sm.optimal_resources[self.class_name] * self.population
-
-        return Arithmetic_Dict(opt_res)
+        return self.parent.sm.optimal_resources[self.class_name] \
+            * self.population
 
     @property
-    def missing_resources(self):
+    def missing_resources(self) -> Resources:
         """
-        Returns the resources the class has negative.
-        WARNING: Uses the temporary _new_resources, not resources itself.
+        Returns the resources the class is missing to not have any negative
+        resources.
         """
-        return Arithmetic_Dict({
+        return Resources({
             resource: -amount if amount < 0 else 0
             for resource, amount
-            in self._new_resources.items()
+            in self.resources.items()
         })
 
     @property
-    def class_overpopulation(self):
+    def class_overpopulation(self) -> float:
         """
         Returns how many of the class need to be demoted to remove
         negative resources.
         """
-        overpops = []
+        overpops: list[float] = []
         for res_name, value in self.missing_resources.items():
             res = INBUILT_RESOURCES[self.class_name][res_name] - \
                 INBUILT_RESOURCES[self.lower_class.class_name][res_name]
@@ -195,155 +129,120 @@ class Class:
             return 0
 
     @property
-    def net_worth(self):
-        """
-        Returns the monetary value of the class' resources, based on current
-        prices in parent.
-        """
-        prices = self.parent.prices
-        return sum([
-            prices[res] * amount
-            for res, amount
-            in self.real_resources.items()
-        ])
+    def net_worth(self) -> float:
+        return self.real_resources.worth(self.parent.prices)
 
     @property
-    def max_employees(self):
-        land_owned = self.resources["land"] + \
-            INBUILT_RESOURCES[self.class_name]["land"] * self.population
+    def max_employees(self) -> float:
+        land_owned = self.resources.land + \
+            INBUILT_RESOURCES[self.class_name].land * self.population
         return min(
-            self.resources["tools"] / 3,
+            self.resources.tools / 3,
             land_owned / self.parent.sm.worker_land_usage,
         )
 
-    def grow_population(self, modifier: float):
+    def grow_population(self, modifier: float) -> None:
         """
         Modifier specifies by how much to modify the population,
         negative means decrease in numbers.
         Modifier 0 means no change in population.
         Also consumes the class' resources, if they are needed for growth.
         """
-        self.new_population *= (1 + modifier)
+        self.population *= (1 + modifier)
 
-    def consume(self):
+    def consume(self) -> None:
         """
         Removes resources the class consumed in the month.
         """
-        self.new_resources -= Arithmetic_Dict({
-            "food": FOOD_CONSUMPTION * self.population,
-            "wood": WOOD_CONSUMPTION[self.parent.month] * self.population
+        self.resources -= Resources({
+            Resource.food: FOOD_CONSUMPTION * self.population,
+            Resource.wood: WOOD_CONSUMPTION[
+                self.parent.month] * self.population
         })
 
-    def to_dict(self):
+    @abstractmethod
+    def produce(self) -> None:
         """
-        Converts the social class object to a dict. Does not save temporary
-        attributes (new_population and new_resources).
+        Adds resources the class produced in the month.
         """
-        data = {
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Converts the social class object to a dict.
+        """
+        return {
             "population": self.population,
-            "resources": dict(self.resources),
+            "resources": self.resources.to_raw_dict(),
+            "starving": self.starving,
+            "freezing": self.freezing,
+            "demoted_from": self.demoted_from,
+            "demoted_to": self.demoted_to,
+            "promoted_from": self.promoted_from,
+            "promoted_to": self.promoted_to,
             "happiness": self.happiness
         }
-        return data
 
     @classmethod
-    def from_dict(cls, parent, data):
+    def from_dict(cls, parent: State_Data, data: dict[str, Any]) -> Class:
         """
         Creates a social class object from the given dict.
+        lower_class still needs to be set!
         """
-        new_class = cls(parent, data["population"], data["resources"])
-        new_class.happiness = data.get("happiness", 0)
-        return new_class
+        try:
+            new = cls(parent, float(data["population"]),
+                      Resources(data["resources"]))
 
-    def handle_empty_class(self):
-        """
-        Makes classes with pop < 0.5 effectively empty.
-        Flushes the class.
-        """
-        self.flush()
-        if self.is_temp:
-            if self.population + self.temp["population"] < 0.5:
-                # Put all pop and res into temp
-                self.temp["population"] += self.population
-                self.temp["resources"] += self.resources
-                self.new_population = 0
-                self.new_resources = EMPTY_RESOURCES.copy()
-            else:
-                # Untemporarify the class
-                self.temp["resources"] += self.resources
-                self.new_population += self.temp["population"]
-                self.new_resources = self.temp["resources"]
-                self.is_temp = False
-                self.temp = \
-                    {"population": 0, "resources": EMPTY_RESOURCES.copy()}
-        elif self.population < 0.5:
-            # Make the class empty, save pop and res into temp
-            self.is_temp = True
-            self.temp["population"] = self.population
-            self.temp["resources"] = self.resources
-            self.new_population = 0
-            self.new_resources = EMPTY_RESOURCES.copy()
-        self.flush()
+            new.parent = parent
 
-    def handle_negative_resources(self):
-        """
-        Handles minimal negative resources resulting from floating-point
-        rounding errors.
-        """
-        for resource in self._new_resources:
-            if self._new_resources[resource] < 0 and \
-                 abs(self._new_resources[resource]) < 0.001:
-                self._new_resources[resource] = 0
+            new.starving = bool(data["starving"])
+            new.freezing = bool(data["freezing"])
+            new.demoted_from = bool(data["demoted_from"])
+            new.demoted_to = bool(data["demoted_to"])
+            new.promoted_from = bool(data["promoted_from"])
+            new.promoted_to = bool(data["promoted_to"])
 
-    def flush(self):
-        """
-        To be run after multifunctional calculations - to save the temporary
-        changes, after checking validity.
-        """
-        if self._new_population < 0:
-            raise NegativePopulationError
-        if set(self._new_resources.keys()) != set(RESOURCES):
-            raise InvalidResourcesDictError
+            new.happiness = float(data["happiness"])
+        except (KeyError, ValueError) as e:
+            raise InvalidInputError from e
 
-        self.handle_negative_resources()
-        for value in self._new_resources.values():
-            if value < 0:
-                raise NegativeResourcesError
+        return new
 
-        self._population = self._new_population
-        self._resources = self._new_resources.copy()
+    def handle_empty_class(self) -> None:
+        """
+        Makes classes with pop < 0.5 effectively empty. Resources are handed
+        over to the government.
+        """
+        if self.population < 0.5:
+            self.population = 0
+            self.parent.government.resources += self.resources
+            self.resources = Resources()
 
-    def decay_happiness(self):
+    def validate(self) -> None:
         """
-        Changes the happiness a bit towards zero. Changes are bigger the
-        further happiness is from zero.
+        Handles very small amounts of negative resources resulting from
+        floating-point math. Raises an exception if resources is negative
+        after that.
         """
-        self.happiness -= self.happiness_plateau
-        decay = min(0.2 * abs(self.happiness), abs(self.happiness))
+        for resource in Resource:
+            if self.resources[resource] < 0:
+                if -0.0001 < self.resources[resource]:
+                    self.resources[resource] = 0
+                else:
+                    raise ValidationError(
+                        f"{resource.name} in {self.class_name} negative"
+                    )
+
+    def decay_happiness(self) -> None:
+        """
+        Changes the happiness towards zero. Changes are bigger the further
+        happiness is from zero.
+        """
+        decay = max(0.2 * abs(self.happiness), abs(self.happiness))
         sign = -1 if self.happiness > 0 else 1
         self.happiness += sign * decay
-        self.happiness += self.happiness_plateau
-
-    def update_happiness_plateau(self):
-        """
-        Sets happiness plateau based on growth modifiers flags.
-        """
-        self.happiness_plateau = 0
-        if self.starving:
-            self.happiness_plateau -= 20
-        if self.freezing:
-            self.happiness_plateau -= 20
-        if self.demoted_from:
-            self.happiness_plateau -= 10
-        if self.demoted_to:
-            self.happiness_plateau -= 10
-        if self.promoted_from:
-            self.happiness_plateau += 10
-        if self.promoted_to:
-            self.happiness_plateau += 10
 
     @staticmethod
-    def starvation_happiness(part_dead):
+    def starvation_happiness(part_dead: float) -> float:
         """
         Returns the change in happiness of a social class whose given part
         died of starvation or freezing.
@@ -352,9 +251,9 @@ class Class:
         return (percent_dead ** 2.5) / (percent_dead - 100.01) - percent_dead
 
     @staticmethod
-    def resources_seized_happiness(net_worth_seized_per_capita):
+    def resources_seized_happiness(worth_seized_per_capita: float) -> float:
         """
         Returns the change in happiness of a social class whose given part
         of resources was seized by the government.
         """
-        return net_worth_seized_per_capita * -5
+        return worth_seized_per_capita * -5

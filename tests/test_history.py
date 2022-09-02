@@ -120,7 +120,7 @@ def test_obtain_data_1():
         b = ["next 11", "next 1"]
         history = History(a, b)
         history.keys_info["resources_after"] = True, 3, False
-        data = history.obtain_data(["resources_after"])
+        data = history.obtain_whole_history(["resources_after"])
         assert len(data.keys()) == 1
         data = data["resources_after"]
 
@@ -146,7 +146,7 @@ def test_obtain_data_2():
         b = ["next 100"]
         history = History(a, b)
         history.keys_info["abc"] = False, 0, False
-        data = history.obtain_data(["abc"])
+        data = history.obtain_whole_history(["abc"])
         assert len(data) == 1
         data = data["abc"]
 

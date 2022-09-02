@@ -3,19 +3,27 @@
 # of a country.
 
 
-from sources.state.state_data import EveryoneDeadError, RebellionError
-from ..auxiliaries.constants import EMPTY_RESOURCES, MONTHS, RESOURCES, CLASSES
-from ..abstract_interface.interface import (
-    Interface,
-    SaveAccessError,
-    check_input,
-    InvalidArgumentError
-)
+import re
+from enum import Enum, auto
 from math import floor, inf, log10
+from numbers import Real
 from os import mkdir
 from os.path import isdir
 from shutil import rmtree
-import re
+from typing import TYPE_CHECKING, Any, Callable, Iterable, TypeVar
+
+from ..abstract_interface.interface import (Interface, InvalidArgumentError,
+                                            SaveAccessError, check_arg)
+from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
+                                 Month, Resource)
+from ..auxiliaries.resources import Resources
+from ..state.state_data_employ_and_commands import (EveryoneDeadError,
+                                                    RebellionError)
+from .cli_game_commands import (fight, laws, optimal, promote, recruit, secure,
+                                transfer)
+
+if TYPE_CHECKING:
+    from ..state.social_classes.class_file import Class
 
 
 class ShutDownCommand(Exception):
@@ -26,18 +34,21 @@ class InvalidCommand(Exception):
     pass
 
 
-def fill_command(string, commands):
+def fill_command(string: str, commands: Iterable[str]) -> list[str]:
     """
-    Finds all commands fitting the given string. Returns a list of them.
+    Finds all commands beginning with the given string. Returns a list of them.
     """
-    results = []
+    results: list[str] = []
     for command in commands:
         if string == command[0:len(string)]:
             results.append(command)
     return results
 
 
-def help_default():
+def help_default() -> None:
+    """
+    Prints general help about commands.
+    """
     print("List of available commands:")
     print("help [<COMMAND>] - shows help about the program's commands")
     print("exit - exit the program")
@@ -58,7 +69,10 @@ def help_default():
     print("fight <TARGET> - send soldiers to battle")
 
 
-def help_command(command: str):
+def help_command(command: str) -> None:
+    """
+    Prints help about the given command.
+    """
     if command == "help":
         print("help [<COMMAND>]")
         print("Shows information about the given <COMMAND>. If <COMMAND> is"
@@ -243,34 +257,43 @@ def help_command(command: str):
         raise InvalidCommand
 
 
-def help(args: list[str], commands):
+def help(args: list[str], interface: Any) -> None:
+    """
+    Prints help about the given command(s).
+    If none are given, prints general help.
+    Args should be: ["help", commands]
+    """
     if len(args) >= 2:
-        args[1] = fill_command(args[1], commands)
-        if "laws" in args[1]:
+        help_cmds = fill_command(args[1], COMMANDS)
+        if "laws" in help_cmds:
             if len(args) < 3:
                 args.append("")
-            args[2] = fill_command(args[2], {"view", "set"})
-            if args[2] == []:
-                args[2] = ["view", "set"]
+            subcommands = fill_command(args[2], {"view", "set"})
+            if subcommands == []:
+                subcommands = ["view", "set"]
 
-            args[1].remove("laws")
-            for arg in args[2]:
-                args[1].append(f"laws {arg}")
-        if len(args[1]) == 0:
+            help_cmds.remove("laws")
+            for arg in subcommands:
+                help_cmds.append(f"laws {arg}")
+        if len(help_cmds) == 0:
             help_default()
         else:
-            for command in args[1]:
+            for command in help_cmds:
                 help_command(command)
     else:
         help_default()
 
 
-def set_months_of_history(months: int | None, interface: Interface, data):
+T = TypeVar("T")
+
+
+def set_months_of_history(months: int | None, interface: Interface,
+                          data: list[T]) -> tuple[int, list[T]]:
     """
     Cuts the given history data to <months> most recent months. Also returns
     the number of the first month not cut.
     """
-    current_month = MONTHS.index(interface.state.month) + \
+    current_month = interface.state.month.value + \
         interface.state.year * 12
     if months is not None:
         begin_month = max(0, current_month - months)
@@ -279,20 +302,20 @@ def set_months_of_history(months: int | None, interface: Interface, data):
     return begin_month, data[begin_month:]
 
 
-def get_month_string(month_int):
+def get_month_string(month_int: int) -> str:
     """
     Returns a 13-characters long string representing the given month.
     """
-    month = MONTHS[month_int % 12]
+    month = Month(month_int % 12).name
     year = month_int // 12
     return f"{month: >9} {year: >3}"
 
 
-def res_to_str(amount: float | int):
+def res_to_str(amount: float) -> str:
     """
     Returns a string representing the given amount of a resource.
     """
-    if isinstance(amount, float):
+    if isinstance(amount, Real):
         if amount.is_integer():
             amount = int(amount)
     string = str(amount)
@@ -301,7 +324,7 @@ def res_to_str(amount: float | int):
     return string
 
 
-def price_to_str(amount: float):
+def price_to_str(amount: float) -> str:
     """
     Returns a string representing the given amount price.
     """
@@ -325,7 +348,7 @@ def price_to_str(amount: float):
     return string
 
 
-def get_modifiers_from_dict(data):
+def get_modifiers_from_dict(data: dict[str, bool]) -> str:
     """
     Extracts a 6-character long string representing growth modifiers from the
     given growth modifiers dictionary.
@@ -340,205 +363,205 @@ def get_modifiers_from_dict(data):
     return modifiers_string
 
 
-def history(args: list[str], interface: Interface):
+def validate_target_name(target_name: str) -> str:
+    """
+    Fills the given target (class name or government) name to full with
+    fill_command, raises InvalidArgumentError if it's ambiguous or invalid.
+    """
+    target_names = {
+        "nobles", "artisans", "peasants", "others", "government"
+    }
+
+    results = fill_command(target_name, target_names)
+    check_arg(len(results) == 1, "target name ambiguous or invalid")
+    return results[0]
+
+
+class Print_Type(Enum):
+    classes = auto()
+    resources = auto()
+    employment = auto()
+
+
+V = TypeVar("V")
+
+
+def print_history(
+    title: str, type: Print_Type, begin_month: int, data: list[dict[str, V]],
+    transform: Callable[[V], str]
+) -> None:
+    """
+    Prints history given in data. Each value is converted to a string with
+    transform. begin_month decides row headers, type decides column headers.
+    title is printed before everything else.
+    """
+    print(title)
+    match type:
+        case Print_Type.classes:
+            keys = CLASS_NAME_STR
+            print(" " * 14 + " ".join([f"{key.title(): >8}" for key in keys]))
+        case Print_Type.resources:
+            keys = RESOURCE_STR
+            print(" " * 14 + " ".join([f"{key.title(): ^6}" for key in keys]))
+        case Print_Type.employment:
+            keys = CLASS_NAME_STR + ["government"]
+            print(" " * 14 + " ".join([f"{key.title(): ^17}" for key in keys]))
+            print(" " * 14 + " Employees   Wages  " * 5)
+    for index, month_data in enumerate(data):
+        header = f"{get_month_string(index + begin_month)}"
+        strings = [transform(month_data[key]) for key in keys]
+        print(header, ' '.join(strings))
+
+
+def print_resources(full_data: list[dict[str, dict[str, float]]],
+                    target_name: str, begin_month: int, changes: bool) -> None:
+    """
+    Prints the history of resources or resource changes from the given data.
+    target_name decides which class or govt's data to print, changes True
+    signifies resource changes are printes, changes False signifies resources
+    are printed.
+    """
+    data = [{  # Limit data to only the printed target
+                key: vals_dict[target_name]
+                for key, vals_dict in month_data.items()
+            } for month_data in full_data]
+    print_history(
+        f"{target_name.title()} resources "
+        f"{'changes ' if changes else ''}stats:",
+        Print_Type.resources, begin_month, data,
+        lambda res: f"{res_to_str(res): >6}"
+    )
+
+
+def history(args: list[str], interface: Interface) -> None:
+    """
+    Prints data about the state's history.
+    Valid args depend on the option chosen - see help for more information.
+    """
     try:
-        check_input(len(args) > 1, "too few arguments")
+        check_arg(len(args) > 1, "too few arguments")
         arguments = {
             "population", "resources", "prices", "modifiers",
             "change_population", "change_resources", "total_resources",
             "employment", "happiness"
         }
-        args[1] = fill_command(args[1], arguments)
-        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
-        args[1] = args[1][0]
+        arg1s = fill_command(args[1], arguments)
+        check_arg(len(arg1s) == 1, "argument 1 ambiguous or invalid")
+        args[1] = arg1s[0]
 
-        if args[1] in {"resources", "change_resources"}:
-            check_input(len(args) in {3, 4}, "invalid number of arguments")
+        months: int | None
+        try:
+            months = int(args[-1])
+            check_arg(months > 0, "number of months not positive")
+            args.pop()
+        except ValueError:
+            months = None
 
-            options = {
-                "nobles", "artisans", "peasants", "others", "government"
-            }
-            args[2] = fill_command(args[2], options)
-            check_input(len(args[2]) == 1, "argument 2 ambiguous or invalid")
-            args[2] = args[2][0]
-            official_class = args[2].title()
-
-            if len(args) == 4:
-                check_input(args[3].isdigit(),
-                            "number of months contains a non-digit")
-                args[3] = int(args[3])
-                check_input(args[3] > 0, "number of months not positive")
-            else:
-                args.append(None)
-
-            if args[1] == "resources":
-                data = interface.history.resources()
-                begin_month, data = set_months_of_history(
-                    args[3], interface, data
-                )
-                print(f"{official_class} resources stats:")
-                print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
-                      f"{'iron': ^6} {'tools': ^6} {'land': ^6}")
-                for index, month_data in enumerate(data):
-                    line = f"{get_month_string(index + begin_month)}"
-                    for resource in RESOURCES:
-                        res = month_data[args[2]].get(resource, 0)
-                        line += f"{res_to_str(res): >7}"
-                    print(line)
-            else:
-                data = interface.history.resources_change()
-                begin_month, data = set_months_of_history(
-                    args[3], interface, data
-                )
-                print(f"{official_class} resources changes stats:")
-                print(" " * 13 + f" {'food': ^6} {'wood': ^6} {'stone': ^6} "
-                      f"{'iron': ^6} {'tools': ^6} {'land': ^6}")
-                for index, month_data in enumerate(data):
-                    line = f"{get_month_string(index + begin_month)}"
-                    for resource in RESOURCES:
-                        res = month_data[args[2]].get(resource, 0)
-                        line += f"{res_to_str(res): >7}"
-                    print(line)
-        else:
-            check_input(len(args) in {2, 3}, "invalid number of arguments")
-
-            if len(args) == 3:
-                check_input(args[2].isdigit(),
-                            "number of months contains a non-digit")
-                args[2] = int(args[2])
-                check_input(args[2] > 0, "number of months not positive")
-            else:
-                args.append(None)
-
-            if args[1] == "population":
+        match args:
+            case "population":
                 data = interface.history.population()
                 begin_month, data = set_months_of_history(
-                    args[2], interface, data
+                    months, interface, data
                 )
-                print("Population stats:")
-                print(" " * 14 + "  Nobles Artisans Peasants   Others")
-                for index, month_data in enumerate(data):
-                    print(f"{get_month_string(index + begin_month)}"
-                          f"{month_data['nobles']: >9}"
-                          f"{month_data['artisans']: >9}"
-                          f"{month_data['peasants']: >9}"
-                          f"{month_data['others']: >9}")
-            elif args[1] == "prices":
+                print_history("Population stats:", Print_Type.classes,
+                              begin_month, data, lambda pop: f"{pop: >8}")
+
+            case "resources", target_name:
+                target_name = validate_target_name(target_name)
+
+                full_data = interface.history.resources()
+                begin_month, full_data = set_months_of_history(
+                    months, interface, full_data
+                )
+                print_resources(full_data, target_name, begin_month, False)
+
+            case "prices":
                 data = interface.history.prices()
                 begin_month, data = set_months_of_history(
-                    args[2], interface, data
+                    months, interface, data
                 )
-                print("Prices stats:")
-                print(" " * 14 +
-                      "  Food    Wood   Stone    Iron   Tools    Land")
-                for index, month_data in enumerate(data):
-                    print(f"{get_month_string(index + begin_month)}"
-                          f" {price_to_str(month_data['food']): >7}"
-                          f" {price_to_str(month_data['wood']): >7}"
-                          f" {price_to_str(month_data['stone']): >7}"
-                          f" {price_to_str(month_data['iron']): >7}"
-                          f" {price_to_str(month_data['tools']): >7}"
-                          f" {price_to_str(month_data['land']): >7}")
-            elif args[1] == "change_population":
-                data = interface.history.population_change()
-                begin_month, data = set_months_of_history(
-                    args[2], interface, data
-                )
-                print("Population changes stats:")
-                print(" " * 14 + "  Nobles Artisans Peasants   Others")
-                for index, month_data in enumerate(data):
-                    print(f"{get_month_string(index + begin_month)}"
-                          f"{month_data['nobles']: >9}"
-                          f"{month_data['artisans']: >9}"
-                          f"{month_data['peasants']: >9}"
-                          f"{month_data['others']: >9}")
-            elif args[1] == "total_resources":
-                data = interface.history.total_resources()
-                begin_month, data = set_months_of_history(
-                    args[2], interface, data
-                )
-                print("Total resources stats:")
-                print(" " * 14 +
-                      "  Food    Wood   Stone    Iron   Tools    Land")
-                for index, month_data in enumerate(data):
-                    print(f"{get_month_string(index + begin_month)}"
-                          f" {res_to_str(month_data['food']): >7}"
-                          f" {res_to_str(month_data['wood']): >7}"
-                          f" {res_to_str(month_data['stone']): >7}"
-                          f" {res_to_str(month_data['iron']): >7}"
-                          f" {res_to_str(month_data['tools']): >7}"
-                          f" {res_to_str(month_data['land']): >7}")
-            elif args[1] == "modifiers":
+                print_history("Prices stats:", Print_Type.resources,
+                              begin_month, data,
+                              lambda price: f"{price_to_str(price): >6}")
+
+            case "modifiers":
                 data = interface.history.growth_modifiers()
                 begin_month, data = set_months_of_history(
-                    args[2], interface, data
+                    months, interface, data
                 )
-                print("Growth modifiers over time (S - starving, F - freezing,"
-                      " P - promoted from, D - demoted from, p - promoted to, "
-                      "d - demoted to):")
-                print(" " * 14 + "  Nobles Artisans Peasants   Others")
-                for index, month_data in enumerate(data):
-                    print(
-                     f"{get_month_string(index + begin_month)}"
-                     f"{get_modifiers_from_dict(month_data['nobles']): >9}"
-                     f"{get_modifiers_from_dict(month_data['artisans']): >9}"
-                     f"{get_modifiers_from_dict(month_data['peasants']): >9}"
-                     f"{get_modifiers_from_dict(month_data['others']): >9}"
-                    )
-            elif args[1] == "employment":
+                title = "Growth modifiers over time (S - starving,"\
+                        " F - freezing, P - promoted from, D - demoted from,"\
+                        " p - promoted to, d - demoted to):"
+                print_history(
+                    title, Print_Type.classes, begin_month, data,
+                    lambda mods: f"{get_modifiers_from_dict(mods): >8}"
+                )
+
+            case "change_population":
+                data = interface.history.population_change()
+                begin_month, data = set_months_of_history(
+                    months, interface, data
+                )
+                print_history("Population changes stats:", Print_Type.classes,
+                              begin_month, data, lambda pop: f"{pop: >8}")
+
+            case "change_resources", target_name:
+                target_name = validate_target_name(target_name)
+
+                full_data = interface.history.resources_change()
+                begin_month, full_data = set_months_of_history(
+                    months, interface, full_data
+                )
+                print_resources(full_data, target_name, begin_month, True)
+
+            case "total_resources":
+                data = interface.history.total_resources()
+                begin_month, data = set_months_of_history(
+                    months, interface, data
+                )
+                print_history("Total resources stats:", Print_Type.resources,
+                              begin_month, data,
+                              lambda res: f"{res_to_str(res): >6}")
+
+            case "employment":
                 data = interface.history.employment()
-                employees = data["employees"]
-                wages = data["wages"]
-                begin_month, employees = set_months_of_history(
-                    args[2], interface, employees
+                begin_month, data = set_months_of_history(
+                    months, interface, data
                 )
-                begin_month, wages = set_months_of_history(
-                    args[2], interface, wages
-                )
-                print("Employment information:")
+                print_history("Employment information:", Print_Type.employment,
+                              begin_month, data,
+                              lambda info: f"{info[0]: >8} {info[1]: >8}")
 
-                line2, line3 = " " * 13, " " * 13
-                for class_name in CLASSES:
-                    line2 += f" {class_name: ^19}"
-                    line3 += " Employees   Wages  "
-                line2 += f" {'government': ^19}"
-                line3 += " Employees   Wages  "
-                print(line2)
-                print(line3)
-
-                for index, month_data in enumerate(
-                     zip(employees, wages)):
-                    month_emps, month_wags = month_data
-                    line = f"{get_month_string(index + begin_month)}"
-                    for employer in month_emps:
-                        line += f" {month_emps[employer]: ^9}"
-                        line += f" {month_wags[employer]: ^9}"
-                    print(line)
-            elif args[1] == "happiness":
+            case "happiness":
                 data = interface.history.happiness()
                 begin_month, data = set_months_of_history(
-                    args[2], interface, data
+                    months, interface, data
                 )
-                print("Happiness stats:")
-                print(" " * 14 + "  Nobles Artisans Peasants   Others")
-                for index, month_data in enumerate(data):
-                    print(f"{get_month_string(index + begin_month)}"
-                          f"{month_data['nobles']: >9}"
-                          f"{month_data['artisans']: >9}"
-                          f"{month_data['peasants']: >9}"
-                          f"{month_data['others']: >9}")
+                print_history("Happiness stats:", Print_Type.classes,
+                              begin_month, data, lambda hap: f"{hap: >8}")
+
+            case _:
+                raise InvalidArgumentError("invalid number of arguments")
+
     except InvalidArgumentError as e:
         print(f"Invalid syntax: {e}. See help for proper usage of history"
               " command")
 
 
-def save(args: list[str], interface: Interface):
+def save(args: list[str], interface: Interface) -> None:
+    """
+    Saves the game in the directory "saves/{save_name}".
+    Args should be: ["save", save_name]
+    If save_name is not given, the state's previous save name will be reused.
+    """
     try:
         if len(args) == 1:
+            if interface.save_name is None:
+                raise InvalidArgumentError("save name must be given")
             args.append(interface.save_name)
-        check_input(len(args) == 2, "invalid number of arguments")
-        check_input(
-            re.search(r"^\w+$", args[1]),
+        check_arg(len(args) == 2, "invalid number of arguments")
+        check_arg(
+            bool(re.search(r"^\w+$", args[1])),
             "save name can only contain letters, digits and underscores"
         )
         if args[1] == "starting":
@@ -566,13 +589,18 @@ def save(args: list[str], interface: Interface):
               " command")
 
 
-def next(args: list[str], interface: Interface):
+def next(args: list[str], interface: Interface) -> None:
+    """
+    Advances the game to the next month {amount} times.
+    Args should be: ["next", amount]
+    If amount is not given, advances by only one month.
+    """
     try:
-        check_input(len(args) in {1, 2}, "invalid number of arguments")
+        check_arg(len(args) in {1, 2}, "invalid number of arguments")
         if len(args) > 1:
-            check_input(args[1].isdigit(),
-                        "number of months contains a non-digit")
-            check_input(int(args[1]) > 0, "number of months not positive")
+            check_arg(args[1].isdigit(),
+                      "number of months contains a non-digit")
+            check_arg(int(args[1]) > 0, "number of months not positive")
         if len(args) == 1:
             interface.next_month()
         else:
@@ -594,7 +622,11 @@ def next(args: list[str], interface: Interface):
         raise ShutDownCommand
 
 
-def get_modifiers_string(social_class):
+def get_modifiers_from_class(social_class: Class) -> str:
+    """
+    Extracts a growth modifiers string from the given class.
+    The string begins with the class' name.
+    """
     modifiers_string = f"{social_class.class_name: >8}: "
     modifiers_string += "S" if social_class.starving else " "
     modifiers_string += "F" if social_class.freezing else " "
@@ -605,45 +637,52 @@ def get_modifiers_string(social_class):
     return modifiers_string
 
 
-def state(args: list[str], interface: Interface):
+def state(args: list[str], interface: Interface) -> None:
+    """
+    Prints information about the current state of the country.
+    Args should be: ["state", option]
+    """
     try:
-        check_input(len(args) == 2, "invalid number of arguments")
+        check_arg(len(args) == 2, "invalid number of arguments")
 
         arguments = {
             "population", "resources", "prices", "total_resources",
             "modifiers", "government", "employment", "happiness", "military"
         }
-        args[1] = fill_command(args[1], arguments)
-        check_input(len(args[1]) == 1, "argument 1 ambiguous or invalid")
-        args[1] = args[1][0]
+        arg1s = fill_command(args[1], arguments)
+        check_arg(len(arg1s) == 1, "argument 1 ambiguous or invalid")
+        args[1] = arg1s[0]
 
         if args[1] == "population":
             data = [
                 round(social_class.population)
                 for social_class
-                in interface.state.classes
+                in interface.state.classes.values()
             ]
             print("Current population:")
-            for index, class_name in enumerate(CLASSES):
+            for index, class_name in enumerate(CLASS_NAME_STR):
                 print(f"{class_name: >8}: {data[index]}")
+
         elif args[1] == "resources":
             data = {
-                social_class.class_name: round(social_class.real_resources, 1)
+                social_class.class_name.name:
+                round(social_class.real_resources, 1)
                 for social_class
-                in interface.state.classes
+                in interface.state.classes.values()
             }
             data["government"] = \
                 round(interface.state.government.real_resources, 1)
             print("Current resources:")
             line = " " * 10
-            for resource in RESOURCES:
+            for resource in RESOURCE_STR:
                 line += f"{resource: >7}"
             print(line)
             for class_name in data:
-                line = f"{class_name: >10}"
-                for resource in RESOURCES:
+                line = f"{class_name.title(): >10}"
+                for resource in Resource:
                     line += f"{res_to_str(data[class_name][resource]): >7}"
                 print(line)
+
         elif args[1] == "prices":
             data = {
                 resource: price_to_str(price)
@@ -653,76 +692,86 @@ def state(args: list[str], interface: Interface):
             print("Current prices:")
             for resource, price in data.items():
                 print(f"{resource: >5}: {price}")
+
         elif args[1] == "total_resources":
-            data = EMPTY_RESOURCES.copy()
-            for social_class in interface.state.classes:
+            data = Resources()
+            for social_class in interface.state.classes.values():
                 data += social_class.real_resources
             data += interface.state.government.real_resources
             print("Current total resources:")
             for resource, value in data.items():
-                print(f"{resource: >5}: {res_to_str(value)}")
+                print(f"{resource.name: >5}: {res_to_str(value)}")
         elif args[1] == "modifiers":
             print("Current growth modifiers (S - starving, F - freezing, "
                   "P - promoted from, D - demoted from, p - promoted to, "
                   "d - demoted to):")
-            for social_class in interface.state.classes:
-                print(get_modifiers_string(social_class))
+            for social_class in interface.state.classes.values():
+                print(get_modifiers_from_class(social_class))
         elif args[1] == "government":
             print("Government overview:")
             print("Tradeable resources:")
             print("  Food    Wood   Stone    Iron   Tools    Land")
             line = ""
             govt_res = interface.state.government.resources
-            for res in RESOURCES:
+            for res in Resource:
                 line += f" {res_to_str(govt_res[res]): ^7}"
             print(line)
             print("Secure resources (not to be traded away):")
             print("  Food    Wood   Stone    Iron   Tools    Land")
             line = ""
             govt_res = interface.state.government.secure_resources
-            for res in RESOURCES:
+            for res in Resource:
                 line += f" {res_to_str(govt_res[res]): ^7}"
             print(line)
             print("Optimal resources (to be purchased first when trading):")
             print("  Food    Wood   Stone    Iron   Tools    Land")
             line = ""
             govt_res = interface.state.government.optimal_resources
-            for res in RESOURCES:
+            for res in Resource:
                 line += f" {res_to_str(govt_res[res]): ^7}"
             print(line)
             print("Current tax rates:")
             print(" " * 10 + " Nobles  Artisans Peasants  Others")
             line = "Personal:"
             taxes = interface.state.sm.tax_rates['personal']
-            for class_name in CLASSES:
+            for class_name in Class_Name:
                 line += f"  {res_to_str(taxes[class_name]): ^7}"
             print(line)
             line = "Property:"
             taxes = interface.state.sm.tax_rates['property']
-            for class_name in CLASSES:
+            for class_name in Class_Name:
                 line += f"  {res_to_str(taxes[class_name]): ^7}"
             print(line)
             line = "Income:  "
             taxes = interface.state.sm.tax_rates['income']
-            for class_name in CLASSES:
+            for class_name in Class_Name:
                 line += f"  {res_to_str(taxes[class_name]): ^7}"
             print(line)
-            govt_wage = getattr(interface.state.government, "old_wage",
-                                interface.state.sm.others_minimum_wage)
+            govt_wage = interface.state.government.old_wage
             autoreg = interface.state.government.wage_autoregulation
             line = f"Current wage for government employees: {govt_wage}"
             line += f" (autoregulation {'on' if autoreg else 'off'})"
             print(line)
         elif args[1] == "employment":
-            employees = round(interface.state.get_state_data(
-                "employees", True, 0
-            ))
-            wages = round(interface.state.get_state_data(
-                "old_wage", True, interface.state.sm.others_minimum_wage
-            ), 2)
+            employees = {
+                class_name.name: round(social_class.employees)
+                for class_name, social_class
+                in interface.state.classes.items()
+            }
+            employees["government"] = \
+                round(interface.state.government.employees)
+
+            wages = {
+                class_name.name: round(social_class.old_wage, 2)
+                for class_name, social_class
+                in interface.state.classes.items()
+            }
+            wages["government"] = \
+                round(interface.state.government.old_wage, 2)
             print("Current employment information:")
+
             line = " " * 10
-            for resource in RESOURCES:
+            for resource in RESOURCE_STR:
                 line += f"{resource: >7}"
             print(" " * 10 + "Employees   Wages")
             for class_name in employees:
@@ -731,32 +780,29 @@ def state(args: list[str], interface: Interface):
                 line += f" {wages[class_name]: ^9}"
                 print(line)
         elif args[1] == "happiness":
-            data = [
-                round(social_class.happiness, 2)
-                for social_class
-                in interface.state.classes
-            ]
+            data = {
+                class_name.name:
+                round(interface.state.classes[class_name].happiness, 2)
+                for class_name in Class_Name
+            }
             print("Current happiness:")
-            for index, class_name in enumerate(CLASSES):
-                print(f"{class_name: >8}: {data[index]}")
+            for class_name in CLASS_NAME_STR:
+                print(f"{class_name: >8}: {data[class_name]}")
         elif args[1] == "military":
             data = interface.state.government.soldiers
             if not __debug__:
-                data["footmen"] = round(data["footmen"])
-                data["knights"] = round(data["knights"])
+                data = round(data, 0)
             print("Current state of the military:")
-            print(f"Footmen: {data['footmen']}")
-            print(f"Knights: {data['knights']}")
+            print(f"Footmen: {data.footmen}")
+            print(f"Knights: {data.knights}")
             rev = "" if interface.state.government.soldier_revolt else "not "
             print(f"The soldiers are {rev}revolting.")
             brigands, strength = interface.get_brigands()
-            if isinstance(brigands, tuple):
+            if isinstance(brigands, tuple) and isinstance(strength, tuple):
                 print(f"Brigands: {brigands[0]}-{brigands[1]}")
-            else:
-                print(f"Brigands: {brigands}")
-            if isinstance(strength, tuple):
                 print(f"Brigand strength: {strength[0]}-{strength[1]}")
             else:
+                print(f"Brigands: {brigands}")
                 print(f"Brigand strength: {strength}")
 
     except InvalidArgumentError as e:
@@ -764,11 +810,15 @@ def state(args: list[str], interface: Interface):
               " command")
 
 
-def delete_save(args: list[str], *other_args):
+def delete_save(args: list[str], interface: Any) -> None:
+    """
+    Deletes the given save (directory "saves/{save_name}")
+    Args should be: ["delete", save_name]
+    """
     try:
-        check_input(len(args) == 2, "invalid number of arguments")
-        check_input(
-            re.search(r"^\w+$", args[1]),
+        check_arg(len(args) == 2, "invalid number of arguments")
+        check_arg(
+            bool(re.search(r"^\w+$", args[1])),
             "save name can only contain letters, digits and underscores"
         )
         if args[1] == "starting":
@@ -793,7 +843,10 @@ def delete_save(args: list[str], *other_args):
               " command")
 
 
-def exit_game(*args):
+def exit_game(args: Any, interface: Any) -> None:
+    """
+    Exits the game after asking the user for confirmation.
+    """
     print("Are you sure you want to quit? Unsaved game state will be lost.")
     while True:
         ans = input("Enter 1 to confirm, 0 to abort: ").strip()
@@ -803,3 +856,21 @@ def exit_game(*args):
             break
         else:
             print("Invalid choice.")
+
+
+COMMANDS: dict[str, Callable[[list[str], Interface], None]] = {
+    "save": save,
+    "exit": exit_game,
+    "history": history,
+    "next": next,
+    "state": state,
+    "delete": delete_save,
+    "transfer": transfer,
+    "secure": secure,
+    "optimal": optimal,
+    "laws": laws,
+    "promote": promote,
+    "recruit": recruit,
+    "fight": fight,
+    "help": help
+}

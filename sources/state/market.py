@@ -1,6 +1,27 @@
-from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
-from ..auxiliaries.constants import DEFAULT_PRICES, EMPTY_RESOURCES
-from .social_classes.class_file import Class
+from __future__ import annotations
+
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Protocol, Sequence
+
+from ..auxiliaries.constants import DEFAULT_PRICES
+from ..auxiliaries.resources import Resources
+
+if TYPE_CHECKING:
+    from .state_data import State_Data
+
+
+class SupportsTrade(Protocol):
+    resources: Resources
+    market_res: Resources
+    money: float
+
+    @property
+    @abstractmethod
+    def optimal_resources(self) -> Resources:
+        """
+        Should return optimal resources for the given object, for trade
+        purposes.
+        """
 
 
 class Market:
@@ -10,25 +31,21 @@ class Market:
     classes - objects between which trade is done
     prices - prices of resources in the last done trade
     """
-    def __init__(self, classes: "list[Class]", parent):
-        """
-        Instead of Class, can accept any object that has properties:
-        resources, optimal_resources
-        """
-        self.classes = classes.copy()
-        self.parent = parent
+    def __init__(self, classes: Sequence[SupportsTrade], parent: State_Data):
+        self.classes: list[SupportsTrade] = list(classes)
+        self.parent: State_Data = parent
 
     def _get_available_and_needed_resources(self):
         """
         Calculates how much resources are available and needed.
         """
-        self.needed_resources = EMPTY_RESOURCES.copy()
-        self.available_resources = EMPTY_RESOURCES.copy()
+        self.needed_resources: Resources = Resources()
+        self.available_resources: Resources = Resources()
         for social_class in self.classes:
             self.needed_resources += social_class.optimal_resources
             self.available_resources += social_class.resources
         if not hasattr(self, "old_avail_res"):
-            self.old_avail_res = self.available_resources.copy()
+            self.old_avail_res: Resources = self.available_resources.copy()
 
     def _set_prices(self):
         """
@@ -64,11 +81,14 @@ class Market:
         Executes the classes purchasing resources they need.
         """
         for social_class in self.classes:
-            if hasattr(social_class, "population"):
-                if social_class.population == 0:
+            try:
+                # social_class doesn't have to have population attribute
+                if social_class.population == 0:  # type: ignore
                     continue
+            except AttributeError:
+                pass
 
-            corrected_optimal_resources = Arithmetic_Dict({})
+            corrected_optimal_resources = Resources()
             rel_prices = self._full_prices / DEFAULT_PRICES
             price_adjusted = {
                 resource: amount / (rel_prices[resource]
@@ -98,7 +118,7 @@ class Market:
                     corrected_optimal_resources * part_bought
                 self.available_resources -= social_class.market_res
             else:
-                social_class.market_res = EMPTY_RESOURCES.copy()
+                social_class.market_res = Resources()
 
     def _buy_other_resources(self):
         """
@@ -107,9 +127,12 @@ class Market:
         total_price = sum((self.available_resources * self.prices).values())
         if total_price > 0:
             for social_class in self.classes:
-                if hasattr(social_class, "population"):
-                    if social_class.population == 0:
+                try:
+                    # social_class doesn't have to have population attribute
+                    if social_class.population == 0:  # type: ignore
                         continue
+                except AttributeError:
+                    pass
 
                 part_bought = social_class.money / total_price
                 social_class.market_res += \
@@ -118,29 +141,37 @@ class Market:
         else:
             classes_count = 0
             for social_class in self.classes:
-                if hasattr(social_class, "population"):
-                    if social_class.population == 0:
+                try:
+                    # social_class doesn't have to have population attribute
+                    if social_class.population == 0:  # type: ignore
                         continue
+                except AttributeError:
+                    pass
                 classes_count += 1
             for social_class in self.classes:
-                if hasattr(social_class, "population"):
-                    if social_class.population == 0:
+                try:
+                    # social_class doesn't have to have population attribute
+                    if social_class.population == 0:  # type: ignore
                         continue
+                except AttributeError:
+                    pass
                 social_class.market_res += \
                     self.available_resources / classes_count
-        self.available_resources = EMPTY_RESOURCES.copy()
+        self.available_resources = Resources()
 
     def _delete_trade_attributes(self):
         """
         Finalizes trade and deletes attributes used during trade calculations.
         """
         for social_class in self.classes:
-            if hasattr(social_class, "population"):
-                if social_class.population == 0:
+            try:
+                # social_class doesn't have to have population attribute
+                if social_class.population == 0:  # type: ignore
                     continue
+            except AttributeError:
+                pass
             del social_class.money
-            social_class.new_resources = social_class.market_res
-            social_class.flush()
+            social_class.resources = social_class.market_res
             del social_class.market_res
 
         self.old_avail_res = self.available_resources.copy()
@@ -150,10 +181,7 @@ class Market:
     def do_trade(self):
         """
         Executes trade between the classes.
-        WARNING: Flushes all the classes.
         """
-        for social_class in self.classes:
-            social_class.flush()
         self._get_available_and_needed_resources()
         self._set_prices()
         self._buy_needed_resources()

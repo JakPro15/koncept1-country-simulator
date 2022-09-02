@@ -1,4 +1,4 @@
-from sources.state.social_classes.class_file import Class
+from ..sources.state.social_classes.class_file import Class
 from ..sources.state.state_data import (
     State_Data, Nobles, Artisans, Peasants, Others, Government
 )
@@ -16,7 +16,7 @@ from ..sources.auxiliaries.constants import (
     OTHERS_MINIMUM_WAGE,
     PLUNDER_FACTOR,
     RECRUITMENT_COST,
-    RESOURCES,
+    RESOURCE_NAMES,
     STARVATION_MORTALITY,
     TAX_RATES,
     WAGE_CHANGE,
@@ -479,7 +479,7 @@ def test_to_dict():
             "max_prices": {
                 resource: MAX_PRICES
                 for resource
-                in RESOURCES
+                in RESOURCE_NAMES
             }
         }
     }
@@ -848,7 +848,7 @@ def test_do_starvation():
 
     state._do_starvation()
     for social_class in state.classes:
-        for res in RESOURCES:
+        for res in RESOURCE_NAMES:
             assert social_class.new_resources[res] >= 0
 
     assert state.classes[0].new_population == 0
@@ -2617,7 +2617,7 @@ def test_get_monetary_value():
         "wood": 20,
         "stone": 300,
     }
-    assert state._get_monetary_value(resources) == 941
+    assert state.get_monetary_value(resources) == 941
 
     resources = {
         "food": 1,
@@ -2627,7 +2627,7 @@ def test_get_monetary_value():
         "tools": 10000,
         "land": 100000
     }
-    assert state._get_monetary_value(resources) == 654321
+    assert state.get_monetary_value(resources) == 654321
 
     resources = {
         "food": 34,
@@ -2636,7 +2636,7 @@ def test_get_monetary_value():
         "iron": 0,
         "land": 10
     }
-    assert state._get_monetary_value(resources) == 414
+    assert state.get_monetary_value(resources) == 414
 
 
 def test_distribute_produced_and_used():

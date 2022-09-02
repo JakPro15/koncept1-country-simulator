@@ -1,15 +1,15 @@
-from PySide6.QtWidgets import (
-    QPushButton, QHBoxLayout, QLineEdit,
-    QVBoxLayout, QLabel, QMessageBox, QDialog, QSlider
-)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit,
+                               QMessageBox, QPushButton, QSlider, QVBoxLayout,
+                               QWidget)
+
 from .auxiliaries import crashing_slot
 
 
 class Number_Select_Dialog(QDialog):
     def __init__(self, min: int, max: int, window_title: str, header: str,
-                 parent=None):
+                 parent: QWidget | None = None):
         super().__init__(parent)
 
         self.header = QLabel(header)
@@ -18,20 +18,26 @@ class Number_Select_Dialog(QDialog):
         self.slider.setMinimum(min)
         self.slider.setMaximum(max)
         self.slider.setMinimumWidth(300)
-        self.slider.valueChanged[int].connect(self.slider_changed)
+        self.slider.valueChanged[int].connect(  # type: ignore
+            self.slider_changed
+        )
 
         self.right_edit = QLineEdit()
         self.right_edit.setValidator(QRegularExpressionValidator(r"^\d*$"))
         self.right_edit.setFixedWidth(50)
         self.right_edit.setText(str(min))
-        self.right_edit.textEdited[str].connect(self.edit_changed)
+        self.right_edit.textEdited[str].connect(  # type: ignore
+            self.edit_changed
+        )
 
         self.input_layout = QHBoxLayout()
         self.input_layout.addWidget(self.slider)
         self.input_layout.addWidget(self.right_edit)
 
         self.confirm_button = QPushButton("Confirm")
-        self.confirm_button.clicked[None].connect(self.confirmed)
+        self.confirm_button.clicked[None].connect(  # type: ignore
+            self.confirmed
+        )
 
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(self.header)
@@ -42,11 +48,11 @@ class Number_Select_Dialog(QDialog):
         self.setWindowTitle(window_title)
 
     @crashing_slot
-    def slider_changed(self, slider_value: int):
+    def slider_changed(self, slider_value: int) -> None:
         self.right_edit.setText(str(slider_value))
 
     @crashing_slot
-    def edit_changed(self, text):
+    def edit_changed(self, text: str) -> None:
         if text:
             if int(text) > self.slider.maximum():
                 QMessageBox.warning(self, "Warning", "Invalid value")
@@ -57,9 +63,9 @@ class Number_Select_Dialog(QDialog):
             self.slider.setValue(int(self.right_edit.text()))
 
     @crashing_slot
-    def confirmed(self):
+    def confirmed(self) -> None:
         self.accept()
 
-    def exec(self):
+    def exec(self) -> int:
         super().exec()
         return self.slider.value()

@@ -5,7 +5,7 @@ from ..sources.auxiliaries.constants import (
     FOOD_PRODUCTION,
     INBUILT_RESOURCES,
     PEASANT_TOOL_USAGE,
-    RESOURCES,
+    RESOURCE_NAMES,
     WOOD_CONSUMPTION,
     WOOD_PRODUCTION
 )
@@ -422,7 +422,7 @@ def test_produce_january():
     }
 
     peasants.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert peasants._new_resources[res] == approx(final_res[res])
 
 
@@ -448,7 +448,7 @@ def test_produce_august():
     }
 
     peasants.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert peasants._new_resources[res] == approx(final_res[res])
 
 
@@ -479,7 +479,7 @@ def test_produce_different_prices():
     }
 
     peasants.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert peasants._new_resources[res] == approx(final_res[res])
 
 
@@ -632,7 +632,7 @@ def test_handle_negative_resources():
         "land": 0
     })
 
-    peasants.handle_negative_resources()
+    peasants.validate()
     assert peasants.new_resources == {
         "food": 100,
         "wood": -100,

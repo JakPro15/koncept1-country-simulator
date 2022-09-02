@@ -1,7 +1,5 @@
-from ...auxiliaries.constants import (
-    CLASSES
-)
-from ...auxiliaries.arithmetic_dict import Arithmetic_Dict
+from ...auxiliaries.enums import Class_Name, Resource
+from ...auxiliaries.resources import Resources
 from .class_file import Class
 
 
@@ -14,21 +12,21 @@ class Artisans(Class):
     They demote to Others.
     """
     @property
-    def class_name(self):
-        return CLASSES[1]
+    def class_name(self) -> Class_Name:
+        return Class_Name.artisans
 
-    def produce(self):
+    def produce(self) -> None:
         """
         Adds resources the class produced in the current month.
         """
-        produced = Arithmetic_Dict({
-            "tools": self.parent.sm.tools_production * self.population
+        produced = Resources({
+            Resource.tools: self.parent.sm.tools_production * self.population
         })
-        used = Arithmetic_Dict({
-            "wood": self.parent.sm.artisan_wood_usage * self.population,
-            "iron": self.parent.sm.artisan_iron_usage * self.population,
-            "tools": self.parent.sm.artisan_tool_usage * self.population
+        used = Resources({
+            Resource.wood: self.parent.sm.artisan_wood_usage * self.population,
+            Resource.iron: self.parent.sm.artisan_iron_usage * self.population,
+            Resource.tools: self.parent.sm.artisan_tool_usage * self.population
         })
 
-        self.new_resources -= used
-        self.new_resources += produced
+        self.resources -= used
+        self.resources += produced

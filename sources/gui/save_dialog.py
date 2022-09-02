@@ -1,28 +1,38 @@
-from PySide6.QtWidgets import (
-    QDialog, QLineEdit, QVBoxLayout, QPushButton, QMessageBox
-)
-from PySide6.QtGui import QRegularExpressionValidator
 import re
 from os import mkdir
 from os.path import isdir
 from shutil import rmtree
-from .confirm_dialog import Confirm_Dialog
+from typing import TYPE_CHECKING
+
+from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtWidgets import (QDialog, QLineEdit, QMessageBox, QPushButton,
+                               QVBoxLayout)
+
 from ..abstract_interface.interface import SaveAccessError
+from .auxiliaries import crashing_slot
+from .confirm_dialog import Confirm_Dialog
+
+if TYPE_CHECKING:
+    from .command_window import Command_Window
 
 
 class Save_Dialog(QDialog):
-    def __init__(self, delete=False, parent=None):
+    def __init__(self, parent: Command_Window, delete: bool = False
+                 ) -> None:
         super().__init__(parent)
+        self._parent = parent
         self.delete = delete
 
         self.dirname_input = QLineEdit()
         self.dirname_input.setPlaceholderText("Enter the name of the save")
-        if not self.delete:
-            self.dirname_input.setText(self.parent().interface.save_name)
+        if not self.delete and self._parent.interface.save_name:
+            self.dirname_input.setText(self._parent.interface.save_name)
         self.dirname_input.setValidator(QRegularExpressionValidator(r"^\w+$"))
 
         self.confirm_button = QPushButton("Confirm")
-        self.confirm_button.clicked[None].connect(self.confirmed)
+        self.confirm_button.clicked[None].connect(  # type: ignore
+            self.confirmed
+        )
 
         self.layout_ = QVBoxLayout()
         self.layout_.addWidget(self.dirname_input)
@@ -34,7 +44,8 @@ class Save_Dialog(QDialog):
         else:
             self.setWindowTitle("Save")
 
-    def confirmed(self):
+    @crashing_slot
+    def confirmed(self) -> None:
         if not re.search(r"^\w+$", self.dirname_input.text()):
             QMessageBox.warning(self, "Warning", "Invalid save name")
             return
@@ -58,7 +69,7 @@ class Save_Dialog(QDialog):
                     return
 
             try:
-                self.parent().interface.save_data(
+                self._parent.interface.save_data(
                     f"{self.dirname_input.text()}"
                 )
             except SaveAccessError:

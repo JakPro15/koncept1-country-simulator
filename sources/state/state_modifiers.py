@@ -1,31 +1,25 @@
-from ..auxiliaries.constants import (
-    AVG_FOOD_PRODUCTION,
-    FOOD_RATIOS,
-    MAX_PRICES,
-    MINER_TOOL_USAGE,
-    NOBLES_CAP,
-    DEFAULT_GROWTH_FACTOR,
-    DEFAULT_PRICES,
-    FOOD_CONSUMPTION,
-    FREEZING_MORTALITY,
-    INBUILT_RESOURCES,
-    INCREASE_PRICE_FACTOR,
-    STARVATION_MORTALITY,
-    WOOD_CONSUMPTION,
-    IRON_PRODUCTION,
-    STONE_PRODUCTION,
-    OTHERS_MINIMUM_WAGE,
-    ARTISAN_IRON_USAGE,
-    ARTISAN_TOOL_USAGE,
-    ARTISAN_WOOD_USAGE,
-    TOOLS_PRODUCTION,
-    PEASANT_TOOL_USAGE,
-    WOOD_PRODUCTION,
-    WORKER_LAND_USAGE,
-    TAX_RATES
-)
-from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from copy import deepcopy
+from typing import TYPE_CHECKING
+
+from ..auxiliaries.enums import Class_Name, Resource
+
+from ..auxiliaries.constants import (ARTISAN_IRON_USAGE, ARTISAN_TOOL_USAGE,
+                                     ARTISAN_WOOD_USAGE, AVG_FOOD_PRODUCTION,
+                                     DEFAULT_GROWTH_FACTOR, DEFAULT_PRICES,
+                                     FOOD_CONSUMPTION, FOOD_RATIOS,
+                                     FREEZING_MORTALITY, INBUILT_RESOURCES,
+                                     INCREASE_PRICE_FACTOR, IRON_PRODUCTION,
+                                     MAX_PRICES, MINER_TOOL_USAGE, NOBLES_CAP,
+                                     OTHERS_MINIMUM_WAGE, PEASANT_TOOL_USAGE,
+                                     STARVATION_MORTALITY, STONE_PRODUCTION,
+                                     TAX_RATES, TOOLS_PRODUCTION,
+                                     WOOD_CONSUMPTION, WOOD_PRODUCTION,
+                                     WORKER_LAND_USAGE)
+from ..auxiliaries.enums import Month
+from ..auxiliaries.resources import Resources
+
+if TYPE_CHECKING:
+    from .state_data import State_Data
 
 
 class State_Modifiers:
@@ -34,8 +28,8 @@ class State_Modifiers:
     mid-game by the player's actions.
     They start out as constants from auxiliaries/constants.py.
     """
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, parent: State_Data) -> None:
+        self.parent: State_Data = parent
 
         # ALL DICT CONSTANTS HERE MUST BE COPIED, not just assigned
         self.miner_tool_usage = MINER_TOOL_USAGE
@@ -67,48 +61,52 @@ class State_Modifiers:
         self.tax_rates = deepcopy(TAX_RATES)
 
     @property
-    def food_production(self):
+    def food_production(self) -> dict[Month, float]:
         return FOOD_RATIOS * self.avg_food_production
 
     @property
-    def optimal_resources(self):
+    def optimal_resources(self) -> dict[Class_Name, Resources]:
         return {
-            "nobles": Arithmetic_Dict({
-                "food": 12 * FOOD_CONSUMPTION,
-                "wood": sum(WOOD_CONSUMPTION.values()),
-                "stone": 2 * INBUILT_RESOURCES["nobles"]["stone"],
-                "iron": 0,
-                "tools": 4 + (4 * self.parent.get_available_employees() /
-                              self.parent.classes[0].population)
-                if self.parent.classes[0].population > 0 else 4,
-                "land": (self.worker_land_usage *
-                         self.parent.get_available_employees() /
-                         self.parent.classes[0].population)
-                if self.parent.classes[0].population > 0 else 0,
+            Class_Name.nobles: Resources({
+                Resource.food: 12 * FOOD_CONSUMPTION,
+                Resource.wood: sum(WOOD_CONSUMPTION.values()),
+                Resource.stone: 2 * INBUILT_RESOURCES[Class_Name.nobles].stone,
+                Resource.iron: 0,
+                Resource.tools:
+                (4 * self.parent.get_available_employees() /
+                 self.parent.classes[Class_Name.nobles].population) + 4
+                if self.parent.classes[Class_Name.nobles].population > 0
+                else 4,
+                Resource.land:
+                (self.worker_land_usage *
+                 self.parent.get_available_employees() /
+                 self.parent.classes[Class_Name.nobles].population)
+                if self.parent.classes[Class_Name.nobles].population > 0
+                else 0,
             }),
-            "artisans": Arithmetic_Dict({
-                "food": 4 * FOOD_CONSUMPTION,
-                "wood": sum(WOOD_CONSUMPTION.values()) / 3 +
-                4 * self.artisan_wood_usage,
-                "stone": 0,
-                "iron": 20 * self.artisan_iron_usage,
-                "tools": 4 * self.artisan_tool_usage,
-                "land": 0
+            Class_Name.artisans: Resources({
+                Resource.food: 4 * FOOD_CONSUMPTION,
+                Resource.wood: (sum(WOOD_CONSUMPTION.values()) / 3 +
+                                4 * self.artisan_wood_usage),
+                Resource.stone: 0,
+                Resource.iron: 20 * self.artisan_iron_usage,
+                Resource.tools: 4 * self.artisan_tool_usage,
+                Resource.land: 0
             }),
-            "peasants": Arithmetic_Dict({
-                "food": 4 * FOOD_CONSUMPTION,
-                "wood": sum(WOOD_CONSUMPTION.values()) / 3,
-                "stone": 0,
-                "iron": 0,
-                "tools": 4 * self.peasant_tool_usage,
-                "land": 0.5 * self.worker_land_usage
+            Class_Name.peasants: Resources({
+                Resource.food: 4 * FOOD_CONSUMPTION,
+                Resource.wood: sum(WOOD_CONSUMPTION.values()) / 3,
+                Resource.stone: 0,
+                Resource.iron: 0,
+                Resource.tools: 4 * self.peasant_tool_usage,
+                Resource.land: 0.5 * self.worker_land_usage
             }),
-            "others": Arithmetic_Dict({
-                "food": 4 * FOOD_CONSUMPTION,
-                "wood": sum(WOOD_CONSUMPTION.values()) / 3,
-                "stone": 0,
-                "iron": 0,
-                "tools": 0,
-                "land": 0
+            Class_Name.others: Resources({
+                Resource.food: 4 * FOOD_CONSUMPTION,
+                Resource.wood: sum(WOOD_CONSUMPTION.values()) / 3,
+                Resource.stone: 0,
+                Resource.iron: 0,
+                Resource.tools: 0,
+                Resource.land: 0
             }),
         }

@@ -579,7 +579,7 @@ def test_handle_negative_resources():
         "land": 0
     })
 
-    nobles.handle_negative_resources()
+    nobles.validate()
     assert nobles.new_resources == {
         "food": 100,
         "wood": -100,

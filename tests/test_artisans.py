@@ -5,7 +5,7 @@ from ..sources.auxiliaries.constants import (
     EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
-    RESOURCES,
+    RESOURCE_NAMES,
     TOOLS_PRODUCTION,
     WOOD_CONSUMPTION
 )
@@ -419,7 +419,7 @@ def test_produce_1():
     }
 
     artisans.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert artisans._new_resources[res] == approx(final_res[res])
 
 
@@ -445,7 +445,7 @@ def test_produce_2():
     }
 
     artisans.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert artisans._new_resources[res] == approx(final_res[res])
 
 
@@ -600,7 +600,7 @@ def test_handle_negative_resources():
         "land": 0
     })
 
-    artisans.handle_negative_resources()
+    artisans.validate()
     assert artisans.new_resources == {
         "food": 100,
         "wood": -100,

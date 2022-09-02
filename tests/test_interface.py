@@ -1,6 +1,6 @@
 from pytest import raises
-from sources.auxiliaries.constants import INBUILT_RESOURCES, RECRUITMENT_COST
-from sources.state.government import Government
+from ..sources.auxiliaries.constants import INBUILT_RESOURCES, RECRUITMENT_COST
+from ..sources.state.government import Government
 from ..sources.abstract_interface.interface import (
     Interface,
     NotEnoughClassPopulation,

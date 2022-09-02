@@ -1,13 +1,49 @@
-from PySide6.QtWidgets import QApplication
-import traceback
+from typing import Callable, ParamSpec, TypeVar
+
+from PySide6.QtWidgets import QApplication, QLabel, QWidget
+
+P = ParamSpec("P")
+V = TypeVar("V")
 
 
-def crashing_slot(inner):
-    def crashing_inner(*args, **kwargs):
+def crashing_slot(inner: Callable[P, V]) -> Callable[P, V]:
+    def crashing_inner(*args: P.args, **kwargs: P.kwargs) -> V:
         try:
-            inner(*args, **kwargs)
+            return inner(*args, **kwargs)
         except BaseException:
-            if __debug__:
-                traceback.print_exc()
             QApplication.exit()
+            raise
     return crashing_inner
+
+
+class Value_Label(QLabel):
+    def __init__(self, desc: str, value: float | None = None,
+                 parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._desc: str = desc
+        self._value: float | None = value
+        self.update()
+
+    @property
+    def desc(self) -> str:
+        return self._desc
+
+    @desc.setter
+    def desc(self, new_desc: str) -> None:
+        self._desc = new_desc
+        self._update()
+
+    @property
+    def value(self) -> float | None:
+        return self._value
+
+    @value.setter
+    def value(self, new_value: float | None) -> None:
+        self._value = new_value
+        self._update()
+
+    def _update(self) -> None:
+        if self.value:
+            self.setText(f"{self.desc}: {self.value}")
+        else:
+            self.setText(f"{self.desc}:")

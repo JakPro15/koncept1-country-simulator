@@ -1,24 +1,16 @@
-from ..abstract_interface.interface import (
-    Interface,
-    MalformedSaveError,
-    SaveAccessError
-)
-from .cli_commands import (
-    ShutDownCommand, fill_command, help, save, history, next, state,
-    delete_save, exit_game
-)
-from .cli_game_commands import (
-    transfer, secure, optimal, laws, promote, recruit, fight
-)
 import traceback
 
+from ..abstract_interface.interface import (Interface, MalformedSaveError,
+                                            SaveAccessError)
+from .cli_commands import COMMANDS, ShutDownCommand, fill_command
 
-def command_line_interface(dirname):
+
+def command_line_interface(dirname_to_load: str) -> None:
     try:
-        print("Loading saves/" + dirname)
+        print("Loading saves/" + dirname_to_load)
         interface = Interface()
         try:
-            interface.load_data(dirname)
+            interface.load_data(dirname_to_load)
         except SaveAccessError:
             print("Failed to open the save file. Shutting down.")
             return
@@ -42,38 +34,21 @@ def command_line_interface(dirname):
 
 
 def execute(command: str, interface: Interface):
-    commands = {
-        "save": (save, interface),
-        "exit": (exit_game, None),
-        "history": (history, interface),
-        "next": (next, interface),
-        "state": (state, interface),
-        "delete": (delete_save, None),
-        "transfer": (transfer, interface),
-        "secure": (secure, interface),
-        "optimal": (optimal, interface),
-        "laws": (laws, interface),
-        "promote": (promote, interface),
-        "recruit": (recruit, interface),
-        "fight": (fight, interface)
-    }
-    commands["help"] = (help, commands.keys())
-
     answer = command.split(' ')
-    answer[0] = fill_command(answer[0], commands.keys())
-    if len(answer[0]) == 0:
+    given_cmd_options = fill_command(answer[0], COMMANDS.keys())
+    if len(given_cmd_options) == 0:
         print("Invalid command. Enter help for a list of"
               " commands.")
-    elif len(answer[0]) > 1:
+    elif len(given_cmd_options) > 1:
         strin = ""
-        for option in answer[0]:
+        for option in given_cmd_options:
             strin += option
             strin += " "
         print(strin)
     else:
-        answer[0] = answer[0][0]
-        if answer[0] in commands:
-            commands[answer[0]][0](answer, commands[answer[0]][1])
+        command = given_cmd_options[0]
+        if command in COMMANDS:
+            COMMANDS[command](answer, interface)
         else:
             print("Invalid command. Enter help for a list of"
                   " commands.")

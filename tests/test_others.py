@@ -2,7 +2,7 @@ from ..sources.auxiliaries.constants import (
     EMPTY_RESOURCES,
     FOOD_CONSUMPTION,
     INBUILT_RESOURCES,
-    RESOURCES,
+    RESOURCE_NAMES,
     WOOD_CONSUMPTION
 )
 from ..sources.state.state_data import State_Data
@@ -374,7 +374,7 @@ def test_produce_january():
     final_res = resources.copy()
 
     others.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert others._new_resources[res] == approx(final_res[res])
 
 
@@ -393,7 +393,7 @@ def test_produce_august():
     final_res = resources.copy()
 
     others.produce()
-    for res in RESOURCES:
+    for res in RESOURCE_NAMES:
         assert others._new_resources[res] == approx(final_res[res])
 
 
@@ -546,7 +546,7 @@ def test_handle_negative_resources():
         "land": 0
     })
 
-    others.handle_negative_resources()
+    others.validate()
     assert others.new_resources == {
         "food": 100,
         "wood": -100,

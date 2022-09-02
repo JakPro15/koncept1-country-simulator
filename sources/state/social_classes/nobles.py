@@ -1,4 +1,4 @@
-from ...auxiliaries.constants import CLASSES
+from ...auxiliaries.enums import Class_Name
 from .class_file import Class
 
 
@@ -12,11 +12,10 @@ class Nobles(Class):
     They demote to Peasants.
     """
     @property
-    def class_name(self):
-        return CLASSES[0]
+    def class_name(self) -> Class_Name:
+        return Class_Name.nobles
 
-    def produce(self):
+    def produce(self) -> None:
         """
         Nobles do not produce anything by themselves.
         """
-        pass
