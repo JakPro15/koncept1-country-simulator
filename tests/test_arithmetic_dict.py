@@ -1,666 +1,320 @@
+from math import inf, isinf, isnan, exp, nan
+from random import randint
+from typing import Callable
+
 from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from math import inf
-from pytest import approx
+from ..sources.auxiliaries.testing import dict_eq
+from pytest import raises
+
+
+def get_numbers() -> tuple[list[float],
+                           Arithmetic_Dict[str],
+                           Arithmetic_Dict[str]]:
+    def rand_no_zero() -> int:
+        result = 0
+        while result == 0:
+            result = randint(-10000, 10000)
+        return result
+
+    numbers = [randint(-10000, 10000) / rand_no_zero()
+               for _ in range(2700)]
+
+    first = Arithmetic_Dict({
+        str(i): numbers[i] for i in range(1500)
+    })
+    second = Arithmetic_Dict({
+        str(i): numbers[i + 1000] for i in range(500, 1700)
+    })
+    return numbers, first, second
+
+
+def get_result(
+    numbers: list[float], operation: Callable[[float, float], float]
+) -> dict[str, float]:
+    result: dict[str, float] = {}
+    for i in range(500):
+        result[str(i)] = operation(numbers[i], 0)
+    for i in range(500, 1500):
+        result[str(i)] = operation(numbers[i], numbers[i + 1000])
+    for i in range(1500, 1700):
+        result[str(i)] = operation(0, numbers[i + 1000])
+    return result
 
 
 def test_addition():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 5,
-        "wood": 4,
-        "stone": 3,
-        "iron": 1,
-        "tools": 2
-    })
-    resources3 = resources1 + resources2
-    assert resources3 == {
-        "food": 5,
-        "wood": 5,
-        "stone": 5,
-        "iron": 4,
-        "tools": 6
-    }
+    numbers, first, second = get_numbers()
+    assert dict_eq(first + second, get_result(numbers, lambda x, y: x + y))
 
 
-def test_assignment_addition():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 5,
-        "wood": 4,
-        "stone": 3,
-        "iron": 1,
-        "tools": 2
-    })
-    resources1 += resources2
-    assert resources1 == {
-        "food": 5,
-        "wood": 5,
-        "stone": 5,
-        "iron": 4,
-        "tools": 6
-    }
+def test_addition_assignment():
+    numbers, first, second = get_numbers()
+    first += second
+    assert dict_eq(first, get_result(numbers, lambda x, y: x + y))
 
 
 def test_subtraction():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
+    numbers, first, second = get_numbers()
+    assert dict_eq(first - second, get_result(numbers, lambda x, y: x - y))
+
+
+def test_subtraction_assignment():
+    numbers, first, second = get_numbers()
+    first -= second
+    assert dict_eq(first, get_result(numbers, lambda x, y: x - y))
+
+
+def test_multiplication_dict():
+    numbers, first, second = get_numbers()
+    assert dict_eq(first * second, get_result(numbers, lambda x, y: x * y))
+
+    third = Arithmetic_Dict({"a": inf, "b": 0})
+    fourth = Arithmetic_Dict({"a": 0, "b": -inf})
+    assert third * fourth == {"a": 0, "b": 0}
+
+
+def test_multiplication_dict_assignment():
+    numbers, first, second = get_numbers()
+    first *= second
+    assert dict_eq(first, get_result(numbers, lambda x, y: x * y))
+
+    third = Arithmetic_Dict({"a": inf, "b": 0})
+    fourth = Arithmetic_Dict({"a": 0, "b": -inf})
+    third *= fourth
+    assert third == {"a": 0, "b": 0}
+
+
+def test_multiplication_float():
+    numbers, first, _ = get_numbers()
+    assert dict_eq(first * 3.5, get_result(numbers, lambda x, y: x * 3.5))
+
+    third = Arithmetic_Dict({"a": inf, "b": -inf})
+    assert third * 0 == {"a": 0, "b": 0}
+
+
+def test_multiplication_float_assignment():
+    numbers, first, _ = get_numbers()
+    first *= -3.5
+    assert dict_eq(first, get_result(numbers, lambda x, y: x * -3.5))
+
+    third = Arithmetic_Dict({"a": inf, "b": -inf})
+    third *= 0
+    assert third == {"a": 0, "b": 0}
+
+
+def test_division_dict():
+    numbers, first, second = get_numbers()
+    assert dict_eq(first / second, get_result(
+        numbers, lambda x, y: x / y if y != 0 else (inf if x != 0 else 0) * x))
+
+    third = Arithmetic_Dict({"a": inf, "b": inf})
+    fourth = Arithmetic_Dict({"a": inf, "b": -inf})
+    fifth = third / fourth
+    assert isnan(fifth["a"]) and isnan(fifth["b"])
+
+
+def test_division_dict_assignment():
+    numbers, first, second = get_numbers()
+    first /= second
+    assert dict_eq(first, get_result(
+        numbers, lambda x, y: x / y if y != 0 else (inf if x != 0 else 0) * x))
+
+    third = Arithmetic_Dict({"a": inf, "b": inf})
+    fourth = Arithmetic_Dict({"a": inf, "b": -inf})
+    third /= fourth
+    assert isnan(third["a"]) and isnan(third["b"])
+
+
+def test_division_float():
+    numbers, first, _ = get_numbers()
+    assert dict_eq(first / -3.5, get_result(numbers, lambda x, y: x / -3.5))
+
+    third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
+    assert third / 0 == {"a": -inf, "b": inf, "c": -inf}
+
+
+def test_division_float_assignment():
+    numbers, first, _ = get_numbers()
+    first /= 3.5
+    assert dict_eq(first, get_result(numbers, lambda x, y: x / 3.5))
+
+    third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
+    third /= 0
+    assert third == {"a": -inf, "b": inf, "c": -inf}
+
+
+def test_floor_division_dict():
+    numbers, first, second = get_numbers()
+    assert dict_eq(first / second, get_result(
+        numbers, lambda x, y: x / y if y != 0
+        else (inf if x != 0 else 0) * x))
+
+    third = Arithmetic_Dict({"a": inf, "b": inf})
+    fourth = Arithmetic_Dict({"a": inf, "b": -inf})
+    fifth = third // fourth
+    assert isnan(fifth["a"]) and isnan(fifth["b"])
+
+
+def test_floor_division_dict_assignment():
+    numbers, first, second = get_numbers()
+    first //= second
+    assert dict_eq(first, get_result(
+        numbers, lambda x, y: x // y if y != 0
+        else (inf if x != 0 else 0) * x))
+
+    third = Arithmetic_Dict({"a": inf, "b": inf})
+    fourth = Arithmetic_Dict({"a": inf, "b": -inf})
+    third //= fourth
+    assert isnan(third["a"]) and isnan(third["b"])
+
+
+def test_floor_division_float():
+    numbers, first, _ = get_numbers()
+    result = first // -3.5
+    assert dict_eq(result, get_result(numbers, lambda x, y: x // -3.5))
+    assert result is not first
+
+    third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
+    result = third // 0
+    assert result == {"a": -inf, "b": inf, "c": -inf}
+    assert result is not third
+
+
+def test_floor_division_float_assignment():
+    numbers, first, _ = get_numbers()
+    first //= 3.5
+    assert dict_eq(first, get_result(numbers, lambda x, y: x // 3.5))
+
+    third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
+    third //= 0
+    assert third == {"a": -inf, "b": inf, "c": -inf}
+
+
+def test_lesser_than_dict():
+    _, first, _ = get_numbers()
+    minimum = min(first.values())
+    second = Arithmetic_Dict({
+        key: minimum - abs(val)
+        for key, val in first.items()
     })
-    resources2 = Arithmetic_Dict({
-        "food": 5,
-        "wood": 4,
-        "stone": 3,
-        "iron": 1,
-        "tools": 2
-    })
-    resources3 = resources1 - resources2
-    assert resources3 == {
-        "food": -5,
-        "wood": -3,
-        "stone": -1,
-        "iron": 2,
-        "tools": 2
+    assert not first < second
+
+    third = {
+        key: minimum + abs(val)
+        for key, val in first.items()
     }
+    assert first < third
+    assert second < third
 
 
-def test_assignment_subtraction():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 5,
-        "wood": 4,
-        "stone": 3,
-        "iron": 1,
-        "tools": 2
-    })
-    resources1 -= resources2
-    assert resources1 == {
-        "food": -5,
-        "wood": -3,
-        "stone": -1,
-        "iron": 2,
-        "tools": 2
-    }
+def test_lesser_than_float():
+    _, first, _ = get_numbers()
+    minimum = min(first.values())
+    maximum = max(first.values())
 
-
-def test_multiplication_by_dict():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": inf,
-        "wood": 4,
-        "stone": 3,
-        "iron": 1,
-        "tools": 2
-    })
-    resources3 = resources1 * resources2
-    assert resources3 == {
-        "food": 0,
-        "wood": 4,
-        "stone": 6,
-        "iron": 3,
-        "tools": 8
-    }
-
-
-def test_assignment_multiplication_by_dict():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": inf,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 5,
-        "wood": 4,
-        "stone": 3,
-        "tools": 2
-    })
-    resources1 *= resources2
-    assert resources1 == {
-        "food": 0,
-        "wood": 4,
-        "stone": 6,
-        "iron": 0,
-        "tools": 8
-    }
-
-
-def test_multiplication_by_factor():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources3 = resources1 * 4
-    assert resources3 == {
-        "wood": 4,
-        "stone": 8,
-        "iron": 12,
-        "tools": 16
-    }
-
-
-def test_multiplication_by_inf():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources3 = resources1 * inf
-    assert resources3 == {
-        "wood": inf,
-        "stone": inf,
-        "iron": inf,
-        "tools": inf
-    }
-
-
-def test_assignment_multiplication_by_factor():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources1 *= 4
-    assert resources1 == {
-        "wood": 4,
-        "stone": 8,
-        "iron": 12,
-        "tools": 16
-    }
-
-
-def test_assignment_multiplication_by_zero():
-    resources1 = Arithmetic_Dict({
-        "food": -inf,
-        "wood": 1,
-        "stone": inf,
-        "iron": 3,
-        "tools": 4
-    })
-    resources1 *= 0
-    assert resources1 == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0
-    }
-
-
-def test_division_by_dict():
-    resources1 = Arithmetic_Dict({
-        "food": 2,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": inf,
-        "wood": 4,
-        "iron": 1,
-        "tools": 2
-    })
-    resources3 = resources1 / resources2
-    assert resources3 == {
-        "food": 0,
-        "wood": approx(0.25),
-        "stone": inf,
-        "iron": 3,
-        "tools": 2
-    }
-
-
-def test_assignment_division_by_dict():
-    resources1 = Arithmetic_Dict({
-        "food": 2,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": inf,
-        "wood": 4,
-        "stone": 3,
-        "tools": 2
-    })
-    resources1 /= resources2
-    assert resources1 == {
-        "food": 0,
-        "wood": approx(0.25),
-        "stone": approx(0.667, abs=0.001),
-        "iron": inf,
-        "tools": 2
-    }
-
-
-def test_division_by_factor():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources3 = resources1 / 4
-    assert resources3 == {
-        "wood": approx(0.25),
-        "stone": approx(0.5),
-        "iron": approx(0.75),
-        "tools": 1
-    }
-
-
-def test_division_by_zero():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources3 = resources1 / 0
-    assert resources3 == {
-        "food": 0,
-        "wood": inf,
-        "stone": inf,
-        "iron": inf,
-        "tools": inf
-    }
-
-
-def test_assignment_division_by_factor():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources1 /= 4
-    assert resources1 == {
-        "food": 0,
-        "wood": approx(0.25),
-        "stone": approx(0.5),
-        "iron": approx(0.75),
-        "tools": 1
-    }
-
-
-def test_assignment_division_by_zero():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources1 /= 0
-    assert resources1 == {
-        "wood": inf,
-        "stone": inf,
-        "iron": inf,
-        "tools": inf
-    }
-
-
-def test_floor_division_by_dict():
-    resources1 = Arithmetic_Dict({
-        "food": 2,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": inf,
-        "wood": 4,
-        "iron": 1,
-        "tools": 2
-    })
-    resources3 = resources1 // resources2
-    assert resources3 == {
-        "food": 0,
-        "wood": 0,
-        "stone": inf,
-        "iron": 3,
-        "tools": 2
-    }
-
-
-def test_assignment_floor_division_by_dict():
-    resources1 = Arithmetic_Dict({
-        "food": 2,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": inf,
-        "wood": 4,
-        "stone": 3,
-        "iron": 0,
-        "tools": 2
-    })
-    resources1 //= resources2
-    assert resources1 == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": inf,
-        "tools": 2
-    }
-
-
-def test_floor_division_by_factor():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources3 = resources1 // 4
-    assert resources3 == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1
-    }
-
-
-def test_floor_division_by_zero():
-    resources1 = Arithmetic_Dict({
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources3 = resources1 // 0
-    assert resources3 == {
-        "wood": inf,
-        "stone": inf,
-        "iron": inf,
-        "tools": inf
-    }
-
-
-def test_assignment_floor_division_by_factor():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources1 //= 4
-    assert resources1 == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1
-    }
-
-
-def test_assignment_floor_division_by_zero():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources1 //= 0
-    assert resources1 == {
-        "food": 0,
-        "wood": inf,
-        "stone": inf,
-        "iron": inf,
-        "tools": inf
-    }
-
-
-def test_lesser_than_operator_on_dicts_both_ways():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 4,
-        "wood": 3,
-        "stone": 2,
-        "iron": 1,
-        "tools": 0
-    })
-    assert resources1 < resources2
-    assert resources2 < resources1
-
-    resources2 = dict(resources2)
-    assert resources1 < resources2
-
-
-def test_lesser_than_operator_on_dicts_strictly_lesser():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 1,
-        "wood": 2,
-        "stone": 3,
-        "iron": 4,
-        "tools": 5
-    })
-    assert resources1 < resources2
-    assert not resources2 < resources1
-
-    resources2 = dict(resources2)
-    assert resources1 < resources2
-
-
-def test_lesser_than_operator_on_dicts_equals():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    assert not resources1 < resources1
-
-    resources2 = dict(resources1)
-    assert not resources1 < resources2
-
-
-def test_lesser_than_operator_with_number_various_values():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    assert resources1 < 4
-    assert resources1 < 1
-    assert not resources1 < 0
-    assert not resources1 < -1.5
-
-
-def test_lesser_than_operator_with_number_equals():
-    resources1 = Arithmetic_Dict({
-        "stone": 4,
-        "iron": 4,
-        "tools": 4
-    })
-    assert not resources1 < 4
-    assert resources1 < 4.5
-    assert not resources1 < 3.5
+    assert not first < minimum
+    assert first < minimum + 0.1
+    assert first < maximum
 
 
 def test_copy():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
-    })
-    resources2 = resources1.copy()
-    assert isinstance(resources2, Arithmetic_Dict)
-    assert resources2 == {
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 3,
-        "tools": 4
+    _, first, second = get_numbers()
+    first_copy = first.copy()
+    assert first == first_copy
+    assert first is not first_copy
+
+    second_copy = second.copy()
+    assert second == second_copy
+    assert second is not second_copy
+
+
+def test_exp():
+    _, first, second = get_numbers()
+    assert (first / 100).exp() == {
+        key: exp(val / 100) for key, val in first.items()
+    }
+    assert (second / 100).exp() == {
+        key: exp(val / 100) for key, val in second.items()
     }
 
 
 def test_int():
-    res = Arithmetic_Dict({
-        "a": 2.3,
-        "b": 5.0,
-        "c": -1.2
-    })
-    assert res.int() == {
-        "a": 2,
-        "b": 5,
-        "c": -1
+    _, first, second = get_numbers()
+    first_int, second_int = first.int(), second.int()
+    assert first_int == {
+        key: int(val) for key, val in first.items()
     }
+    for value in first_int.values():
+        assert isinstance(value, int)
 
-    res = Arithmetic_Dict({
-        "a": 2.333333,
-        "b": 5,
-        "c": "23",
-        "d": Arithmetic_Dict({
-            "e": -3.01,
-            "f": 0.0
-        })
-    })
-    assert res.int() == {
-        "a": 2,
-        "b": 5,
-        "c": 23,
-        "d": {
-            "e": -3,
-            "f": 0
-        }
+    assert second_int == {
+        key: int(val) for key, val in second.items()
     }
+    for value in second_int.values():
+        assert isinstance(value, int)
 
 
 def test_float():
-    res = Arithmetic_Dict({
-        "a": 2.3,
-        "b": 5,
-        "c": -1.2
-    })
-    res = res.float()
-    assert res == {
-        "a": 2.3,
-        "b": 5.0,
-        "c": -1.2
-    }
-    assert isinstance(res["a"], float)
-    assert isinstance(res["b"], float)
-    assert isinstance(res["c"], float)
+    _, first, second = get_numbers()
+    first_float = first.float()
+    assert first_float == first
+    for value in first_float.values():
+        assert isinstance(value, float)
 
-    res = Arithmetic_Dict({
-        "a": 2.333333,
-        "b": 5,
-        "c": "2.3",
-        "d": Arithmetic_Dict({
-            "e": -3.01,
-            "f": 0,
-            "g": "-1"
-        })
-    })
-    res = res.float()
-    assert res == {
-        "a": 2.333333,
-        "b": 5,
-        "c": 2.3,
-        "d": {
-            "e": -3.01,
-            "f": 0.0,
-            "g": -1.0
-        }
-    }
-    assert isinstance(res["a"], float)
-    assert isinstance(res["b"], float)
-    assert isinstance(res["c"], float)
-    assert isinstance(res["d"]["e"], float)
-    assert isinstance(res["d"]["f"], float)
-    assert isinstance(res["d"]["g"], float)
+    second = second.int()
+    second_float = second.float()
+    assert second_float == second
+    for value in second_float.values():
+        assert isinstance(value, float)
+
+
+def test_round_one():
+    # ignoring private use warnings
+    assert isinf(Arithmetic_Dict._round(inf))  # type: ignore
+    assert isinf(Arithmetic_Dict._round(-inf))  # type: ignore
+    assert isnan(Arithmetic_Dict._round(nan))  # type: ignore
+
+    numbers, _, _ = get_numbers()
+    for num in numbers:
+        rounded = Arithmetic_Dict._round(num)  # type: ignore
+        assert rounded == round(num)
+        assert isinstance(rounded, int)
+
+        rounded = Arithmetic_Dict._round(num, 1)  # type: ignore
+        assert rounded == round(num, 1)
+        assert isinstance(rounded, float)
+
+        rounded = Arithmetic_Dict._round(num, -1)  # type: ignore
+        assert rounded == round(num, -1)
+        assert isinstance(rounded, int)
 
 
 def test_round():
-    resources1 = Arithmetic_Dict({
-        "food": 0,
-        "wood": 1.1111,
-        "stone": 2,
-        "iron": 37.3456,
-        "tools": 14.2
-    })
+    numbers, first, second = get_numbers()
+    assert dict_eq(round(first, 1), get_result(
+        numbers, lambda x, y: round(x, 1)))
 
-    resources2 = round(resources1)
-    assert isinstance(resources2, Arithmetic_Dict)
-    assert resources2 == {
-        "food": 0,
-        "wood": 1,
-        "stone": 2,
-        "iron": 37,
-        "tools": 14
-    }
+    rounded = round(second, -1)
+    assert dict_eq(rounded, get_result(
+        numbers, lambda x, y: round(y, -1)))
+    for val in rounded.values():
+        assert isinstance(val, int)
 
-    resources2 = round(resources1, 2)
-    assert isinstance(resources2, Arithmetic_Dict)
-    assert resources2 == {
-        "food": 0,
-        "wood": 1.11,
-        "stone": 2,
-        "iron": 37.35,
-        "tools": 14.2
-    }
+    for val in round(first, 0).values():
+        assert isinstance(val, int)
 
-    resources2 = round(resources1, -1)
-    assert isinstance(resources2, Arithmetic_Dict)
-    assert resources2 == {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 40,
-        "tools": 10
-    }
+    with raises(TypeError):
+        round(first)
+
+
+def test_calculate_ratios():
+    _, first, second = get_numbers()
+    first_total = sum(first.values())
+    assert first.calculate_ratios() == first / first_total
+
+    second_total = sum(second.values())
+    assert second.calculate_ratios() == second / second_total
+
+    # make the sum of first's values zero
+    first["0"] -= first_total
+    # check if the ratios values are all zeros
+    assert dict_eq(first.calculate_ratios(), {})

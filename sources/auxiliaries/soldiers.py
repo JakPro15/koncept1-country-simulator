@@ -70,3 +70,9 @@ class Soldiers(Arithmetic_Dict[Soldier]):
         return {
             key.name: value for key, value in self.items()
         }
+
+    def __getitem__(self, __k: Soldier) -> float:
+        return self.get(__k, 0)
+
+    def __delitem__(self, __k: Soldier) -> None:
+        self[__k] = 0

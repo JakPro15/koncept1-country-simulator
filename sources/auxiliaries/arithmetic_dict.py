@@ -2,36 +2,35 @@ from __future__ import annotations
 
 from math import exp, inf, isinf, isnan
 from numbers import Real
-from typing import Any, Generic, Hashable, Mapping, TypeVar, overload
+from typing import Generic, Hashable, Mapping, TypeVar, overload
+
 from typing_extensions import Self
 
 T = TypeVar("T", bound=Hashable)
 
 
 class Arithmetic_Dict(Generic[T], dict[T, float]):
-    def __add__(self, other: Mapping[Any, float]) -> Self:
+    def __add__(self, other: Mapping[T, float]) -> Self:
         result = self.copy()
         for key in self | other:
             result[key] = self.get(key, 0) + other.get(key, 0)
         return result
 
-    def __IADD__(self, other: Mapping[Any, float]) -> Self:
+    def __IADD__(self, other: Mapping[T, float]) -> None:
         for key in self | other:
             self[key] = self.get(key, 0) + other.get(key, 0)
-        return self
 
-    def __sub__(self, other: Mapping[Any, float]) -> Self:
+    def __sub__(self, other: Mapping[T, float]) -> Self:
         result = self.copy()
         for key in self | other:
             result[key] = self.get(key, 0) - other.get(key, 0)
         return result
 
-    def __ISUB__(self, other: Mapping[Any, float]) -> Self:
+    def __ISUB__(self, other: Mapping[T, float]) -> None:
         for key in self | other:
             self[key] = self.get(key, 0) - other.get(key, 0)
-        return self
 
-    def __mul__(self, factor: Mapping[Any, float] | float) -> Self:
+    def __mul__(self, factor: Mapping[T, float] | float) -> Self:
         result = self.copy()
         if isinstance(factor, Mapping):
             for key in self | factor:
@@ -48,7 +47,7 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
                             " a real number")
         return result
 
-    def __IMUL__(self, factor: Mapping[Any, float] | float) -> Self:
+    def __IMUL__(self, factor: Mapping[T, float] | float) -> None:
         if isinstance(factor, Mapping):
             for key in self | factor:
                 self[key] = self.get(key, 0) * factor.get(key, 0)
@@ -62,9 +61,8 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
         else:
             raise TypeError("multiplication factor must be a mapping object or"
                             " a real number")
-        return self
 
-    def __truediv__(self, factor: Mapping[Any, float] | float) -> Self:
+    def __truediv__(self, factor: Mapping[T, float] | float) -> Self:
         result = self.copy()
         if isinstance(factor, Mapping):
             for key in self | factor:
@@ -74,7 +72,7 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
                     if self.get(key, 0) == 0:
                         result[key] = 0
                     else:
-                        result[key] = inf
+                        result[key] = inf * self.get(key, 0)
         elif isinstance(factor, Real):
             for key in result:
                 try:
@@ -83,33 +81,32 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
                     if self.get(key, 0) == 0:
                         result[key] = 0
                     else:
-                        result[key] = inf
+                        result[key] = inf * self.get(key, 0)
         else:
             raise TypeError("division factor must be a mapping object or"
                             " a real number")
         return result
 
-    def __IDIV__(self, factor: Mapping[Any, float] | float) -> Self:
+    def __IDIV__(self, factor: Mapping[T, float] | float) -> None:
         if isinstance(factor, Mapping):
             for key in self | factor:
                 try:
                     self[key] = self.get(key, 0) / factor.get(key, 0)
                 except ZeroDivisionError:
                     if self.get(key, 0) != 0:
-                        self[key] = inf
+                        self[key] = inf * self.get(key, 0)
         elif isinstance(factor, Real):
             for key in self:
                 try:
                     self[key] = self.get(key, 0) / factor
                 except ZeroDivisionError:
                     if self.get(key, 0) != 0:
-                        self[key] = inf
+                        self[key] = inf * self.get(key, 0)
         else:
             raise TypeError("division factor must be a mapping object or"
                             " a real number")
-        return self
 
-    def __floordiv__(self, factor: Mapping[Any, float] | float) -> Self:
+    def __floordiv__(self, factor: Mapping[T, float] | float) -> Self:
         result = self.copy()
         if isinstance(factor, Mapping):
             for key in self | factor:
@@ -119,7 +116,7 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
                     if self.get(key, 0) == 0:
                         result[key] = 0
                     else:
-                        result[key] = inf
+                        result[key] = inf * self.get(key, 0)
         elif isinstance(factor, Real):
             for key in result:
                 try:
@@ -128,33 +125,32 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
                     if self.get(key, 0) == 0:
                         result[key] = 0
                     else:
-                        result[key] = inf
+                        result[key] = inf * self.get(key, 0)
         else:
             raise TypeError("division factor must be a mapping object or"
                             " a real number")
         return result
 
-    def __IFLOORDIV__(self, factor: Mapping[Any, float] | float) -> Self:
+    def __IFLOORDIV__(self, factor: Mapping[T, float] | float) -> None:
         if isinstance(factor, Mapping):
             for key in self | factor:
                 try:
                     self[key] = self.get(key, 0) // factor.get(key, 0)
                 except ZeroDivisionError:
                     if self.get(key, 0) != 0:
-                        self[key] = inf
+                        self[key] = inf * self.get(key, 0)
         elif isinstance(factor, Real):
             for key in self:
                 try:
                     self[key] = self.get(key, 0) // factor
                 except ZeroDivisionError:
                     if self.get(key, 0) != 0:
-                        self[key] = inf
+                        self[key] = inf * self.get(key, 0)
         else:
             raise TypeError("division factor must be a mapping object or"
                             " a real number")
-        return self
 
-    def __lt__(self, other: Mapping[Any, float] | float) -> bool:
+    def __lt__(self, other: Mapping[T, float] | float) -> bool:
         """
         Returns True if and only if one of the elements is smaller than its
         counterpart in the other mapping object. If other is a number, returns
@@ -230,12 +226,12 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
     def __round__(self, ndigits: int | None = None
                   ) -> Self | int:
         if ndigits is None:
-            raise ValueError(
+            raise TypeError(
                 "round of an arithmetic dict must provide a second argument"
             )
         result = self.copy()
         for key in result:
-            result[key] = Arithmetic_Dict[T]._round(result[key], ndigits)
+            result[key] = Arithmetic_Dict._round(result[key], ndigits)
         return result
 
     def calculate_ratios(self) -> Arithmetic_Dict[T]:
@@ -245,7 +241,7 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
         If sum of values is 0 then returns a dict of zeros.
         """
         total = sum(self.values())
-        if total != 0:
+        if abs(total) > 1e-10:
             ratios = self / total
         else:
             ratios = Arithmetic_Dict({

@@ -87,7 +87,7 @@ class Resources(Arithmetic_Dict[Resource]):
         Returns the value of these Resources under the given prices.
         """
         result = 0
-        for res in self:
+        for res in Resource:
             result += self[res] * prices[res]
         return result
 
@@ -97,5 +97,11 @@ class Resources(Arithmetic_Dict[Resource]):
         not enumerators, as keys.
         """
         return {
-            key.name: value for key, value in self.items()
+            key.name: self.get(key, 0) for key in Resource
         }
+
+    def __getitem__(self, __k: Resource) -> float:
+        return self.get(__k, 0)
+
+    def __delitem__(self, __k: Resource) -> None:
+        self[__k] = 0
