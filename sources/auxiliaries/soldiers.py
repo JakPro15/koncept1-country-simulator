@@ -16,7 +16,7 @@ class Soldiers(Arithmetic_Dict[Soldier]):
     by enumerator - res[Soldier.knights]
     """
     def __init__(
-        self, soldiers: Mapping[Soldier, float] | float | None = None
+        self, soldiers: Mapping[Soldier, float] | float = {}
     ) -> None:
         """
         If a dict is given as argument, the object is constructed from it.
@@ -31,7 +31,7 @@ class Soldiers(Arithmetic_Dict[Soldier]):
         elif isinstance(soldiers, Real):
             for sol in Soldier:
                 self[sol] = soldiers
-        elif soldiers is not None:
+        else:
             raise TypeError("soldiers argument must be a dict or a number")
 
     @property
@@ -40,7 +40,7 @@ class Soldiers(Arithmetic_Dict[Soldier]):
 
     @footmen.setter
     def footmen(self, new: float) -> None:
-        self[Soldier.footmen] = float(new)
+        self[Soldier.footmen] = new
 
     @property
     def knights(self) -> float:
@@ -48,7 +48,7 @@ class Soldiers(Arithmetic_Dict[Soldier]):
 
     @knights.setter
     def knights(self, new: float) -> None:
-        self[Soldier.knights] = float(new)
+        self[Soldier.knights] = new
 
     @property
     def strength(self) -> float:
@@ -66,13 +66,10 @@ class Soldiers(Arithmetic_Dict[Soldier]):
         """
         Converts the Soldiers object into a raw dict, with resource names,
         not enumerators, as keys.
+        Ignores all keys that are not of type Soldier.
         """
-        return {
-            key.name: value for key, value in self.items()
-        }
-
-    def __getitem__(self, __k: Soldier) -> float:
-        return self.get(__k, 0)
+        return {key.name: self[key] for key in Soldier}
 
     def __delitem__(self, __k: Soldier) -> None:
+        # so that all Soldier enumerators are always keys of the object
         self[__k] = 0

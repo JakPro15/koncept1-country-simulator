@@ -15,7 +15,7 @@ class Resources(Arithmetic_Dict[Resource]):
     by enumerator - res[Resource.land]
     """
     def __init__(
-        self, resources: Mapping[Resource, float] | float | None = None
+        self, resources: Mapping[Resource, float] | float = {}
     ) -> None:
         """
         If a dict is given as argument, the object is constructed from it.
@@ -30,13 +30,13 @@ class Resources(Arithmetic_Dict[Resource]):
         elif isinstance(resources, Real):
             for res in Resource:
                 self[res] = resources
-        elif resources is not None:
+        else:
             raise TypeError("Resources construction argument must be a mapping"
                             " object or a real number")
 
     @property
     def food(self) -> float:
-        return self.get(Resource.food, 0.0)
+        return self[Resource.food]
 
     @food.setter
     def food(self, new: float) -> None:
@@ -44,43 +44,43 @@ class Resources(Arithmetic_Dict[Resource]):
 
     @property
     def wood(self) -> float:
-        return self.get(Resource.wood, 0.0)
+        return self[Resource.wood]
 
     @wood.setter
     def wood(self, new: float) -> None:
-        self[Resource.wood] = float(new)
+        self[Resource.wood] = new
 
     @property
     def stone(self) -> float:
-        return self.get(Resource.stone, 0.0)
+        return self[Resource.stone]
 
     @stone.setter
     def stone(self, new: float) -> None:
-        self[Resource.stone] = float(new)
+        self[Resource.stone] = new
 
     @property
     def iron(self) -> float:
-        return self.get(Resource.iron, 0.0)
+        return self[Resource.iron]
 
     @iron.setter
     def iron(self, new: float) -> None:
-        self[Resource.iron] = float(new)
+        self[Resource.iron] = new
 
     @property
     def tools(self) -> float:
-        return self.get(Resource.tools, 0.0)
+        return self[Resource.tools]
 
     @tools.setter
     def tools(self, new: float) -> None:
-        self[Resource.tools] = float(new)
+        self[Resource.tools] = new
 
     @property
     def land(self) -> float:
-        return self.get(Resource.land, 0.0)
+        return self[Resource.land]
 
     @land.setter
     def land(self, new: float) -> None:
-        self[Resource.land] = float(new)
+        self[Resource.land] = new
 
     def worth(self, prices: Mapping[Resource, float]) -> float:
         """
@@ -95,13 +95,10 @@ class Resources(Arithmetic_Dict[Resource]):
         """
         Converts the Resources object into a raw dict, with resource names,
         not enumerators, as keys.
+        Ignores all keys that are not of type Resource.
         """
-        return {
-            key.name: self.get(key, 0) for key in Resource
-        }
-
-    def __getitem__(self, __k: Resource) -> float:
-        return self.get(__k, 0)
+        return {key.name: self[key] for key in Resource}
 
     def __delitem__(self, __k: Resource) -> None:
+        # so that all Resource enumerators are always keys in Resources
         self[__k] = 0

@@ -1,10 +1,10 @@
-from math import inf, isinf, isnan, exp, nan
+from math import exp, inf, isinf, isnan, nan
 from random import randint
 from typing import Callable
 
-from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from ..sources.auxiliaries.testing import dict_eq
 from pytest import raises
+
+from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
 
 
 def get_numbers() -> tuple[list[float],
@@ -43,29 +43,29 @@ def get_result(
 
 def test_addition():
     numbers, first, second = get_numbers()
-    assert dict_eq(first + second, get_result(numbers, lambda x, y: x + y))
+    assert first + second == get_result(numbers, lambda x, y: x + y)
 
 
 def test_addition_assignment():
     numbers, first, second = get_numbers()
     first += second
-    assert dict_eq(first, get_result(numbers, lambda x, y: x + y))
+    assert first == get_result(numbers, lambda x, y: x + y)
 
 
 def test_subtraction():
     numbers, first, second = get_numbers()
-    assert dict_eq(first - second, get_result(numbers, lambda x, y: x - y))
+    assert first - second == get_result(numbers, lambda x, y: x - y)
 
 
 def test_subtraction_assignment():
     numbers, first, second = get_numbers()
     first -= second
-    assert dict_eq(first, get_result(numbers, lambda x, y: x - y))
+    assert first == get_result(numbers, lambda x, y: x - y)
 
 
 def test_multiplication_dict():
     numbers, first, second = get_numbers()
-    assert dict_eq(first * second, get_result(numbers, lambda x, y: x * y))
+    assert first * second == get_result(numbers, lambda x, y: x * y)
 
     third = Arithmetic_Dict({"a": inf, "b": 0})
     fourth = Arithmetic_Dict({"a": 0, "b": -inf})
@@ -75,7 +75,7 @@ def test_multiplication_dict():
 def test_multiplication_dict_assignment():
     numbers, first, second = get_numbers()
     first *= second
-    assert dict_eq(first, get_result(numbers, lambda x, y: x * y))
+    assert first == get_result(numbers, lambda x, y: x * y)
 
     third = Arithmetic_Dict({"a": inf, "b": 0})
     fourth = Arithmetic_Dict({"a": 0, "b": -inf})
@@ -85,7 +85,7 @@ def test_multiplication_dict_assignment():
 
 def test_multiplication_float():
     numbers, first, _ = get_numbers()
-    assert dict_eq(first * 3.5, get_result(numbers, lambda x, y: x * 3.5))
+    assert first * 3.5 == get_result(numbers, lambda x, y: x * 3.5)
 
     third = Arithmetic_Dict({"a": inf, "b": -inf})
     assert third * 0 == {"a": 0, "b": 0}
@@ -94,7 +94,7 @@ def test_multiplication_float():
 def test_multiplication_float_assignment():
     numbers, first, _ = get_numbers()
     first *= -3.5
-    assert dict_eq(first, get_result(numbers, lambda x, y: x * -3.5))
+    assert first == get_result(numbers, lambda x, y: x * -3.5)
 
     third = Arithmetic_Dict({"a": inf, "b": -inf})
     third *= 0
@@ -103,8 +103,8 @@ def test_multiplication_float_assignment():
 
 def test_division_dict():
     numbers, first, second = get_numbers()
-    assert dict_eq(first / second, get_result(
-        numbers, lambda x, y: x / y if y != 0 else (inf if x != 0 else 0) * x))
+    assert first / second == get_result(
+        numbers, lambda x, y: x / y if y != 0 else (inf if x != 0 else 0) * x)
 
     third = Arithmetic_Dict({"a": inf, "b": inf})
     fourth = Arithmetic_Dict({"a": inf, "b": -inf})
@@ -115,8 +115,8 @@ def test_division_dict():
 def test_division_dict_assignment():
     numbers, first, second = get_numbers()
     first /= second
-    assert dict_eq(first, get_result(
-        numbers, lambda x, y: x / y if y != 0 else (inf if x != 0 else 0) * x))
+    assert first == get_result(
+        numbers, lambda x, y: x / y if y != 0 else (inf if x != 0 else 0) * x)
 
     third = Arithmetic_Dict({"a": inf, "b": inf})
     fourth = Arithmetic_Dict({"a": inf, "b": -inf})
@@ -126,7 +126,7 @@ def test_division_dict_assignment():
 
 def test_division_float():
     numbers, first, _ = get_numbers()
-    assert dict_eq(first / -3.5, get_result(numbers, lambda x, y: x / -3.5))
+    assert first / -3.5 == get_result(numbers, lambda x, y: x / -3.5)
 
     third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
     assert third / 0 == {"a": -inf, "b": inf, "c": -inf}
@@ -135,7 +135,7 @@ def test_division_float():
 def test_division_float_assignment():
     numbers, first, _ = get_numbers()
     first /= 3.5
-    assert dict_eq(first, get_result(numbers, lambda x, y: x / 3.5))
+    assert first == get_result(numbers, lambda x, y: x / 3.5)
 
     third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
     third /= 0
@@ -144,9 +144,9 @@ def test_division_float_assignment():
 
 def test_floor_division_dict():
     numbers, first, second = get_numbers()
-    assert dict_eq(first / second, get_result(
+    assert first / second == get_result(
         numbers, lambda x, y: x / y if y != 0
-        else (inf if x != 0 else 0) * x))
+        else (inf if x != 0 else 0) * x)
 
     third = Arithmetic_Dict({"a": inf, "b": inf})
     fourth = Arithmetic_Dict({"a": inf, "b": -inf})
@@ -157,9 +157,9 @@ def test_floor_division_dict():
 def test_floor_division_dict_assignment():
     numbers, first, second = get_numbers()
     first //= second
-    assert dict_eq(first, get_result(
+    assert first == get_result(
         numbers, lambda x, y: x // y if y != 0
-        else (inf if x != 0 else 0) * x))
+        else (inf if x != 0 else 0) * x)
 
     third = Arithmetic_Dict({"a": inf, "b": inf})
     fourth = Arithmetic_Dict({"a": inf, "b": -inf})
@@ -170,7 +170,7 @@ def test_floor_division_dict_assignment():
 def test_floor_division_float():
     numbers, first, _ = get_numbers()
     result = first // -3.5
-    assert dict_eq(result, get_result(numbers, lambda x, y: x // -3.5))
+    assert result == get_result(numbers, lambda x, y: x // -3.5)
     assert result is not first
 
     third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
@@ -182,7 +182,7 @@ def test_floor_division_float():
 def test_floor_division_float_assignment():
     numbers, first, _ = get_numbers()
     first //= 3.5
-    assert dict_eq(first, get_result(numbers, lambda x, y: x // 3.5))
+    assert first == get_result(numbers, lambda x, y: x // 3.5)
 
     third = Arithmetic_Dict({"a": -2, "b": inf, "c": -inf})
     third //= 0
@@ -214,6 +214,34 @@ def test_lesser_than_float():
     assert not first < minimum
     assert first < minimum + 0.1
     assert first < maximum
+
+
+def test_equality():
+    a = Arithmetic_Dict({
+        "a": 234,
+        "b": 345,
+        "c": 567
+    })
+    b = a.copy()
+    assert a == b
+    assert b == a
+
+    c = {
+        "a": 234,
+        "b": 345,
+        "c": 567,
+        "d": 0
+    }
+    assert a == c
+
+    d = {
+        "b": 345,
+        "c": 567,
+        "d": 0
+    }
+    assert a != d
+
+    assert a != {}
 
 
 def test_copy():
@@ -290,12 +318,12 @@ def test_round_one():
 
 def test_round():
     numbers, first, second = get_numbers()
-    assert dict_eq(round(first, 1), get_result(
-        numbers, lambda x, y: round(x, 1)))
+    assert round(first, 1) == get_result(
+        numbers, lambda x, y: round(x, 1))
 
     rounded = round(second, -1)
-    assert dict_eq(rounded, get_result(
-        numbers, lambda x, y: round(y, -1)))
+    assert rounded == get_result(
+        numbers, lambda x, y: round(y, -1))
     for val in rounded.values():
         assert isinstance(val, int)
 
@@ -317,4 +345,4 @@ def test_calculate_ratios():
     # make the sum of first's values zero
     first["0"] -= first_total
     # check if the ratios values are all zeros
-    assert dict_eq(first.calculate_ratios(), {})
+    assert first.calculate_ratios() == {}

@@ -4,6 +4,7 @@ from math import exp, inf, isinf, isnan
 from numbers import Real
 from typing import Generic, Hashable, Mapping, TypeVar, overload
 
+from pytest import approx  # type: ignore
 from typing_extensions import Self
 
 T = TypeVar("T", bound=Hashable)
@@ -168,6 +169,14 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
             raise TypeError("comparison argument must be a mapping object or"
                             " a real number")
         return False
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        for key in self | other:
+            if self.get(key, 0) != approx(other.get(key, 0)):  # type: ignore
+                return False
+        return True
 
     def copy(self) -> Self:
         """

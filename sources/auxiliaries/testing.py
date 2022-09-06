@@ -4,9 +4,12 @@ from pytest import approx  # type: ignore
 
 
 def dict_eq(dict1: dict[Any, float], dict2: dict[Any, float]) -> bool:
-    for key in dict1 | dict2:
-        if dict1.get(key, 0) != approx(dict2.get(key, 0)):
-            return False
+    try:
+        for key in dict1 | dict2:
+            if dict1[key] != approx(dict2[key]):
+                return False
+    except KeyError:
+        return False
     return True
 
 
