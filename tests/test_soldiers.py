@@ -150,3 +150,21 @@ def test_to_raw_dict():
         "knights": 234,
         "footmen": 123
     }
+
+
+def test_from_raw_dict():
+    a_raw = {
+        "knights": 234,
+        "footmen": 123,
+        "abc": 10
+    }
+    a = Soldiers({
+        Soldier.knights: 234,
+        Soldier.footmen: 123
+    })
+    a = Soldiers.from_raw_dict(a_raw)
+    assert isinstance(a, Soldiers)
+    assert a == {
+        Soldier.knights: 234,
+        Soldier.footmen: 123
+    }

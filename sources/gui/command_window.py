@@ -1,12 +1,12 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
 
 import sys
+from abc import ABC, abstractmethod
 from math import floor
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QGridLayout, QHBoxLayout, QLabel, QMessageBox,
-                               QPushButton, QVBoxLayout, QWidget, QDialog)
+from PySide6.QtWidgets import (QDialog, QGridLayout, QHBoxLayout, QLabel,
+                               QMessageBox, QPushButton, QVBoxLayout, QWidget)
 
 from ..abstract_interface.interface import (Interface, MalformedSaveError,
                                             SaveAccessError)

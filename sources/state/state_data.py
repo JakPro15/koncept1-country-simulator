@@ -9,7 +9,9 @@ from ..auxiliaries.enums import Class_Name, Resource
 from ..auxiliaries.resources import Resources
 from ..auxiliaries.soldiers import Soldiers
 from .social_classes.class_file import Class
-from .state_data_employ_and_commands import State_Data_Creation_And_Do_Month
+from .state_data_employ_and_commands import (Artisans, Government, Nobles,
+                                             Others, Peasants,
+                                             State_Data_Creation_And_Do_Month)
 
 
 class InvalidCommandError(ValueError):
@@ -28,6 +30,21 @@ class State_Data(State_Data_Creation_And_Do_Month):
     _market - object executing trade within the country
     prices - last month's resource prices on the market
     """
+    @classmethod
+    def generate_empty_state(cls):
+        """
+        Creates a finalized state object, with all classes empty.
+        """
+        state = cls()
+        state.classes = {
+            Class_Name.nobles: Nobles(state),
+            Class_Name.artisans: Artisans(state),
+            Class_Name.peasants: Peasants(state),
+            Class_Name.others: Others(state)
+        }
+        state.government = Government(state)
+        return state
+
     def do_transfer(self, class_name: Class_Name, resource: Resource,
                     amount: float, demote: bool = True) -> None:
         """

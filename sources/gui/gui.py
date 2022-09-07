@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QApplication
 from .command_window import Command_Window
 
 
-def graphical_user_interface(dirname):
+def graphical_user_interface(dirname: str):
     app = QApplication([])
 
     try:

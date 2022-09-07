@@ -995,7 +995,7 @@ class State_Data_Creation_And_Do_Month:
             "population_after": pop_after,
             "change_resources": {
                 key: dict(Arithmetic_Dict(res_after[key])
-                          - old_resources[key])
+                          - old_resources[key].to_raw_dict())
                 for key
                 in [cls_name.name for cls_name in Class_Name] + ["government"]
             },

@@ -1,52 +1,51 @@
-from ..sources.auxiliaries.constants import (
-    DEFAULT_PRICES,
-    EMPTY_RESOURCES,
-    FOOD_CONSUMPTION,
-    INBUILT_RESOURCES,
-    WOOD_CONSUMPTION
-)
-from ..sources.state.state_data import State_Data, State_Modifiers
+from pytest import raises
+
+from ..sources.auxiliaries.constants import (FOOD_CONSUMPTION,
+                                             INBUILT_RESOURCES,
+                                             OTHERS_MINIMUM_WAGE,
+                                             WOOD_CONSUMPTION)
+from ..sources.auxiliaries.enums import Class_Name, Month, Resource
+from ..sources.auxiliaries.resources import Resources
+from ..sources.state.social_classes.class_file import ValidationError
 from ..sources.state.social_classes.nobles import Nobles
-from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from pytest import approx, raises
+from ..sources.state.state_data import State_Data
 
 
 def test_constructor():
     state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.tools: 100
+    })
     nobles = Nobles(state, 80, resources)
 
     assert nobles.parent == state
-
-    assert not nobles.employable
-
     assert nobles.population == 80
 
-    assert nobles.resources["food"] == 100
-    assert nobles.resources["wood"] == 200
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 100
-    assert nobles.resources["land"] == 0
+    assert nobles.resources.food == 100
+    assert nobles.resources.wood == 200
+    assert nobles.resources.iron == 0
+    assert nobles.resources.stone == 0
+    assert nobles.resources.tools == 100
+    assert nobles.resources.land == 0
 
-    assert nobles.missing_resources["food"] == 0
-    assert nobles.missing_resources["wood"] == 0
-
-    assert not nobles.is_temp
-    assert nobles.temp["population"] == 0
-    assert nobles.temp["resources"] == EMPTY_RESOURCES
     assert not nobles.starving
     assert not nobles.freezing
+    assert not nobles.demoted_from
+    assert not nobles.demoted_to
+    assert not nobles.promoted_from
+    assert not nobles.promoted_to
+
+    assert nobles.employees == 0
+    assert nobles.old_wage == OTHERS_MINIMUM_WAGE
 
     assert nobles.happiness == 0
-    assert nobles.happiness_plateau == 0
+
+    with raises(ValueError):
+        Nobles(state, -1)
+    with raises(ValueError):
+        Nobles(state, resources=Resources({Resource.food: -1}))
 
 
 def test_default_constructor():
@@ -54,238 +53,118 @@ def test_default_constructor():
     nobles = Nobles(state, 200)
 
     assert nobles.parent == state
-
-    assert not nobles.employable
-
     assert nobles.population == 200
 
-    assert nobles.resources["food"] == 0
-    assert nobles.resources["wood"] == 0
-    assert nobles.resources["iron"] == 0
-    assert nobles.resources["stone"] == 0
-    assert nobles.resources["tools"] == 0
-    assert nobles.resources["land"] == 0
+    assert nobles.resources.food == 0
+    assert nobles.resources.wood == 0
+    assert nobles.resources.iron == 0
+    assert nobles.resources.stone == 0
+    assert nobles.resources.tools == 0
+    assert nobles.resources.land == 0
 
-    assert nobles.missing_resources["food"] == 0
-    assert nobles.missing_resources["wood"] == 0
-
-    assert not nobles.is_temp
-    assert nobles.temp["population"] == 0
-    assert nobles.temp["resources"] == EMPTY_RESOURCES
     assert not nobles.starving
     assert not nobles.freezing
+    assert not nobles.demoted_from
+    assert not nobles.demoted_to
+    assert not nobles.promoted_from
+    assert not nobles.promoted_to
+
+    assert nobles.employees == 0
+    assert nobles.old_wage == OTHERS_MINIMUM_WAGE
 
     assert nobles.happiness == 0
-    assert nobles.happiness_plateau == 0
 
 
 def test_class_name():
     state = State_Data()
     nobles = Nobles(state, 200)
-    assert nobles.class_name == "nobles"
+    assert nobles.class_name == Class_Name.nobles
 
 
-def test_population_1():
+def test_population():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: 300,
+        Resource.iron: 400,
+        Resource.land: 500,
+    })
+    nobles = Nobles(state, 200, resources)
+
+    nobles.population += 40
+    assert nobles.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.nobles] * 40
+
+    nobles.population = 150
+    assert nobles.resources == \
+        resources + INBUILT_RESOURCES[Class_Name.nobles] * 50
+
+    nobles.population = 500
+    assert nobles.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.nobles] * 300
+
+
+def test_employable():
+    state = State_Data()
+    nobles = Nobles(state, 200)
+    assert not nobles.employable
+
+
+def test_real_resources():
+    state = State_Data()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.tools: 100
     })
     nobles = Nobles(state, 80, resources)
-    nobles.new_population += 20
-    assert nobles.resources == resources
-    assert nobles.population == 80
-    assert nobles.new_resources == resources - INBUILT_RESOURCES["nobles"] * 20
-    assert nobles.new_population == 100
+    assert nobles.real_resources == \
+        INBUILT_RESOURCES[Class_Name.nobles] * 80 + resources
 
 
-def test_population_2():
+def test_optimal_resources():
+    state = State_Data.generate_empty_state()
+    state.classes[Class_Name.nobles].population = 50
+    assert state.classes[Class_Name.nobles].optimal_resources == \
+        state.sm.optimal_resources[Class_Name.nobles] * 50
+
+
+def test_missing_resources():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    nobles = Nobles(state, 200)
+    assert nobles.missing_resources == {}
+
+    nobles.resources = Resources({
+        Resource.food: 234,
+        Resource.wood: 23,
+        Resource.stone: -1,
+        Resource.land: -200
     })
-    nobles = Nobles(state, 80, resources)
-    nobles.new_population -= 20
-    assert nobles.resources == resources
-    assert nobles.population == 80
-    assert nobles.new_resources == resources + INBUILT_RESOURCES["nobles"] * 20
-    assert nobles.new_population == 60
-
-
-def test_resources():
-    state = State_Data()
-    resources1 = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 150,
-        "wood": 10,
-        "iron": 11,
-        "stone": 12,
-        "tools": 100,
-        "land": 0
-    })
-    nobles = Nobles(state, 80, resources1)
-    nobles.new_resources = resources2
-    assert nobles.resources == resources1
-    assert nobles.new_resources == resources2
-
-
-def test_grow_population_1():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100,
-        "land": 0
+    assert nobles.missing_resources == {
+        Resource.stone: 1,
+        Resource.land: 200
     }
-    nobles = Nobles(state, 80, resources)
-
-    nobles.grow_population(0.25)
-    assert nobles._new_population == 100
-    assert nobles._new_resources == \
-        nobles.resources - INBUILT_RESOURCES["nobles"] * 20
-
-
-def test_grow_population_2():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 20000,
-        "iron": 0,
-        "stone": 120,
-        "tools": 1000,
-        "land": 0
-    }
-    nobles = Nobles(state, 80, resources)
-
-    nobles.grow_population(0.625)
-    assert nobles._new_population == 130
-    assert nobles._new_resources == \
-        nobles.resources - INBUILT_RESOURCES["nobles"] * 50
-
-
-def test_optimal_resources_january():
-    state = Fake_State_Data(100, "January")
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
-    nobles = Nobles(state, 100, resources)
-    state._classes = [nobles]
-    opt_res = nobles.optimal_resources
-    assert opt_res == state.sm.optimal_resources["nobles"] * 100
-
-
-def test_optimal_resources_july():
-    state = Fake_State_Data(500, "July")
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
-    nobles = Nobles(state, 80, resources)
-    state._classes = [nobles]
-    opt_res = nobles.optimal_resources
-    assert opt_res == state.sm.optimal_resources["nobles"] * 80
-
-
-def test_missing_resources_1():
-    state = Fake_State_Data(500, "July")
-    resources = {
-        "food": -200,
-        "wood": 500,
-        "stone": -20,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
-    missing = {
-        "food": 200,
-        "wood": 0,
-        "stone": 20,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
-    nobles = Nobles(state, 80)
-    nobles.new_resources = resources
-    assert nobles.missing_resources == missing
-
-
-def test_missing_resources_2():
-    state = Fake_State_Data(500, "July")
-    resources = {
-        "food": 200,
-        "wood": 500,
-        "stone": 20,
-        "iron": -1,
-        "tools": -300,
-        "land": 0
-    }
-    missing = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 1,
-        "tools": 300,
-        "land": 0
-    }
-    nobles = Nobles(state, 80)
-    nobles.new_resources = resources
-    assert nobles.missing_resources == missing
-
-
-class Fake_Class:
-    def __init__(self):
-        self.class_name = "peasants"
 
 
 def test_class_overpopulation_1():
-    state = Fake_State_Data(500, "July")
-    resources = {
-        "food": 200,
-        "wood": -500,
-        "stone": -20,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
+    state = State_Data.generate_empty_state()
+    nobles = state.classes[Class_Name.nobles]
+
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: -500,
+        Resource.stone: -20,
+        Resource.tools: 1200
+    })
     missing_wood = 500
     missing_stone = 20
 
-    nobles = Nobles(state, 80)
-    nobles.new_resources = resources
-    peasants = Fake_Class()
-    nobles.lower_class = peasants
+    nobles.resources = resources
 
-    inbuilt_wood = INBUILT_RESOURCES["nobles"]["wood"] - \
-        INBUILT_RESOURCES["peasants"]["wood"]
-    inbuilt_stone = INBUILT_RESOURCES["nobles"]["stone"] - \
-        INBUILT_RESOURCES["peasants"]["stone"]
+    inbuilt_wood = INBUILT_RESOURCES[Class_Name.nobles][Resource.wood] - \
+        INBUILT_RESOURCES[Class_Name.peasants][Resource.wood]
+    inbuilt_stone = INBUILT_RESOURCES[Class_Name.nobles][Resource.stone] - \
+        INBUILT_RESOURCES[Class_Name.peasants][Resource.stone]
 
     overpop = max(missing_wood / inbuilt_wood, missing_stone / inbuilt_stone)
 
@@ -293,27 +172,25 @@ def test_class_overpopulation_1():
 
 
 def test_class_overpopulation_2():
-    state = Fake_State_Data(500, "July")
-    resources = {
-        "food": 200,
-        "wood": -50,
-        "stone": -200,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
+    state = State_Data.generate_empty_state()
+    state.classes[Class_Name.others].population = 500
+    nobles = state.classes[Class_Name.nobles]
+
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: -50,
+        Resource.stone: -200,
+        Resource.tools: 1200
+    })
     missing_wood = 50
     missing_stone = 200
 
-    nobles = Nobles(state, 80)
-    nobles.new_resources = resources
-    peasants = Fake_Class()
-    nobles.lower_class = peasants
+    nobles.resources = resources
 
-    inbuilt_wood = INBUILT_RESOURCES["nobles"]["wood"] - \
-        INBUILT_RESOURCES["peasants"]["wood"]
-    inbuilt_stone = INBUILT_RESOURCES["nobles"]["stone"] - \
-        INBUILT_RESOURCES["peasants"]["stone"]
+    inbuilt_wood = INBUILT_RESOURCES[Class_Name.nobles][Resource.wood] - \
+        INBUILT_RESOURCES[Class_Name.peasants][Resource.wood]
+    inbuilt_stone = INBUILT_RESOURCES[Class_Name.nobles][Resource.stone] - \
+        INBUILT_RESOURCES[Class_Name.peasants][Resource.stone]
 
     overpop = max(missing_wood / inbuilt_wood, missing_stone / inbuilt_stone)
 
@@ -321,72 +198,80 @@ def test_class_overpopulation_2():
 
 
 def test_class_overpopulation_3():
-    state = Fake_State_Data(500, "July")
-    resources = {
-        "food": 200,
-        "wood": 500,
-        "stone": 20,
-        "iron": 0,
-        "tools": 100,
-        "land": 0
-    }
+    state = State_Data.generate_empty_state()
+    state.classes[Class_Name.others].population = 500
+    nobles = state.classes[Class_Name.nobles]
 
-    nobles = Nobles(state, 80, resources)
-    peasants = Fake_Class()
-    nobles.lower_class = peasants
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: 500,
+        Resource.stone: 20,
+        Resource.iron: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
+
+    nobles.resources = resources
 
     assert nobles.class_overpopulation == 0
 
 
-class Fake_State_Data(State_Data):
-    def __init__(
-        self, available_employees, month="January", prices=DEFAULT_PRICES
-    ):
-        self._month = month
-        self.available_employees = available_employees
-        self.prices = Arithmetic_Dict(prices.copy())
-        self.sm = State_Modifiers(self)
-
-    def get_available_employees(self):
-        return self.available_employees
-
-
-def test_real_resources():
+def test_grow_population_1():
     state = State_Data()
-    resources1 = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 1000,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 100,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    resources2 = resources1 + INBUILT_RESOURCES["nobles"] * 80
-    nobles = Nobles(state, 80, resources1)
-    assert nobles.resources == resources1
-    assert nobles.real_resources == resources2
+    nobles = Nobles(state, 80, resources)
+
+    nobles.grow_population(0.25)
+    assert nobles.population == 100
+    assert nobles.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.nobles] * 20
+
+
+def test_grow_population_2():
+    state = State_Data()
+    resources = Resources({
+        Resource.food: 1000,
+        Resource.wood: 20000,
+        Resource.iron: 0,
+        Resource.stone: 120,
+        Resource.tools: 1000,
+        Resource.land: 0
+    })
+    nobles = Nobles(state, 80, resources)
+
+    nobles.grow_population(0.625)
+    assert nobles.population == 130
+    assert nobles.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.nobles] * 50
 
 
 def test_net_worth():
     state = State_Data()
-    state.prices = {
-        "food": 2,
-        "wood": 3,
-        "stone": 4,
-        "iron": 5,
-        "tools": 6,
-        "land": 7
-    }
-    resources = {
-        "food": 100000,
-        "wood": 10000,
-        "stone": 1000,
-        "iron": 100,
-        "tools": 10,
-        "land": 1
-    }
+    state.prices = Resources({
+        Resource.food: 2,
+        Resource.wood: 3,
+        Resource.stone: 4,
+        Resource.iron: 5,
+        Resource.tools: 6,
+        Resource.land: 7
+    })
+    resources = Resources({
+        Resource.food: 100000,
+        Resource.wood: 10000,
+        Resource.stone: 1000,
+        Resource.iron: 100,
+        Resource.tools: 10,
+        Resource.land: 1
+    })
     inbuilt_worth = sum(
-        (INBUILT_RESOURCES["nobles"] * state.prices * 20).values()
+        (INBUILT_RESOURCES[Class_Name.nobles] * state.prices * 20).values()
     )
     nobles = Nobles(state, 20, resources)
     assert nobles.net_worth == 234567 + inbuilt_worth
@@ -395,17 +280,17 @@ def test_net_worth():
 def test_max_employees_from_land():
     state = State_Data()
     state.sm.worker_land_usage = 10
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 1000000,
-        "land": 100
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 1000000,
+        Resource.land: 100
+    })
     nobles = Nobles(state, 50, resources)
 
-    emps = 10 + INBUILT_RESOURCES["nobles"]["land"] * 5
+    emps = 10 + INBUILT_RESOURCES[Class_Name.nobles][Resource.land] * 5
 
     assert nobles.max_employees == emps
 
@@ -413,14 +298,14 @@ def test_max_employees_from_land():
 def test_max_employees_from_tools():
     state = State_Data()
     state.sm.worker_land_usage = 10
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 300,
-        "land": 1000000
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 300,
+        Resource.land: 1000000
+    })
     nobles = Nobles(state, 50, resources)
 
     assert nobles.max_employees == 100
@@ -428,59 +313,85 @@ def test_max_employees_from_tools():
 
 def test_consume():
     state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
     nobles = Nobles(state, 80, resources)
     nobles.consume()
 
-    consumed = {
-        "food": FOOD_CONSUMPTION * 80,
-        "wood": WOOD_CONSUMPTION["January"] * 80
-    }
+    consumed = Resources({
+        Resource.food: FOOD_CONSUMPTION * 80,
+        Resource.wood: WOOD_CONSUMPTION[Month.January] * 80
+    })
 
-    assert nobles._new_resources == nobles.resources - consumed
-    assert nobles.missing_resources == EMPTY_RESOURCES
+    assert nobles.resources == resources - consumed
+    assert nobles.missing_resources == {}
+
+
+def test_produce():
+    state = State_Data()
+    nobles = Nobles(state, 200)
+    nobles.produce()
+    assert nobles.population == 200
+    assert nobles.resources == {}
+    assert nobles.happiness == 0
 
 
 def test_to_dict():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
     nobles = Nobles(state, 80, resources)
-    nobles.new_population += 20
+    nobles.population += 20
     nobles.happiness = -20
+    nobles.freezing = True
+    nobles.promoted_to = True
 
     dicted = nobles.to_dict()
-    assert dicted["population"] == 80
-    assert dicted["resources"] == resources
-    assert dicted["happiness"] == -20
+    assert dicted == {
+        "population": 100,
+        "resources":
+        (resources - INBUILT_RESOURCES[Class_Name.nobles] * 20).to_raw_dict(),
+        "starving": False,
+        "freezing": True,
+        "demoted_from": False,
+        "demoted_to": False,
+        "promoted_from": False,
+        "promoted_to": True,
+        "happiness": -20
+    }
 
 
 def test_from_dict():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
     dicted = {
         "population": 80,
-        "resources": dict(resources.copy()),
+        "resources": resources.to_raw_dict(),
+        "starving": False,
+        "freezing": True,
+        "demoted_from": False,
+        "demoted_to": False,
+        "promoted_from": False,
+        "promoted_to": True,
         "happiness": -20
     }
     nobles = Nobles.from_dict(state, dicted)
@@ -488,208 +399,112 @@ def test_from_dict():
     assert nobles.parent == state
     assert nobles.population == 80
     assert nobles.resources == resources
+    assert nobles.starving is False
+    assert nobles.freezing is True
+    assert nobles.demoted_from is False
+    assert nobles.demoted_to is False
+    assert nobles.promoted_from is False
+    assert nobles.promoted_to is True
     assert nobles.happiness == -20
-    assert nobles.new_population == 80
-    assert nobles.new_resources == resources
 
 
 def test_handle_empty_class_emptying():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    state = State_Data.generate_empty_state()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    nobles = Nobles(state, 0.3, resources)
+    nobles = state.classes[Class_Name.nobles]
 
-    # This is normally done by State_Data when adding classes
-    nobles.is_temp = False
-    nobles.temp = {"population": 0, "resources": EMPTY_RESOURCES.copy()}
+    nobles.resources = resources.copy()
+    nobles._population = 0.3  # type: ignore
 
     nobles.handle_empty_class()
     assert nobles.population == 0
-    assert nobles.resources == EMPTY_RESOURCES
-    assert nobles.is_temp
-    assert nobles.temp["population"] == 0.3
-    assert nobles.temp["resources"] == resources
+    assert nobles.resources == {}
+    assert state.government.resources == \
+        resources + INBUILT_RESOURCES[Class_Name.nobles] * 0.3
 
 
-def test_handle_empty_class_unemptying():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+def test_handle_empty_class_not_emptying():
+    state = State_Data.generate_empty_state()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    nobles = Nobles(state, 0, EMPTY_RESOURCES)
+    nobles = state.classes[Class_Name.nobles]
 
-    nobles.is_temp = True
-    nobles.temp = {"population": 0.4, "resources": resources.copy()}
-    nobles._new_population = 0.2
+    nobles.resources = resources.copy()
+    nobles._population = 0.5  # type: ignore
 
     nobles.handle_empty_class()
-    assert nobles.population == approx(0.6)
+    assert nobles.population == 0.5
     assert nobles.resources == resources
-    assert not nobles.is_temp
-    assert nobles.temp["population"] == 0
-    assert nobles.temp["resources"] == EMPTY_RESOURCES
+    assert state.government.resources == {}
 
 
-def test_handle_empty_class_adding_to_temp():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    })
-    nobles = Nobles(state, 0, EMPTY_RESOURCES)
-
-    nobles.is_temp = True
-    nobles.temp = {"population": 0.2, "resources": resources.copy()}
-    nobles._new_population = 0.2
-    nobles._new_resources = resources.copy()
-
-    nobles.handle_empty_class()
-    assert nobles.population == 0
-    assert nobles.resources == EMPTY_RESOURCES
-    assert nobles.is_temp
-    assert nobles.temp["population"] == approx(0.4)
-    assert nobles.temp["resources"] == resources * 2
-
-
-def test_handle_negative_resources():
+def test_validate():
     state = State_Data()
     nobles = Nobles(state, 5)
 
-    nobles._new_resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": -100,
-        "stone": -0.0001,
-        "iron": -0.00099999,
-        "tools": 0.0001,
-        "land": 0
+    nobles.resources = Resources({
+        Resource.food: 100,
+        Resource.wood: -0.00001,
+        Resource.iron: -0.000099999,
+        Resource.tools: 0.00001,
     })
 
     nobles.validate()
-    assert nobles.new_resources == {
-        "food": 100,
-        "wood": -100,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0.0001,
-        "land": 0
+    assert nobles.resources == {
+        Resource.food: 100,
+        Resource.tools: 0.00001
     }
 
-
-def test_flush_typical():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 1000,
-        "wood": 2000,
-        "iron": 0,
-        "stone": 1000,
-        "tools": 1000,
-        "land": 10000
+    nobles.resources = Resources({
+        Resource.food: 100,
+        Resource.wood: -0.0001,
+        Resource.iron: -0.000099999,
+        Resource.tools: 0.00001,
     })
-    new_res = resources - INBUILT_RESOURCES["nobles"] * 20
-    nobles = Nobles(state, 80, resources)
-    nobles.new_population += 20
-    nobles.flush()
+    with raises(ValidationError):
+        nobles.validate()
 
-    assert nobles.resources == new_res
-    assert nobles.population == 100
-    assert nobles.new_resources == new_res
-    assert nobles.new_population == 100
-
-
-def test_flush_exception():
-    state = State_Data()
-    nobles = Nobles(state, 80)
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": -200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100,
-        "land": 0
+    nobles.resources = Resources({
+        Resource.food: -100,
+        Resource.iron: -0.000099999,
+        Resource.tools: -100,
     })
-    nobles.new_resources = resources
-    with raises(Exception):
-        nobles.flush()
+    with raises(ValidationError):
+        nobles.validate()
 
 
-def test_decay_happiness_no_plateau():
+def test_decay_happiness():
     state = State_Data()
     nobles = Nobles(state, 80)
     nobles.happiness = 20
     nobles.decay_happiness()
-    assert 0 < nobles.happiness < 20
+    assert nobles.happiness == 16
 
     nobles.happiness = -20
     nobles.decay_happiness()
-    assert 0 > nobles.happiness > -20
+    assert nobles.happiness == -16
 
     nobles.happiness = 0
     nobles.decay_happiness()
     assert nobles.happiness == 0
 
-
-def test_decay_happiness_with_plateau():
-    state = State_Data()
-    nobles = Nobles(state, 80)
-    nobles.happiness = 30
-    nobles.happiness_plateau = 10
+    nobles.happiness = 0.6
     nobles.decay_happiness()
-    assert 10 < nobles.happiness < 30
+    assert nobles.happiness == 0
 
-    nobles.happiness = -10
+    nobles.happiness = -0.6
     nobles.decay_happiness()
-    assert 10 > nobles.happiness > -10
-
-    nobles.happiness = 10
-    nobles.decay_happiness()
-    assert nobles.happiness == 10
-
-
-def test_update_happiness_plateau():
-    state = State_Data()
-    nobles = Nobles(state, 80)
-
-    nobles.starving = False
-    nobles.freezing = True
-    nobles.demoted_from = False
-    nobles.demoted_to = True
-    nobles.promoted_from = True
-    nobles.promoted_to = False
-
-    nobles.update_happiness_plateau()
-    assert nobles.happiness_plateau == -20
-
-    nobles.starving = True
-    nobles.freezing = False
-    nobles.demoted_from = False
-    nobles.demoted_to = False
-    nobles.promoted_from = True
-    nobles.promoted_to = False
-
-    nobles.update_happiness_plateau()
-    assert nobles.happiness_plateau == -10
-
-    nobles.starving = False
-    nobles.freezing = False
-    nobles.demoted_from = True
-    nobles.demoted_to = False
-    nobles.promoted_from = False
-    nobles.promoted_to = True
-
-    nobles.update_happiness_plateau()
-    assert nobles.happiness_plateau == 0
+    assert nobles.happiness == 0

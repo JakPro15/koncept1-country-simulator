@@ -1,55 +1,51 @@
-from ..sources.auxiliaries.constants import (
-    ARTISAN_IRON_USAGE,
-    ARTISAN_TOOL_USAGE,
-    ARTISAN_WOOD_USAGE,
-    EMPTY_RESOURCES,
-    FOOD_CONSUMPTION,
-    INBUILT_RESOURCES,
-    RESOURCE_NAMES,
-    TOOLS_PRODUCTION,
-    WOOD_CONSUMPTION
-)
-from ..sources.state.state_data import State_Data
+from pytest import raises
+
+from ..sources.auxiliaries.constants import (FOOD_CONSUMPTION,
+                                             INBUILT_RESOURCES,
+                                             OTHERS_MINIMUM_WAGE,
+                                             WOOD_CONSUMPTION)
+from ..sources.auxiliaries.enums import Class_Name, Month, Resource
+from ..sources.auxiliaries.resources import Resources
 from ..sources.state.social_classes.artisans import Artisans
-from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
-from pytest import approx, raises
+from ..sources.state.social_classes.class_file import ValidationError
+from ..sources.state.state_data import State_Data
 
 
 def test_constructor():
     state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.tools: 100
+    })
     artisans = Artisans(state, 80, resources)
 
     assert artisans.parent == state
-
-    assert not artisans.employable
-
     assert artisans.population == 80
 
-    assert artisans.resources["food"] == 100
-    assert artisans.resources["wood"] == 200
-    assert artisans.resources["iron"] == 0
-    assert artisans.resources["stone"] == 0
-    assert artisans.resources["tools"] == 100
+    assert artisans.resources.food == 100
+    assert artisans.resources.wood == 200
+    assert artisans.resources.iron == 0
+    assert artisans.resources.stone == 0
+    assert artisans.resources.tools == 100
+    assert artisans.resources.land == 0
 
-    assert artisans.missing_resources["food"] == 0
-    assert artisans.missing_resources["wood"] == 0
-
-    assert not artisans.is_temp
-    assert artisans.temp["population"] == 0
-    assert artisans.temp["resources"] == EMPTY_RESOURCES
     assert not artisans.starving
     assert not artisans.freezing
+    assert not artisans.demoted_from
+    assert not artisans.demoted_to
+    assert not artisans.promoted_from
+    assert not artisans.promoted_to
+
+    assert artisans.employees == 0
+    assert artisans.old_wage == OTHERS_MINIMUM_WAGE
 
     assert artisans.happiness == 0
-    assert artisans.happiness_plateau == 0
+
+    with raises(ValueError):
+        Artisans(state, -1)
+    with raises(ValueError):
+        Artisans(state, resources=Resources({Resource.food: -1}))
 
 
 def test_default_constructor():
@@ -57,221 +53,118 @@ def test_default_constructor():
     artisans = Artisans(state, 200)
 
     assert artisans.parent == state
-
-    assert not artisans.employable
-
     assert artisans.population == 200
 
-    assert artisans.resources["food"] == 0
-    assert artisans.resources["wood"] == 0
-    assert artisans.resources["iron"] == 0
-    assert artisans.resources["stone"] == 0
-    assert artisans.resources["tools"] == 0
+    assert artisans.resources.food == 0
+    assert artisans.resources.wood == 0
+    assert artisans.resources.iron == 0
+    assert artisans.resources.stone == 0
+    assert artisans.resources.tools == 0
+    assert artisans.resources.land == 0
 
-    assert artisans.missing_resources["food"] == 0
-    assert artisans.missing_resources["wood"] == 0
-
-    assert not artisans.is_temp
-    assert artisans.temp["population"] == 0
-    assert artisans.temp["resources"] == EMPTY_RESOURCES
     assert not artisans.starving
     assert not artisans.freezing
+    assert not artisans.demoted_from
+    assert not artisans.demoted_to
+    assert not artisans.promoted_from
+    assert not artisans.promoted_to
+
+    assert artisans.employees == 0
+    assert artisans.old_wage == OTHERS_MINIMUM_WAGE
 
     assert artisans.happiness == 0
-    assert artisans.happiness_plateau == 0
 
 
 def test_class_name():
     state = State_Data()
     artisans = Artisans(state, 200)
-    assert artisans.class_name == "artisans"
+    assert artisans.class_name == Class_Name.artisans
 
 
-def test_population_1():
+def test_population():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: 300,
+        Resource.iron: 400,
+        Resource.land: 500,
+    })
+    artisans = Artisans(state, 200, resources)
+
+    artisans.population += 40
+    assert artisans.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.artisans] * 40
+
+    artisans.population = 150
+    assert artisans.resources == \
+        resources + INBUILT_RESOURCES[Class_Name.artisans] * 50
+
+    artisans.population = 500
+    assert artisans.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.artisans] * 300
+
+
+def test_employable():
+    state = State_Data()
+    artisans = Artisans(state, 200)
+    assert not artisans.employable
+
+
+def test_real_resources():
+    state = State_Data()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.tools: 100
     })
     artisans = Artisans(state, 80, resources)
-    artisans.new_population += 20
-    assert artisans.resources == resources
-    assert artisans.population == 80
-    assert artisans.new_resources == \
-        resources - INBUILT_RESOURCES["artisans"] * 20
-    assert artisans.new_population == 100
-
-
-def test_population_2():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    })
-    artisans = Artisans(state, 80, resources)
-    artisans.new_population -= 20
-    assert artisans.resources == resources
-    assert artisans.population == 80
-    assert artisans.new_resources == \
-        resources + INBUILT_RESOURCES["artisans"] * 20
-    assert artisans.new_population == 60
-
-
-def test_resources():
-    state = State_Data()
-    resources1 = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    })
-    resources2 = Arithmetic_Dict({
-        "food": 150,
-        "wood": 10,
-        "iron": 11,
-        "stone": 12,
-        "tools": 100,
-        "land": 0
-    })
-    artisans = Artisans(state, 80, resources1)
-    artisans.new_resources = resources2
-    assert artisans.resources == resources1
-    assert artisans.new_resources == resources2
-
-
-def test_grow_population_1():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100,
-        "land": 0
-    }
-    artisans = Artisans(state, 80, resources)
-
-    artisans.grow_population(0.25)
-    assert artisans._new_population == 100
-    assert artisans._new_resources == \
-        artisans.resources - INBUILT_RESOURCES["artisans"] * 20
-
-
-def test_grow_population_2():
-    state = State_Data()
-    resources = {
-        "food": 1000,
-        "wood": 20000,
-        "iron": 0,
-        "stone": 120,
-        "tools": 1000,
-        "land": 0
-    }
-    artisans = Artisans(state, 80, resources)
-
-    artisans.grow_population(0.625)
-    assert artisans._new_population == 130
-    assert artisans._new_resources == \
-        artisans.resources - INBUILT_RESOURCES["artisans"] * 50
+    assert artisans.real_resources == \
+        INBUILT_RESOURCES[Class_Name.artisans] * 80 + resources
 
 
 def test_optimal_resources():
+    state = State_Data.generate_empty_state()
+    state.classes[Class_Name.artisans].population = 50
+    assert state.classes[Class_Name.artisans].optimal_resources == \
+        state.sm.optimal_resources[Class_Name.artisans] * 50
+
+
+def test_missing_resources():
     state = State_Data()
-    resources = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
+    artisans = Artisans(state, 200)
+    assert artisans.missing_resources == {}
+
+    artisans.resources = Resources({
+        Resource.food: 234,
+        Resource.wood: 23,
+        Resource.stone: -1,
+        Resource.land: -200
+    })
+    assert artisans.missing_resources == {
+        Resource.stone: 1,
+        Resource.land: 200
     }
-    artisans = Artisans(state, 80, resources)
-    opt_res = artisans.optimal_resources
-    assert opt_res == state.sm.optimal_resources["artisans"] * 80
-
-
-def test_missing_resources_1():
-    state = State_Data("July")
-    missing = {
-        "food": 200,
-        "wood": 0,
-        "stone": 20,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    }
-    artisans = Artisans(state, 80)
-    artisans.new_resources = {
-        "food": -200,
-        "wood": 500,
-        "stone": -20,
-        "iron": 0,
-        "tools": 1200,
-        "land": 0
-    }
-    assert artisans.missing_resources == missing
-
-
-def test_missing_resources_2():
-    state = State_Data("July")
-    resources = {
-        "food": 200,
-        "wood": 500,
-        "stone": 20,
-        "iron": -1,
-        "tools": -300,
-        "land": 0
-    }
-    missing = {
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 1,
-        "tools": 300,
-        "land": 0
-    }
-    artisans = Artisans(state, 80)
-    artisans.new_resources = resources
-    assert artisans.missing_resources == missing
-
-
-class Fake_Class:
-    def __init__(self):
-        self.class_name = "others"
 
 
 def test_class_overpopulation_1():
-    state = State_Data("July")
-    resources = {
-        "food": 200,
-        "wood": -500,
-        "stone": 0,
-        "iron": -20,
-        "tools": 1200,
-        "land": 0
-    }
+    state = State_Data.generate_empty_state()
+    artisans = state.classes[Class_Name.artisans]
+
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: -500,
+        Resource.iron: -20,
+        Resource.tools: 1200
+    })
     missing_wood = 500
     missing_iron = 20
 
-    artisans = Artisans(state, 80)
-    artisans.new_resources = resources
-    others = Fake_Class()
-    artisans.lower_class = others
+    artisans.resources = resources
 
-    inbuilt_wood = INBUILT_RESOURCES["artisans"]["wood"] - \
-        INBUILT_RESOURCES["others"]["wood"]
-    inbuilt_iron = INBUILT_RESOURCES["artisans"]["iron"] - \
-        INBUILT_RESOURCES["others"]["iron"]
+    inbuilt_wood = INBUILT_RESOURCES[Class_Name.artisans][Resource.wood] - \
+        INBUILT_RESOURCES[Class_Name.others][Resource.wood]
+    inbuilt_iron = INBUILT_RESOURCES[Class_Name.artisans][Resource.iron] - \
+        INBUILT_RESOURCES[Class_Name.others][Resource.iron]
 
     overpop = max(missing_wood / inbuilt_wood, missing_iron / inbuilt_iron)
 
@@ -279,27 +172,24 @@ def test_class_overpopulation_1():
 
 
 def test_class_overpopulation_2():
-    state = State_Data("July")
-    resources = {
-        "food": 200,
-        "wood": -50,
-        "stone": 0,
-        "iron": -200,
-        "tools": 1200,
-        "land": 0
-    }
+    state = State_Data.generate_empty_state()
+    artisans = state.classes[Class_Name.artisans]
+
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: -50,
+        Resource.iron: -200,
+        Resource.tools: 1200
+    })
     missing_wood = 50
     missing_iron = 200
 
-    artisans = Artisans(state, 80)
-    artisans.new_resources = resources
-    others = Fake_Class()
-    artisans.lower_class = others
+    artisans.resources = resources
 
-    inbuilt_wood = INBUILT_RESOURCES["artisans"]["wood"] - \
-        INBUILT_RESOURCES["others"]["wood"]
-    inbuilt_iron = INBUILT_RESOURCES["artisans"]["iron"] - \
-        INBUILT_RESOURCES["others"]["iron"]
+    inbuilt_wood = INBUILT_RESOURCES[Class_Name.artisans][Resource.wood] - \
+        INBUILT_RESOURCES[Class_Name.others][Resource.wood]
+    inbuilt_iron = INBUILT_RESOURCES[Class_Name.artisans][Resource.iron] - \
+        INBUILT_RESOURCES[Class_Name.others][Resource.iron]
 
     overpop = max(missing_wood / inbuilt_wood, missing_iron / inbuilt_iron)
 
@@ -307,59 +197,79 @@ def test_class_overpopulation_2():
 
 
 def test_class_overpopulation_3():
-    state = State_Data("July")
-    resources = {
-        "food": 200,
-        "wood": 500,
-        "stone": 20,
-        "iron": 0,
-        "tools": 100,
-        "land": 0
-    }
+    state = State_Data.generate_empty_state()
+    artisans = state.classes[Class_Name.artisans]
 
-    artisans = Artisans(state, 80, resources)
-    others = Fake_Class()
-    artisans.lower_class = others
+    resources = Resources({
+        Resource.food: 200,
+        Resource.wood: 500,
+        Resource.stone: 20,
+        Resource.iron: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
+
+    artisans.resources = resources
 
     assert artisans.class_overpopulation == 0
 
 
-def test_real_resources():
+def test_grow_population_1():
     state = State_Data()
-    resources1 = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 1000,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 100,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    resources2 = resources1 + INBUILT_RESOURCES["artisans"] * 80
-    artisans = Artisans(state, 80, resources1)
-    assert artisans.resources == resources1
-    assert artisans.real_resources == resources2
+    artisans = Artisans(state, 80, resources)
+
+    artisans.grow_population(0.25)
+    assert artisans.population == 100
+    assert artisans.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.artisans] * 20
+
+
+def test_grow_population_2():
+    state = State_Data()
+    resources = Resources({
+        Resource.food: 1000,
+        Resource.wood: 20000,
+        Resource.iron: 0,
+        Resource.stone: 120,
+        Resource.tools: 1000,
+        Resource.land: 0
+    })
+    artisans = Artisans(state, 80, resources)
+
+    artisans.grow_population(0.625)
+    assert artisans.population == 130
+    assert artisans.resources == \
+        resources - INBUILT_RESOURCES[Class_Name.artisans] * 50
 
 
 def test_net_worth():
     state = State_Data()
-    state.prices = {
-        "food": 2,
-        "wood": 3,
-        "stone": 4,
-        "iron": 5,
-        "tools": 6,
-        "land": 7
-    }
-    resources = {
-        "food": 100000,
-        "wood": 10000,
-        "stone": 1000,
-        "iron": 100,
-        "tools": 10,
-        "land": 1
-    }
+    state.prices = Resources({
+        Resource.food: 2,
+        Resource.wood: 3,
+        Resource.stone: 4,
+        Resource.iron: 5,
+        Resource.tools: 6,
+        Resource.land: 7
+    })
+    resources = Resources({
+        Resource.food: 100000,
+        Resource.wood: 10000,
+        Resource.stone: 1000,
+        Resource.iron: 100,
+        Resource.tools: 10,
+        Resource.land: 1
+    })
     inbuilt_worth = sum(
-        (INBUILT_RESOURCES["artisans"] * state.prices * 20).values()
+        (INBUILT_RESOURCES[Class_Name.artisans] * state.prices * 20).values()
     )
     artisans = Artisans(state, 20, resources)
     assert artisans.net_worth == 234567 + inbuilt_worth
@@ -368,17 +278,17 @@ def test_net_worth():
 def test_max_employees_from_land():
     state = State_Data()
     state.sm.worker_land_usage = 10
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 1000000,
-        "land": 100
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 1000000,
+        Resource.land: 100
+    })
     artisans = Artisans(state, 50, resources)
 
-    emps = 10 + INBUILT_RESOURCES["artisans"]["land"] * 5
+    emps = 10 + INBUILT_RESOURCES[Class_Name.artisans][Resource.land] * 5
 
     assert artisans.max_employees == emps
 
@@ -386,331 +296,227 @@ def test_max_employees_from_land():
 def test_max_employees_from_tools():
     state = State_Data()
     state.sm.worker_land_usage = 10
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 300,
-        "land": 1000000
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 300,
+        Resource.land: 1000000
+    })
     artisans = Artisans(state, 50, resources)
 
     assert artisans.max_employees == 100
 
 
-def test_produce_1():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 0,
-        "wood": 400,
-        "stone": 0,
-        "iron": 400,
-        "tools": 1200,
-        "land": 0
-    })
-    artisans = Artisans(state, 80, resources)
-
-    final_res = resources.copy()
-    final_res += {
-        "wood": -ARTISAN_WOOD_USAGE * 80,
-        "iron": -ARTISAN_IRON_USAGE * 80,
-        "tools": (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 80
-    }
-
-    artisans.produce()
-    for res in RESOURCE_NAMES:
-        assert artisans._new_resources[res] == approx(final_res[res])
-
-
-def test_produce_2():
-    state = State_Data("August")
-    resources = Arithmetic_Dict({
-        "food": 0,
-        "wood": 0,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0,
-        "land": 0
-    })
-    artisans = Artisans(state, 100, resources)
-
-    final_res = {
-        "food": 0,
-        "wood": -ARTISAN_WOOD_USAGE * 100,
-        "stone": 0,
-        "iron": -ARTISAN_IRON_USAGE * 100,
-        "tools": (TOOLS_PRODUCTION - ARTISAN_TOOL_USAGE) * 100,
-        "land": 0
-    }
-
-    artisans.produce()
-    for res in RESOURCE_NAMES:
-        assert artisans._new_resources[res] == approx(final_res[res])
-
-
 def test_consume():
     state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    }
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
     artisans = Artisans(state, 80, resources)
     artisans.consume()
 
-    consumed = {
-        "food": FOOD_CONSUMPTION * 80,
-        "wood": WOOD_CONSUMPTION["January"] * 80
-    }
+    consumed = Resources({
+        Resource.food: FOOD_CONSUMPTION * 80,
+        Resource.wood: WOOD_CONSUMPTION[Month.January] * 80
+    })
 
-    assert artisans._new_resources == artisans.resources - consumed
-    assert artisans.missing_resources == EMPTY_RESOURCES
+    assert artisans.resources == resources - consumed
+    assert artisans.missing_resources == {}
+
+
+def test_produce():
+    state = State_Data()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
+    artisans = Artisans(state, 200, resources)
+    artisans.produce()
+
+    resources.tools += \
+        (state.sm.tools_production - state.sm.artisan_tool_usage) * 200
+    resources.wood -= state.sm.artisan_wood_usage * 200
+    resources.iron -= state.sm.artisan_iron_usage * 200
+
+    assert artisans.population == 200
+    assert artisans.resources == resources
+    assert artisans.happiness == 0
 
 
 def test_to_dict():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
     artisans = Artisans(state, 80, resources)
-    artisans.new_population += 20
-    artisans.happiness = 10
+    artisans.population += 20
+    artisans.happiness = -20
+    artisans.freezing = True
+    artisans.promoted_to = True
 
     dicted = artisans.to_dict()
-    assert dicted["population"] == 80
-    assert dicted["resources"] == resources
-    assert dicted["happiness"] == 10
+    assert dicted == {
+        "population": 100,
+        "resources": (resources - INBUILT_RESOURCES[Class_Name.artisans]
+                      * 20).to_raw_dict(),
+        "starving": False,
+        "freezing": True,
+        "demoted_from": False,
+        "demoted_to": False,
+        "promoted_from": False,
+        "promoted_to": True,
+        "happiness": -20
+    }
 
 
 def test_from_dict():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
     dicted = {
         "population": 80,
-        "resources": dict(resources.copy())
+        "resources": resources.to_raw_dict(),
+        "starving": False,
+        "freezing": True,
+        "demoted_from": False,
+        "demoted_to": False,
+        "promoted_from": False,
+        "promoted_to": True,
+        "happiness": -20
     }
     artisans = Artisans.from_dict(state, dicted)
 
     assert artisans.parent == state
     assert artisans.population == 80
     assert artisans.resources == resources
-    assert artisans.new_population == 80
-    assert artisans.new_resources == resources
+    assert artisans.starving is False
+    assert artisans.freezing is True
+    assert artisans.demoted_from is False
+    assert artisans.demoted_to is False
+    assert artisans.promoted_from is False
+    assert artisans.promoted_to is True
+    assert artisans.happiness == -20
 
 
 def test_handle_empty_class_emptying():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    state = State_Data.generate_empty_state()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    artisans = Artisans(state, 0.3, resources)
+    artisans = state.classes[Class_Name.artisans]
 
-    # This is normally done by State_Data when adding classes
-    artisans.is_temp = False
-    artisans.temp = {"population": 0, "resources": EMPTY_RESOURCES.copy()}
+    artisans.resources = resources.copy()
+    artisans._population = 0.3  # type: ignore
 
     artisans.handle_empty_class()
     assert artisans.population == 0
-    assert artisans.resources == EMPTY_RESOURCES
-    assert artisans.is_temp
-    assert artisans.temp["population"] == 0.3
-    assert artisans.temp["resources"] == resources
+    assert artisans.resources == {}
+    assert state.government.resources == \
+        resources + INBUILT_RESOURCES[Class_Name.artisans] * 0.3
 
 
-def test_handle_empty_class_unemptying():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+def test_handle_empty_class_not_emptying():
+    state = State_Data.generate_empty_state()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    artisans = Artisans(state, 0, EMPTY_RESOURCES)
+    artisans = state.classes[Class_Name.artisans]
 
-    artisans.is_temp = True
-    artisans.temp = {"population": 0.4, "resources": resources.copy()}
-    artisans._new_population = 0.2
+    artisans.resources = resources.copy()
+    artisans._population = 0.5  # type: ignore
 
     artisans.handle_empty_class()
-    assert artisans.population == approx(0.6)
+    assert artisans.population == 0.5
     assert artisans.resources == resources
-    assert not artisans.is_temp
-    assert artisans.temp["population"] == 0
-    assert artisans.temp["resources"] == EMPTY_RESOURCES
+    assert state.government.resources == {}
 
 
-def test_handle_empty_class_adding_to_temp():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    })
-    artisans = Artisans(state, 0, EMPTY_RESOURCES)
-
-    artisans.is_temp = True
-    artisans.temp = {"population": 0.2, "resources": resources.copy()}
-    artisans._new_population = 0.2
-    artisans._new_resources = resources.copy()
-
-    artisans.handle_empty_class()
-    assert artisans.population == 0
-    assert artisans.resources == EMPTY_RESOURCES
-    assert artisans.is_temp
-    assert artisans.temp["population"] == approx(0.4)
-    assert artisans.temp["resources"] == resources * 2
-
-
-def test_handle_negative_resources():
+def test_validate():
     state = State_Data()
     artisans = Artisans(state, 5)
 
-    artisans._new_resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": -100,
-        "stone": -0.0001,
-        "iron": -0.00099999,
-        "tools": 0.0001,
-        "land": 0
+    artisans.resources = Resources({
+        Resource.food: 100,
+        Resource.wood: -0.00001,
+        Resource.iron: -0.000099999,
+        Resource.tools: 0.00001,
     })
 
     artisans.validate()
-    assert artisans.new_resources == {
-        "food": 100,
-        "wood": -100,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0.0001,
-        "land": 0
+    assert artisans.resources == {
+        Resource.food: 100,
+        Resource.tools: 0.00001
     }
 
-
-def test_flush_typical():
-    state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 100,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    artisans.resources = Resources({
+        Resource.food: 100,
+        Resource.wood: -0.0001,
+        Resource.iron: -0.000099999,
+        Resource.tools: 0.00001,
     })
-    new_res = resources - INBUILT_RESOURCES["artisans"] * 20
-    artisans = Artisans(state, 80, resources)
-    artisans.new_population += 20
-    artisans.flush()
+    with raises(ValidationError):
+        artisans.validate()
 
-    assert artisans.resources == new_res
-    assert artisans.population == 100
-    assert artisans.new_resources == new_res
-    assert artisans.new_population == 100
-
-
-def test_flush_exception():
-    state = State_Data()
-    artisans = Artisans(state, 80)
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": -200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100,
-        "land": 0
+    artisans.resources = Resources({
+        Resource.food: -100,
+        Resource.iron: -0.000099999,
+        Resource.tools: -100,
     })
-    artisans.new_resources = resources
-    with raises(Exception):
-        artisans.flush()
+    with raises(ValidationError):
+        artisans.validate()
 
 
-def test_decay_happiness_no_plateau():
+def test_decay_happiness():
     state = State_Data()
     artisans = Artisans(state, 80)
     artisans.happiness = 20
     artisans.decay_happiness()
-    assert 0 < artisans.happiness < 20
+    assert artisans.happiness == 16
 
     artisans.happiness = -20
     artisans.decay_happiness()
-    assert 0 > artisans.happiness > -20
+    assert artisans.happiness == -16
 
     artisans.happiness = 0
     artisans.decay_happiness()
     assert artisans.happiness == 0
 
-
-def test_decay_happiness_with_plateau():
-    state = State_Data()
-    artisans = Artisans(state, 80)
-    artisans.happiness = 30
-    artisans.happiness_plateau = 10
+    artisans.happiness = 0.6
     artisans.decay_happiness()
-    assert 10 < artisans.happiness < 30
+    assert artisans.happiness == 0
 
-    artisans.happiness = -10
+    artisans.happiness = -0.6
     artisans.decay_happiness()
-    assert 10 > artisans.happiness > -10
-
-    artisans.happiness = 10
-    artisans.decay_happiness()
-    assert artisans.happiness == 10
-
-
-def test_update_happiness_plateau():
-    state = State_Data()
-    artisans = Artisans(state, 80)
-
-    artisans.starving = False
-    artisans.freezing = True
-    artisans.demoted_from = False
-    artisans.demoted_to = True
-    artisans.promoted_from = True
-    artisans.promoted_to = False
-
-    artisans.update_happiness_plateau()
-    assert artisans.happiness_plateau == -20
-
-    artisans.starving = True
-    artisans.freezing = False
-    artisans.demoted_from = False
-    artisans.demoted_to = False
-    artisans.promoted_from = True
-    artisans.promoted_to = False
-
-    artisans.update_happiness_plateau()
-    assert artisans.happiness_plateau == -10
-
-    artisans.starving = False
-    artisans.freezing = False
-    artisans.demoted_from = True
-    artisans.demoted_to = False
-    artisans.promoted_from = False
-    artisans.promoted_to = True
-
-    artisans.update_happiness_plateau()
-    assert artisans.happiness_plateau == 0
+    assert artisans.happiness == 0

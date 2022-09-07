@@ -165,3 +165,5 @@ GOVT_LEFT_LABELS = [
     "Secure resources",
     "Optimal resources"
 ]
+
+HAPPINESS_DECAY = 0.2

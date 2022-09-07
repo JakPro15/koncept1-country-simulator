@@ -3,8 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from ...auxiliaries.constants import (FOOD_CONSUMPTION, INBUILT_RESOURCES,
-                                      OTHERS_MINIMUM_WAGE, WOOD_CONSUMPTION)
+from typing_extensions import Self
+
+from ...auxiliaries.constants import (FOOD_CONSUMPTION, HAPPINESS_DECAY,
+                                      INBUILT_RESOURCES, OTHERS_MINIMUM_WAGE,
+                                      WOOD_CONSUMPTION)
 from ...auxiliaries.enums import Class_Name, Resource
 from ...auxiliaries.resources import Resources
 
@@ -38,13 +41,11 @@ class Class(ABC):
 
         if population < 0:
             raise ValueError("population cannot be negative")
-        else:
-            self.population: float = population
+        self._population: float = population
 
         if resources < 0:
-            raise ValueError("resources cannot be negative")
-        else:
-            self.resources: Resources = resources.copy()
+            raise ValueError("resources cannot be negative at the beginning")
+        self.resources: Resources = resources.copy()
 
         self.starving: bool = False
         self.freezing: bool = False
@@ -76,8 +77,19 @@ class Class(ABC):
     def class_name(self) -> Class_Name:
         """
         Returns the name of the class as an enumerator (Class_Name).
-        Should never be used on the base Class, only on derived classes.
         """
+
+    @property
+    def population(self) -> float:
+        return self._population
+
+    @population.setter
+    def population(self, new: float) -> None:
+        if new < 0:
+            raise ValueError("population cannot be negative")
+        difference = new - self._population
+        self.resources -= INBUILT_RESOURCES[self.class_name] * difference
+        self._population = new
 
     @property
     def employable(self) -> bool:
@@ -183,14 +195,14 @@ class Class(ABC):
         }
 
     @classmethod
-    def from_dict(cls, parent: State_Data, data: dict[str, Any]) -> Class:
+    def from_dict(cls, parent: State_Data, data: dict[str, Any]) -> Self:
         """
         Creates a social class object from the given dict.
         lower_class still needs to be set!
         """
         try:
             new = cls(parent, float(data["population"]),
-                      Resources(data["resources"]))
+                      Resources.from_raw_dict(data["resources"]))
 
             new.parent = parent
 
@@ -237,9 +249,9 @@ class Class(ABC):
         Changes the happiness towards zero. Changes are bigger the further
         happiness is from zero.
         """
-        decay = max(0.2 * abs(self.happiness), abs(self.happiness))
-        sign = -1 if self.happiness > 0 else 1
-        self.happiness += sign * decay
+        self.happiness *= (1 - HAPPINESS_DECAY)
+        if abs(self.happiness) < 0.5:
+            self.happiness = 0
 
     @staticmethod
     def starvation_happiness(part_dead: float) -> float:

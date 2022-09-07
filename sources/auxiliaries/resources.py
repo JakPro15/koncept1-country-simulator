@@ -3,6 +3,8 @@ from __future__ import annotations
 from numbers import Real
 from typing import Mapping
 
+from typing_extensions import Self
+
 from .arithmetic_dict import Arithmetic_Dict
 from .enums import Resource
 
@@ -98,6 +100,18 @@ class Resources(Arithmetic_Dict[Resource]):
         Ignores all keys that are not of type Resource.
         """
         return {key.name: self[key] for key in Resource}
+
+    @classmethod
+    def from_raw_dict(cls, raw_dict: Mapping[str, float]) -> Self:
+        """
+        Creates a Resources object from the given raw dict, with resource
+        names, not enumerators, as keys.
+        Ignores all keys that do not correspond to Resource enumerators.
+        """
+        new_dict = {
+            res: raw_dict.get(res.name, 0) for res in Resource
+        }
+        return cls(new_dict)
 
     def __delitem__(self, __k: Resource) -> None:
         # so that all Resource enumerators are always keys in Resources

@@ -4,7 +4,7 @@ from sys import argv
 import argparse
 
 
-def main(arguments):
+def main(arguments: list[str]):
     parser = argparse.ArgumentParser(
         prog='Koncept 1 - main.py',
         description='Game/simulation of a pre-industrial country.'

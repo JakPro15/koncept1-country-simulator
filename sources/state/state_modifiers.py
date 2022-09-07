@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import TYPE_CHECKING
-
-from ..auxiliaries.enums import Class_Name, Resource
 
 from ..auxiliaries.constants import (ARTISAN_IRON_USAGE, ARTISAN_TOOL_USAGE,
                                      ARTISAN_WOOD_USAGE, AVG_FOOD_PRODUCTION,
@@ -15,7 +15,7 @@ from ..auxiliaries.constants import (ARTISAN_IRON_USAGE, ARTISAN_TOOL_USAGE,
                                      TAX_RATES, TOOLS_PRODUCTION,
                                      WOOD_CONSUMPTION, WOOD_PRODUCTION,
                                      WORKER_LAND_USAGE)
-from ..auxiliaries.enums import Month
+from ..auxiliaries.enums import Class_Name, Month, Resource
 from ..auxiliaries.resources import Resources
 
 if TYPE_CHECKING:

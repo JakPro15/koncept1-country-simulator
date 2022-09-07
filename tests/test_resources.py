@@ -292,3 +292,23 @@ def test_to_raw_dict():
         "tools": 0,
         "land": 10
     }
+
+
+def test_from_raw_dict():
+    a_raw = {
+        "food": 234,
+        "wood": 123,
+        "stone": 2,
+        "iron": 0,
+        "tools": 0,
+        "land": 10,
+        "abc": 10
+    }
+    a = Resources.from_raw_dict(a_raw)
+    assert isinstance(a, Resources)
+    assert a == {
+        Resource.food: 234,
+        Resource.wood: 123,
+        Resource.land: 10,
+        Resource.stone: 2
+    }
