@@ -2,7 +2,6 @@ from pytest import raises
 
 from ..sources.auxiliaries.constants import (FOOD_CONSUMPTION,
                                              INBUILT_RESOURCES,
-                                             OTHERS_MINIMUM_WAGE,
                                              WOOD_CONSUMPTION)
 from ..sources.auxiliaries.enums import Class_Name, Month, Resource
 from ..sources.auxiliaries.resources import Resources
@@ -20,7 +19,7 @@ def test_constructor():
     })
     nobles = Nobles(state, 80, resources)
 
-    assert nobles.parent == state
+    assert nobles.parent is state
     assert nobles.population == 80
 
     assert nobles.resources.food == 100
@@ -38,7 +37,7 @@ def test_constructor():
     assert not nobles.promoted_to
 
     assert nobles.employees == 0
-    assert nobles.old_wage == OTHERS_MINIMUM_WAGE
+    assert nobles.old_wage == state.sm.others_minimum_wage
 
     assert nobles.happiness == 0
 
@@ -52,7 +51,7 @@ def test_default_constructor():
     state = State_Data()
     nobles = Nobles(state, 200)
 
-    assert nobles.parent == state
+    assert nobles.parent is state
     assert nobles.population == 200
 
     assert nobles.resources.food == 0
@@ -70,7 +69,7 @@ def test_default_constructor():
     assert not nobles.promoted_to
 
     assert nobles.employees == 0
-    assert nobles.old_wage == OTHERS_MINIMUM_WAGE
+    assert nobles.old_wage == state.sm.others_minimum_wage
 
     assert nobles.happiness == 0
 
@@ -396,7 +395,7 @@ def test_from_dict():
     }
     nobles = Nobles.from_dict(state, dicted)
 
-    assert nobles.parent == state
+    assert nobles.parent is state
     assert nobles.population == 80
     assert nobles.resources == resources
     assert nobles.starving is False

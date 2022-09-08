@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ..auxiliaries.constants import OTHERS_MINIMUM_WAGE
 from ..auxiliaries.resources import Resources
 from ..auxiliaries.soldiers import Soldiers
 from .social_classes.class_file import InvalidInputError, ValidationError
@@ -63,13 +62,11 @@ class Government:
         self.employees: float = 0
         self.increase_wage: bool
         self.profit_share: float
-        self.old_wage: float = OTHERS_MINIMUM_WAGE
+        self.old_wage: float = self.parent.sm.others_minimum_wage
 
         # Attributes used only when trading
         self.market_res: Resources
         self.money: float
-
-        self.fought: bool = False
 
     @property
     def real_resources(self) -> Resources:
@@ -109,8 +106,9 @@ class Government:
             "wage": self.wage,
             "wage_autoregulation": self.wage_autoregulation,
             "soldiers": self.soldiers.to_raw_dict(),
-            "fought": self.fought,
-            "missing_food": self.missing_food
+            "missing_food": self.missing_food,
+            "employees": self.employees,
+            "old_wage": self.old_wage
         }
 
     @classmethod
@@ -120,15 +118,16 @@ class Government:
         """
         try:
             new = cls(
-                parent, Resources(data["resources"]),
-                Resources(data["optimal_resources"]),
-                Resources(data["secure_resources"]), Soldiers(data["soldiers"])
+                parent, Resources.from_raw_dict(data["resources"]),
+                Resources.from_raw_dict(data["optimal_resources"]),
+                Resources.from_raw_dict(data["secure_resources"]),
+                Soldiers.from_raw_dict(data["soldiers"])
             )
-
             new.wage = float(data["wage"])
             new.wage_autoregulation = bool(data["wage_autoregulation"])
-            new.fought = bool(data["fought"])
             new.missing_food = float(data["missing_food"])
+            new.employees = float(data["employees"])
+            new.old_wage = float(data["old_wage"])
         except (KeyError, ValueError) as e:
             raise InvalidInputError from e
         return new

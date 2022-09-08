@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import Self
 
 from ...auxiliaries.constants import (FOOD_CONSUMPTION, HAPPINESS_DECAY,
-                                      INBUILT_RESOURCES, OTHERS_MINIMUM_WAGE,
-                                      WOOD_CONSUMPTION)
+                                      INBUILT_RESOURCES, WOOD_CONSUMPTION)
 from ...auxiliaries.enums import Class_Name, Resource
 from ...auxiliaries.resources import Resources
 
@@ -62,7 +61,7 @@ class Class(ABC):
         self.wage_share: float
         self.increase_wage: bool
         self.profit_share: float
-        self.old_wage: float = OTHERS_MINIMUM_WAGE
+        self.old_wage: float = self.parent.sm.others_minimum_wage
 
         # Attributes used only when trading
         self.market_res: Resources

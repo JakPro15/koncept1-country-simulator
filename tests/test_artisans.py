@@ -2,7 +2,6 @@ from pytest import raises
 
 from ..sources.auxiliaries.constants import (FOOD_CONSUMPTION,
                                              INBUILT_RESOURCES,
-                                             OTHERS_MINIMUM_WAGE,
                                              WOOD_CONSUMPTION)
 from ..sources.auxiliaries.enums import Class_Name, Month, Resource
 from ..sources.auxiliaries.resources import Resources
@@ -20,7 +19,7 @@ def test_constructor():
     })
     artisans = Artisans(state, 80, resources)
 
-    assert artisans.parent == state
+    assert artisans.parent is state
     assert artisans.population == 80
 
     assert artisans.resources.food == 100
@@ -38,7 +37,7 @@ def test_constructor():
     assert not artisans.promoted_to
 
     assert artisans.employees == 0
-    assert artisans.old_wage == OTHERS_MINIMUM_WAGE
+    assert artisans.old_wage == state.sm.others_minimum_wage
 
     assert artisans.happiness == 0
 
@@ -52,7 +51,7 @@ def test_default_constructor():
     state = State_Data()
     artisans = Artisans(state, 200)
 
-    assert artisans.parent == state
+    assert artisans.parent is state
     assert artisans.population == 200
 
     assert artisans.resources.food == 0
@@ -70,7 +69,7 @@ def test_default_constructor():
     assert not artisans.promoted_to
 
     assert artisans.employees == 0
-    assert artisans.old_wage == OTHERS_MINIMUM_WAGE
+    assert artisans.old_wage == state.sm.others_minimum_wage
 
     assert artisans.happiness == 0
 
@@ -408,7 +407,7 @@ def test_from_dict():
     }
     artisans = Artisans.from_dict(state, dicted)
 
-    assert artisans.parent == state
+    assert artisans.parent is state
     assert artisans.population == 80
     assert artisans.resources == resources
     assert artisans.starving is False

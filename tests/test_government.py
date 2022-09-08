@@ -1,422 +1,331 @@
 from ..sources.auxiliaries.constants import (
-    KNIGHT_FIGHTING_STRENGTH,
     KNIGHT_FOOD_CONSUMPTION
 )
 from ..sources.state.government import Government
 from ..sources.state.state_data import State_Data
-from ..sources.auxiliaries.arithmetic_dict import Arithmetic_Dict
+from ..sources.auxiliaries.resources import Resources
+from ..sources.auxiliaries.soldiers import Soldiers
+from ..sources.auxiliaries.enums import Resource, Soldier
+from ..sources.state.social_classes.class_file import ValidationError
 from pytest import raises
 
 
 def test_constructor():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.tools: 100
     })
-    soldiers = {
-        "knights": 10,
-        "footmen": 50
-    }
+    soldiers = Soldiers({
+        Soldier.knights: 10,
+        Soldier.footmen: 50
+    })
     govt = Government(state, resources, resources / 2, resources / 4, soldiers)
 
-    assert govt.parent == state
+    assert govt.parent is state
 
-    assert govt.resources["food"] == 100
-    assert govt.resources["wood"] == 200
-    assert govt.resources["iron"] == 0
-    assert govt.resources["stone"] == 0
-    assert govt.resources["tools"] == 100
-    assert govt.resources["land"] == 0
+    assert govt.resources == resources
+    assert govt.secure_resources == resources / 4
+    assert govt.optimal_resources == resources / 2
 
-    assert govt._new_resources["food"] == 100
-    assert govt._new_resources["wood"] == 200
-    assert govt._new_resources["iron"] == 0
-    assert govt._new_resources["stone"] == 0
-    assert govt._new_resources["tools"] == 100
-    assert govt._new_resources["land"] == 0
+    assert govt.wage == state.sm.others_minimum_wage
+    assert govt.wage_autoregulation is True
 
-    assert govt._secure_resources["food"] == 25
-    assert govt._secure_resources["wood"] == 50
-    assert govt._secure_resources["iron"] == 0
-    assert govt._secure_resources["stone"] == 0
-    assert govt._secure_resources["tools"] == 25
-    assert govt._secure_resources["land"] == 0
+    assert govt.soldiers == soldiers
 
-    assert govt.optimal_resources["food"] == 50
-    assert govt.optimal_resources["wood"] == 100
-    assert govt.optimal_resources["iron"] == 0
-    assert govt.optimal_resources["stone"] == 0
-    assert govt.optimal_resources["tools"] == 50
-    assert govt.optimal_resources["land"] == 0
-
-    assert govt.soldiers["knights"] == 10
-    assert govt.soldiers["footmen"] == 50
-    assert govt.soldier_revolt is False
+    assert govt.missing_food == 0
+    assert govt.employees == 0
+    assert govt.old_wage == state.sm.others_minimum_wage
 
 
 def test_default_constructor():
     state = State_Data()
     govt = Government(state)
 
-    assert govt.parent == state
+    assert govt.parent is state
 
-    assert govt.resources["food"] == 0
-    assert govt.resources["wood"] == 0
-    assert govt.resources["iron"] == 0
-    assert govt.resources["stone"] == 0
-    assert govt.resources["tools"] == 0
-    assert govt.resources["land"] == 0
+    assert govt.resources == {}
+    assert govt.secure_resources == {}
+    assert govt.optimal_resources == {}
 
-    assert govt._new_resources["food"] == 0
-    assert govt._new_resources["wood"] == 0
-    assert govt._new_resources["iron"] == 0
-    assert govt._new_resources["stone"] == 0
-    assert govt._new_resources["tools"] == 0
-    assert govt._new_resources["land"] == 0
+    assert govt.wage == state.sm.others_minimum_wage
+    assert govt.wage_autoregulation is True
 
-    assert govt._secure_resources["food"] == 0
-    assert govt._secure_resources["wood"] == 0
-    assert govt._secure_resources["iron"] == 0
-    assert govt._secure_resources["stone"] == 0
-    assert govt._secure_resources["tools"] == 0
-    assert govt._secure_resources["land"] == 0
+    assert govt.soldiers == {}
 
-    assert govt.optimal_resources["food"] == 0
-    assert govt.optimal_resources["wood"] == 0
-    assert govt.optimal_resources["iron"] == 0
-    assert govt.optimal_resources["stone"] == 0
-    assert govt.optimal_resources["tools"] == 0
-    assert govt.optimal_resources["land"] == 0
-
-    assert govt.soldiers["knights"] == 0
-    assert govt.soldiers["footmen"] == 0
-    assert govt.soldier_revolt is False
+    assert govt.missing_food == 0
+    assert govt.employees == 0
+    assert govt.old_wage == state.sm.others_minimum_wage
 
 
-def test_resources():
+def test_real_resources():
     state = State_Data()
-    resources1 = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
     })
-    resources2 = Arithmetic_Dict({
-        "food": 150,
-        "wood": 10,
-        "iron": 11,
-        "stone": 12,
-        "tools": 100,
-        "land": 0
-    })
-    govt = Government(state, resources1)
-    govt.new_resources = resources2
-    assert govt.resources == resources1
-    assert govt.new_resources == resources2
+    govt = Government(state, resources, resources / 2, resources / 4)
+    assert govt.real_resources == resources * 1.25
+
+    govt.resources = Resources()
+    assert govt.real_resources == resources * 0.25
+
+    govt.optimal_resources = Resources()
+    assert govt.real_resources == resources * 0.25
+
+    govt.secure_resources = Resources()
+    assert govt.real_resources == {}
 
 
-def test_secure_resources():
+def test_max_employees_from_land():
     state = State_Data()
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
+    state.sm.worker_land_usage = 10
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 1000000,
+        Resource.land: 100
     })
-    govt = Government(state, resources, resources / 2)
-    secure_res = {
-        "food": 1000,
-        "wood": 2000,
-        "iron": 3000,
-        "stone": 4000,
-        "tools": 5000,
-        "land": 6000
-    }
-    govt.secure_resources = secure_res
-    assert govt.real_resources == {
-        "food": 1100,
-        "wood": 2200,
-        "iron": 3000,
-        "stone": 4000,
-        "tools": 5100,
-        "land": 6000
-    }
-    assert govt.secure_resources == {
-        "food": 1000,
-        "wood": 2000,
-        "iron": 3000,
-        "stone": 4000,
-        "tools": 5000,
-        "land": 6000
-    }
-    govt.new_resources = {
-        "food": -100,
-        "wood": 0,
-        "iron": 300,
-        "stone": 400,
-        "tools": -5000,
-        "land": -5000
-    }
-    govt.flush()
-    assert govt.resources == {
-        "food": 0,
-        "wood": 0,
-        "iron": 300,
-        "stone": 400,
-        "tools": 0,
-        "land": 0
-    }
-    assert govt.secure_resources == {
-        "food": 900,
-        "wood": 2000,
-        "iron": 3000,
-        "stone": 4000,
-        "tools": 0,
-        "land": 1000
-    }
-    assert govt.real_resources == {
-        "food": 900,
-        "wood": 2000,
-        "iron": 3300,
-        "stone": 4400,
-        "tools": 0,
-        "land": 1000
-    }
+    govt = Government(state, resources)
+
+    assert govt.max_employees == 10
 
 
-def test_soldiers_private_properties():
+def test_max_employees_from_tools():
+    state = State_Data()
+    state.sm.worker_land_usage = 10
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 300,
+        Resource.land: 1000000
+    })
+    govt = Government(state, resources)
+
+    assert govt.max_employees == 100
+
+
+def test_soldier_revolt():
     state = State_Data()
     govt = Government(state)
-    govt.soldiers = {
-        "knights": 30,
-        "footmen": 100
-    }
-    assert govt.soldiers_fighting_strength == \
-        100 + 30 * KNIGHT_FIGHTING_STRENGTH
-    assert govt.soldiers_population == 130
-
-    govt.soldiers = {
-        "knights": 10,
-        "footmen": 200
-    }
-    assert govt.soldiers_fighting_strength == \
-        200 + 10 * KNIGHT_FIGHTING_STRENGTH
-    assert govt.soldiers_population == 210
+    assert govt.soldier_revolt is False
+    govt.missing_food = 2
+    assert govt.soldier_revolt is True
+    govt.missing_food = -2
+    assert govt.soldier_revolt is False
 
 
 def test_consume_typical():
     state = State_Data()
-    res = {
-        "food": 300,
-        "wood": 20,
-        "stone": 230,
-        "iron": 1,
-        "tools": 44,
-        "land": 234
-    }
+    res = Resources({
+        Resource.food: 300,
+        Resource.wood: 20,
+        Resource.stone: 230,
+        Resource.iron: 1,
+        Resource.tools: 44,
+        Resource.land: 234
+    })
     govt = Government(state, res)
-    govt.soldiers = {
-        "knights": 30,
-        "footmen": 100
-    }
+    govt.soldiers = Soldiers({
+        Soldier.knights: 30,
+        Soldier.footmen: 100
+    })
     govt.consume()
-    govt.flush()
     assert govt.resources == {
-        "food": 200 - 30 * KNIGHT_FOOD_CONSUMPTION,
-        "wood": 20,
-        "stone": 230,
-        "iron": 1,
-        "tools": 44,
-        "land": 234
+        Resource.food: 200 - 30 * KNIGHT_FOOD_CONSUMPTION,
+        Resource.wood: 20,
+        Resource.stone: 230,
+        Resource.iron: 1,
+        Resource.tools: 44,
+        Resource.land: 234
     }
 
-    govt.soldiers = {
-        "knights": 10,
-        "footmen": 20
-    }
+    govt.soldiers = Soldiers({
+        Soldier.knights: 10,
+        Soldier.footmen: 20
+    })
     govt.consume()
-    govt.flush()
     assert govt.resources == {
-        "food": 180 - 40 * KNIGHT_FOOD_CONSUMPTION,
-        "wood": 20,
-        "stone": 230,
-        "iron": 1,
-        "tools": 44,
-        "land": 234
+        Resource.food: 180 - 40 * KNIGHT_FOOD_CONSUMPTION,
+        Resource.wood: 20,
+        Resource.stone: 230,
+        Resource.iron: 1,
+        Resource.tools: 44,
+        Resource.land: 234
     }
 
 
 def test_consume_no_food():
-    class NoFood(Exception):
-        pass
-
-    def fake_handle():
-        raise NoFood
-
     state = State_Data()
-    res = {
-        "food": 100,
-        "wood": 20,
-        "stone": 230,
-        "iron": 1,
-        "tools": 44,
-        "land": 234
-    }
+    res = Resources({
+        Resource.food: 100,
+        Resource.wood: 20,
+        Resource.stone: 230,
+        Resource.iron: 1,
+        Resource.tools: 44,
+        Resource.land: 234
+    })
     govt = Government(state, res)
-    govt.handle_soldier_bankruptcy = fake_handle
-    govt.soldiers = {
-        "knights": 30,
-        "footmen": 100
+    govt.soldiers = Soldiers({
+        Soldier.knights: 30,
+        Soldier.footmen: 100
+    })
+    govt.consume()
+    assert govt.resources == {
+        Resource.wood: 20,
+        Resource.stone: 230,
+        Resource.iron: 1,
+        Resource.tools: 44,
+        Resource.land: 234
     }
-    with raises(NoFood):
-        govt.consume()
+    assert govt.missing_food == 30 * KNIGHT_FOOD_CONSUMPTION
 
 
 def test_to_dict():
     state = State_Data()
-    resources = {
-        "food": 100,
-        "wood": 200,
-        "iron": 0,
-        "stone": 0,
-        "tools": 100,
-        "land": 0
-    }
-    optimal_resources = {
-        "food": 10,
-        "wood": 20,
-        "iron": 0,
-        "stone": 0,
-        "tools": 10,
-        "land": 0
-    }
-    secure_resources = {
-        "food": 300,
-        "wood": 300,
-        "iron": 10,
-        "stone": 10,
-        "tools": 300,
-        "land": 10
-    }
-    govt = Government(state, resources, optimal_resources, secure_resources)
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
+    optimal_resources = Resources({
+        Resource.food: 10,
+        Resource.wood: 20,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 10,
+        Resource.land: 0
+    })
+    secure_resources = Resources({
+        Resource.food: 300,
+        Resource.wood: 300,
+        Resource.iron: 10,
+        Resource.stone: 10,
+        Resource.tools: 300,
+        Resource.land: 10
+    })
+    soldiers = Soldiers({
+        Soldier.knights: 20,
+        Soldier.footmen: 34
+    })
+    govt = Government(state, resources, optimal_resources,
+                      secure_resources, soldiers)
+    govt.wage = 0.9
+    govt.wage_autoregulation = False
+    govt.missing_food = 21
+    govt.employees = 56.6
+    govt.old_wage = 0.8
 
-    dicted = govt.to_dict()
-    assert dicted["resources"] == resources
-    assert dicted["optimal_resources"] == optimal_resources
-    assert dicted["secure_resources"] == secure_resources
+    assert govt.to_dict() == {
+        "resources": resources.to_raw_dict(),
+        "optimal_resources": optimal_resources.to_raw_dict(),
+        "secure_resources": secure_resources.to_raw_dict(),
+        "wage": 0.9,
+        "wage_autoregulation": False,
+        "soldiers": soldiers.to_raw_dict(),
+        "missing_food": 21,
+        "employees": 56.6,
+        "old_wage": 0.8
+    }
 
 
 def test_from_dict():
     state = State_Data()
+    resources = Resources({
+        Resource.food: 100,
+        Resource.wood: 200,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 100,
+        Resource.land: 0
+    })
+    optimal_resources = Resources({
+        Resource.food: 10,
+        Resource.wood: 20,
+        Resource.iron: 0,
+        Resource.stone: 0,
+        Resource.tools: 10,
+        Resource.land: 0
+    })
+    secure_resources = Resources({
+        Resource.food: 300,
+        Resource.wood: 300,
+        Resource.iron: 10,
+        Resource.stone: 10,
+        Resource.tools: 300,
+        Resource.land: 10
+    })
+    soldiers = Soldiers({
+        Soldier.knights: 20,
+        Soldier.footmen: 34
+    })
+
     dicted = {
-        "resources": {
-            "food": 100,
-            "wood": 200,
-            "iron": 0,
-            "stone": 0,
-            "tools": 100,
-            "land": 0
-        },
-        "optimal_resources": {
-            "food": 10,
-            "wood": 20,
-            "iron": 30,
-            "stone": 40,
-            "tools": 100,
-            "land": 50
-        },
-        "secure_resources": {
-            "food": 10,
-            "wood": 20,
-            "iron": 40,
-            "stone": 50,
-            "tools": 10,
-            "land": 10
-        }
+        "resources": resources.to_raw_dict(),
+        "optimal_resources": optimal_resources.to_raw_dict(),
+        "secure_resources": secure_resources.to_raw_dict(),
+        "wage": 0.9,
+        "wage_autoregulation": False,
+        "soldiers": soldiers.to_raw_dict(),
+        "missing_food": 21,
+        "employees": 56.6,
+        "old_wage": 0.8
     }
     govt = Government.from_dict(state, dicted)
+    assert govt.parent is state
+    assert govt.resources == resources
+    assert govt.optimal_resources == optimal_resources
+    assert govt.secure_resources == secure_resources
+    assert govt.wage == 0.9
+    assert govt.wage_autoregulation is False
+    assert govt.soldiers == soldiers
+    assert govt.missing_food == 21
+    assert govt.employees == 56.6
+    assert govt.old_wage == 0.8
 
-    assert govt.parent == state
-    assert govt.resources == dicted["resources"]
-    assert govt.new_resources == dicted["resources"]
-    assert govt.optimal_resources == dicted["optimal_resources"]
-    assert govt.secure_resources == dicted["secure_resources"]
 
-
-def test_handle_negative_resources():
+def test_validate():
     state = State_Data()
     govt = Government(state)
 
-    govt._new_resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": -100,
-        "stone": -0.0001,
-        "iron": -0.00099999,
-        "tools": 0.0001,
-        "land": 0
+    govt.resources = Resources({
+        Resource.food: 100,
+        Resource.wood: -0.00001,
+        Resource.iron: -0.000099999,
+        Resource.tools: 0.00001,
     })
 
-    govt.handle_negative_resources()
-    assert govt.new_resources == {
-        "food": 100,
-        "wood": -100,
-        "stone": 0,
-        "iron": 0,
-        "tools": 0.0001,
-        "land": 0
+    govt.validate()
+    assert govt.resources == {
+        Resource.food: 100,
+        Resource.tools: 0.00001
     }
 
-
-def test_flush_typical():
-    state = State_Data()
-    resources1 = {
-        "food": 1000,
-        "wood": 2000,
-        "iron": 0,
-        "stone": 1000,
-        "tools": 1000,
-        "land": 10000
-    }
-    resources2 = {
-        "food": 10000,
-        "wood": 20000,
-        "iron": 10,
-        "stone": 10000,
-        "tools": 10000,
-        "land": 100000
-    }
-    govt = Government(state, resources1)
-    govt._new_resources = resources2
-
-    assert govt.resources == resources1
-    assert govt.new_resources == resources2
-
-    govt.flush()
-
-    assert govt.resources == resources2
-    assert govt.new_resources == resources2
-
-
-def test_flush_exception():
-    state = State_Data()
-    govt = Government(state)
-    resources = Arithmetic_Dict({
-        "food": 100,
-        "wood": -200,
-        "iron": 0,
-        "stone": 100,
-        "tools": 100,
-        "land": 0
+    govt.resources = Resources({
+        Resource.food: 100,
+        Resource.wood: -0.0001,
+        Resource.iron: -0.000099999,
+        Resource.tools: 0.00001,
     })
-    govt.new_resources = resources
-    with raises(Exception):
-        govt.flush()
+    with raises(ValidationError):
+        govt.validate()
+
+    govt.resources = Resources({
+        Resource.food: -100,
+        Resource.iron: -0.000099999,
+        Resource.tools: -100,
+    })
+    with raises(ValidationError):
+        govt.validate()

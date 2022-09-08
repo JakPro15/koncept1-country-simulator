@@ -2,7 +2,6 @@ from pytest import raises
 
 from ..sources.auxiliaries.constants import (FOOD_CONSUMPTION,
                                              INBUILT_RESOURCES,
-                                             OTHERS_MINIMUM_WAGE,
                                              WOOD_CONSUMPTION)
 from ..sources.auxiliaries.enums import Class_Name, Month, Resource
 from ..sources.auxiliaries.resources import Resources
@@ -20,7 +19,7 @@ def test_constructor():
     })
     others = Others(state, 80, resources)
 
-    assert others.parent == state
+    assert others.parent is state
     assert others.population == 80
 
     assert others.resources.food == 100
@@ -38,7 +37,7 @@ def test_constructor():
     assert not others.promoted_to
 
     assert others.employees == 0
-    assert others.old_wage == OTHERS_MINIMUM_WAGE
+    assert others.old_wage == state.sm.others_minimum_wage
 
     assert others.happiness == 0
 
@@ -52,7 +51,7 @@ def test_default_constructor():
     state = State_Data()
     others = Others(state, 200)
 
-    assert others.parent == state
+    assert others.parent is state
     assert others.population == 200
 
     assert others.resources.food == 0
@@ -70,7 +69,7 @@ def test_default_constructor():
     assert not others.promoted_to
 
     assert others.employees == 0
-    assert others.old_wage == OTHERS_MINIMUM_WAGE
+    assert others.old_wage == state.sm.others_minimum_wage
 
     assert others.happiness == 0
 
@@ -376,7 +375,7 @@ def test_from_dict():
     }
     others = Others.from_dict(state, dicted)
 
-    assert others.parent == state
+    assert others.parent is state
     assert others.population == 80
     assert others.resources == resources
     assert others.starving is False

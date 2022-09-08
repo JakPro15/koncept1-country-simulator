@@ -2,7 +2,6 @@ from pytest import raises
 
 from ..sources.auxiliaries.constants import (DEFAULT_PRICES, FOOD_CONSUMPTION,
                                              INBUILT_RESOURCES,
-                                             OTHERS_MINIMUM_WAGE,
                                              WOOD_CONSUMPTION)
 from ..sources.auxiliaries.enums import Class_Name, Month, Resource
 from ..sources.auxiliaries.resources import Resources
@@ -20,7 +19,7 @@ def test_constructor():
     })
     peasants = Peasants(state, 80, resources)
 
-    assert peasants.parent == state
+    assert peasants.parent is state
     assert peasants.population == 80
 
     assert peasants.resources.food == 100
@@ -38,7 +37,7 @@ def test_constructor():
     assert not peasants.promoted_to
 
     assert peasants.employees == 0
-    assert peasants.old_wage == OTHERS_MINIMUM_WAGE
+    assert peasants.old_wage == state.sm.others_minimum_wage
 
     assert peasants.happiness == 0
 
@@ -52,7 +51,7 @@ def test_default_constructor():
     state = State_Data()
     peasants = Peasants(state, 200)
 
-    assert peasants.parent == state
+    assert peasants.parent is state
     assert peasants.population == 200
 
     assert peasants.resources.food == 0
@@ -70,7 +69,7 @@ def test_default_constructor():
     assert not peasants.promoted_to
 
     assert peasants.employees == 0
-    assert peasants.old_wage == OTHERS_MINIMUM_WAGE
+    assert peasants.old_wage == state.sm.others_minimum_wage
 
     assert peasants.happiness == 0
 
@@ -411,7 +410,7 @@ def test_from_dict():
     }
     peasants = Peasants.from_dict(state, dicted)
 
-    assert peasants.parent == state
+    assert peasants.parent is state
     assert peasants.population == 80
     assert peasants.resources == resources
     assert peasants.starving is False
