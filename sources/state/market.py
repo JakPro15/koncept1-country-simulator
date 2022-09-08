@@ -32,7 +32,7 @@ class Market:
     prices - prices of resources in the last done trade
     """
     def __init__(self, classes: Sequence[SupportsTrade], parent: State_Data):
-        self.classes: list[SupportsTrade] = list(classes)
+        self.trading_objs: list[SupportsTrade] = list(classes)
         self.parent: State_Data = parent
 
     def _get_available_and_needed_resources(self):
@@ -41,7 +41,7 @@ class Market:
         """
         self.needed_resources: Resources = Resources()
         self.available_resources: Resources = Resources()
-        for social_class in self.classes:
+        for social_class in self.trading_objs:
             self.needed_resources += social_class.optimal_resources
             self.available_resources += social_class.resources
         if not hasattr(self, "old_avail_res"):
@@ -80,14 +80,7 @@ class Market:
         """
         Executes the classes purchasing resources they need.
         """
-        for social_class in self.classes:
-            try:
-                # social_class doesn't have to have population attribute
-                if social_class.population == 0:  # type: ignore
-                    continue
-            except AttributeError:
-                pass
-
+        for trading_obj in self.trading_objs:
             corrected_optimal_resources = Resources()
             rel_prices = self._full_prices / DEFAULT_PRICES
             price_adjusted = {
@@ -95,30 +88,30 @@ class Market:
                                     if rel_prices[resource] > 0.1
                                     else 0.1)
                 for resource, amount
-                in social_class.optimal_resources.items()
+                in trading_obj.optimal_resources.items()
             }
-            for key in social_class.optimal_resources:
+            for key in trading_obj.optimal_resources:
                 corrected_optimal_resources[key] = min(
-                    social_class.optimal_resources[key],
+                    trading_obj.optimal_resources[key],
                     price_adjusted[key]
                 )
 
-            social_class.money = sum(
-                (social_class.resources * self.prices).values()
+            trading_obj.money = sum(
+                (trading_obj.resources * self.prices).values()
             )
             needed_money = sum(
                 (corrected_optimal_resources * self.prices).values()
             )
             if needed_money > 0:
-                part_bought = min(social_class.money / needed_money, 1)
-                money_spent = min(social_class.money, needed_money)
-                social_class.money -= money_spent
+                part_bought = min(trading_obj.money / needed_money, 1)
+                money_spent = min(trading_obj.money, needed_money)
+                trading_obj.money -= money_spent
 
-                social_class.market_res = \
+                trading_obj.market_res = \
                     corrected_optimal_resources * part_bought
-                self.available_resources -= social_class.market_res
+                self.available_resources -= trading_obj.market_res
             else:
-                social_class.market_res = Resources()
+                trading_obj.market_res = Resources()
 
     def _buy_other_resources(self):
         """
@@ -126,7 +119,7 @@ class Market:
         """
         total_price = sum((self.available_resources * self.prices).values())
         if total_price > 0:
-            for social_class in self.classes:
+            for social_class in self.trading_objs:
                 try:
                     # social_class doesn't have to have population attribute
                     if social_class.population == 0:  # type: ignore
@@ -140,7 +133,7 @@ class Market:
                 social_class.money = 0
         else:
             classes_count = 0
-            for social_class in self.classes:
+            for social_class in self.trading_objs:
                 try:
                     # social_class doesn't have to have population attribute
                     if social_class.population == 0:  # type: ignore
@@ -148,7 +141,7 @@ class Market:
                 except AttributeError:
                     pass
                 classes_count += 1
-            for social_class in self.classes:
+            for social_class in self.trading_objs:
                 try:
                     # social_class doesn't have to have population attribute
                     if social_class.population == 0:  # type: ignore
@@ -163,7 +156,7 @@ class Market:
         """
         Finalizes trade and deletes attributes used during trade calculations.
         """
-        for social_class in self.classes:
+        for social_class in self.trading_objs:
             try:
                 # social_class doesn't have to have population attribute
                 if social_class.population == 0:  # type: ignore
