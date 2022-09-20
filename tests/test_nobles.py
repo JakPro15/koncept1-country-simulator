@@ -123,8 +123,8 @@ def test_real_resources():
 
 def test_optimal_resources():
     state = State_Data.generate_empty_state()
-    state.classes[Class_Name.nobles].population = 50
-    assert state.classes[Class_Name.nobles].optimal_resources == \
+    state.nobles.population = 50
+    assert state.nobles.optimal_resources == \
         state.sm.optimal_resources[Class_Name.nobles] * 50
 
 
@@ -147,8 +147,6 @@ def test_missing_resources():
 
 def test_class_overpopulation_1():
     state = State_Data.generate_empty_state()
-    nobles = state.classes[Class_Name.nobles]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: -500,
@@ -158,7 +156,7 @@ def test_class_overpopulation_1():
     missing_wood = 500
     missing_stone = 20
 
-    nobles.resources = resources
+    state.nobles.resources = resources
 
     inbuilt_wood = INBUILT_RESOURCES[Class_Name.nobles][Resource.wood] - \
         INBUILT_RESOURCES[Class_Name.peasants][Resource.wood]
@@ -167,13 +165,12 @@ def test_class_overpopulation_1():
 
     overpop = max(missing_wood / inbuilt_wood, missing_stone / inbuilt_stone)
 
-    assert nobles.class_overpopulation == overpop
+    assert state.nobles.class_overpopulation == overpop
 
 
 def test_class_overpopulation_2():
     state = State_Data.generate_empty_state()
-    state.classes[Class_Name.others].population = 500
-    nobles = state.classes[Class_Name.nobles]
+    state.others.population = 500
 
     resources = Resources({
         Resource.food: 200,
@@ -184,7 +181,7 @@ def test_class_overpopulation_2():
     missing_wood = 50
     missing_stone = 200
 
-    nobles.resources = resources
+    state.nobles.resources = resources
 
     inbuilt_wood = INBUILT_RESOURCES[Class_Name.nobles][Resource.wood] - \
         INBUILT_RESOURCES[Class_Name.peasants][Resource.wood]
@@ -193,13 +190,12 @@ def test_class_overpopulation_2():
 
     overpop = max(missing_wood / inbuilt_wood, missing_stone / inbuilt_stone)
 
-    assert nobles.class_overpopulation == overpop
+    assert state.nobles.class_overpopulation == overpop
 
 
 def test_class_overpopulation_3():
     state = State_Data.generate_empty_state()
-    state.classes[Class_Name.others].population = 500
-    nobles = state.classes[Class_Name.nobles]
+    state.others.population = 500
 
     resources = Resources({
         Resource.food: 200,
@@ -210,9 +206,9 @@ def test_class_overpopulation_3():
         Resource.land: 0
     })
 
-    nobles.resources = resources
+    state.nobles.resources = resources
 
-    assert nobles.class_overpopulation == 0
+    assert state.nobles.class_overpopulation == 0
 
 
 def test_grow_population_1():
@@ -417,14 +413,13 @@ def test_handle_empty_class_emptying():
         Resource.tools: 100,
         Resource.land: 0
     })
-    nobles = state.classes[Class_Name.nobles]
 
-    nobles.resources = resources.copy()
-    nobles._population = 0.3  # type: ignore
+    state.nobles.resources = resources.copy()
+    state.nobles._population = 0.3  # type: ignore
 
-    nobles.handle_empty_class()
-    assert nobles.population == 0
-    assert nobles.resources == {}
+    state.nobles.handle_empty_class()
+    assert state.nobles.population == 0
+    assert state.nobles.resources == {}
     assert state.government.resources == \
         resources + INBUILT_RESOURCES[Class_Name.nobles] * 0.3
 
@@ -439,14 +434,13 @@ def test_handle_empty_class_not_emptying():
         Resource.tools: 100,
         Resource.land: 0
     })
-    nobles = state.classes[Class_Name.nobles]
 
-    nobles.resources = resources.copy()
-    nobles._population = 0.5  # type: ignore
+    state.nobles.resources = resources.copy()
+    state.nobles._population = 0.5  # type: ignore
 
-    nobles.handle_empty_class()
-    assert nobles.population == 0.5
-    assert nobles.resources == resources
+    state.nobles.handle_empty_class()
+    assert state.nobles.population == 0.5
+    assert state.nobles.resources == resources
     assert state.government.resources == {}
 
 

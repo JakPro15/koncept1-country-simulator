@@ -21,6 +21,12 @@ class Arithmetic_Dict(Generic[T], dict[T, float]):
         for key in self | other:
             self[key] = self.get(key, 0) + other.get(key, 0)
 
+    def __neg__(self) -> Self:
+        result = self.copy()
+        for key in self:
+            result[key] = -self.get(key, 0)
+        return result
+
     def __sub__(self, other: Mapping[T, float]) -> Self:
         result = self.copy()
         for key in self | other:

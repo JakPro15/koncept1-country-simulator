@@ -123,8 +123,8 @@ def test_real_resources():
 
 def test_optimal_resources():
     state = State_Data.generate_empty_state()
-    state.classes[Class_Name.others].population = 50
-    assert state.classes[Class_Name.others].optimal_resources == \
+    state.others.population = 50
+    assert state.others.optimal_resources == \
         state.sm.optimal_resources[Class_Name.others] * 50
 
 
@@ -147,8 +147,6 @@ def test_missing_resources():
 
 def test_class_overpopulation_1():
     state = State_Data.generate_empty_state()
-    others = state.classes[Class_Name.others]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: -500,
@@ -156,15 +154,13 @@ def test_class_overpopulation_1():
         Resource.tools: 1200
     })
 
-    others.resources = resources
+    state.others.resources = resources
 
-    assert others.class_overpopulation == 0
+    assert state.others.class_overpopulation == 0
 
 
 def test_class_overpopulation_2():
     state = State_Data.generate_empty_state()
-    others = state.classes[Class_Name.others]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: -50,
@@ -172,15 +168,13 @@ def test_class_overpopulation_2():
         Resource.tools: 1200
     })
 
-    others.resources = resources
+    state.others.resources = resources
 
-    assert others.class_overpopulation == 0
+    assert state.others.class_overpopulation == 0
 
 
 def test_class_overpopulation_3():
     state = State_Data.generate_empty_state()
-    others = state.classes[Class_Name.others]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: 500,
@@ -190,9 +184,9 @@ def test_class_overpopulation_3():
         Resource.land: 0
     })
 
-    others.resources = resources
+    state.others.resources = resources
 
-    assert others.class_overpopulation == 0
+    assert state.others.class_overpopulation == 0
 
 
 def test_grow_population_1():
@@ -397,14 +391,13 @@ def test_handle_empty_class_emptying():
         Resource.tools: 100,
         Resource.land: 0
     })
-    others = state.classes[Class_Name.others]
 
-    others.resources = resources.copy()
-    others._population = 0.3  # type: ignore
+    state.others.resources = resources.copy()
+    state.others._population = 0.3  # type: ignore
 
-    others.handle_empty_class()
-    assert others.population == 0
-    assert others.resources == {}
+    state.others.handle_empty_class()
+    assert state.others.population == 0
+    assert state.others.resources == {}
     assert state.government.resources == \
         resources + INBUILT_RESOURCES[Class_Name.others] * 0.3
 
@@ -419,14 +412,13 @@ def test_handle_empty_class_not_emptying():
         Resource.tools: 100,
         Resource.land: 0
     })
-    others = state.classes[Class_Name.others]
 
-    others.resources = resources.copy()
-    others._population = 0.5  # type: ignore
+    state.others.resources = resources.copy()
+    state.others._population = 0.5  # type: ignore
 
-    others.handle_empty_class()
-    assert others.population == 0.5
-    assert others.resources == resources
+    state.others.handle_empty_class()
+    assert state.others.population == 0.5
+    assert state.others.resources == resources
     assert state.government.resources == {}
 
 

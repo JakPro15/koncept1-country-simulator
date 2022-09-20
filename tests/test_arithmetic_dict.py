@@ -52,6 +52,11 @@ def test_addition_assignment():
     assert first == get_result(numbers, lambda x, y: x + y)
 
 
+def test_unary_minus():
+    numbers, first, _ = get_numbers()
+    assert -first == get_result(numbers, lambda x, y: -x)
+
+
 def test_subtraction():
     numbers, first, second = get_numbers()
     assert first - second == get_result(numbers, lambda x, y: x - y)

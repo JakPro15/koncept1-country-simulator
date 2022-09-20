@@ -31,6 +31,7 @@ class Class(ABC):
     """
     Represents one social class of the country.
     """
+    # mutable default argument - it is copied anyway
     def __init__(self, parent: State_Data, population: float = 0,
                  resources: Resources = Resources()) -> None:
         """
@@ -55,7 +56,7 @@ class Class(ABC):
 
         self.happiness: float = 0
 
-        # Attributes used only during employment calculation and history
+        # Attributes used only during employment calculation (and history)
         self.employees: float = 0
         self.wage: float = 0
         self.wage_share: float

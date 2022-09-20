@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from math import inf, isinf, log
-from typing import TYPE_CHECKING, Any, Mapping, Protocol, Sequence, TypedDict
+from typing import (TYPE_CHECKING, Any, Generator, Mapping, Protocol, Sequence,
+                    TypedDict)
 
 from ..auxiliaries.arithmetic_dict import Arithmetic_Dict
 from ..auxiliaries.constants import (BRIGAND_STRENGTH_CLASS,
@@ -124,7 +125,7 @@ class State_Data_Creation_And_Do_Month:
         self._market: Market | None = None
 
         self._brigands: float = 0.0
-        self._brigand_strength: float = 0.8
+        self._brigands_strength: float = 0.8
 
     @property
     def classes(self) -> dict[Class_Name, Class]:
@@ -151,6 +152,25 @@ class State_Data_Creation_And_Do_Month:
             self._classes[Class_Name.others]
         self._classes[Class_Name.others].lower_class = \
             self._classes[Class_Name.others]
+
+    @property
+    def nobles(self) -> Class:
+        return self.classes[Class_Name.nobles]
+
+    @property
+    def artisans(self) -> Class:
+        return self.classes[Class_Name.artisans]
+
+    @property
+    def peasants(self) -> Class:
+        return self.classes[Class_Name.peasants]
+
+    @property
+    def others(self) -> Class:
+        return self.classes[Class_Name.others]
+
+    def __iter__(self) -> Generator[Class, None, None]:
+        yield from self.classes.values()
 
     @property
     def government(self) -> Government:
@@ -195,10 +215,10 @@ class State_Data_Creation_And_Do_Month:
     def _set_wages_and_employers(self) -> list[Employer]:
         """
         Makes employers' wages compliant with minimum wage and returns a list
-        of employers classes.
+        of employers classes. Also sets all employees attributes to 0.
         """
         employers_classes: list[Employer] = []
-        for social_class in self.classes.values():
+        for social_class in self:
             social_class.employees = 0
             if social_class.real_resources.land > 0:
                 employers_classes.append(social_class)
@@ -224,7 +244,7 @@ class State_Data_Creation_And_Do_Month:
         """
         employees_classes: list[Class] = []
         employees = 0
-        for social_class in self.classes.values():
+        for social_class in self:
             if social_class.employable:
                 employees_classes.append(social_class)
                 employees += social_class.population
@@ -260,17 +280,14 @@ class State_Data_Creation_And_Do_Month:
         Adds the given employees numbers to the given employers classes.
         """
         for employer, value in employees.items():
-            if hasattr(employer, "employees"):
-                employer.employees += value
-            else:
-                employer.employees = value
+            employer.employees += value
 
     def _get_produced_and_used(
         self, ratioed_employees: Arithmetic_Dict[Resource]
     ) -> tuple[Resources, Resources]:
         """
         Calculates how much resources will be produced and used as a result of
-        this month's employment.
+        this month's employment. Returns tuple: (produced, used)
         """
         per_capita = Resources({
             Resource.food: self.sm.food_production[self.month],
@@ -323,9 +340,8 @@ class State_Data_Creation_And_Do_Month:
     @staticmethod
     def _employees_to_profit(employers_classes: Sequence[Employer]) -> None:
         """
-        Removes employees attribute from employers classes, adding
-        profit_share attribute instead, indicating what part of total produced
-        resources were produced in the employ of this class.
+        Sets profit_share attribute in employers, indicating what part of
+        total produced resources were produced in the employ of this class.
         """
         total_employees = 0
         for employer in employers_classes:
@@ -362,8 +378,6 @@ class State_Data_Creation_And_Do_Month:
 
             employer.resources -= used * employer.profit_share
 
-            del employer.profit_share
-
         produced -= total_employers_share
         for employee in employees_classes:
             employee.resources += produced * employee.wage_share
@@ -380,18 +394,18 @@ class State_Data_Creation_And_Do_Month:
             if employer.increase_wage:
                 employer.wage += WAGE_CHANGE
                 employer.wage = min(
-                    employer.wage, getattr(self, "max_wage", 1)
+                    employer.wage, self.max_wage
                 )
             else:
                 employer.wage -= WAGE_CHANGE
                 employer.wage = max(employer.wage, 0)
                 employer.wage = min(
-                    employer.wage, getattr(self, "max_wage", 1)
+                    employer.wage, self.max_wage
                 )
 
     def _employ(self) -> None:
         """
-        Executes employable classes' production.
+        Executes employable classes' (Others) production.
         """
         employers_classes = self._set_wages_and_employers()
 
@@ -431,7 +445,7 @@ class State_Data_Creation_And_Do_Month:
         Creates a market for the object. Needs classes and government to be
         initialized.
         """
-        trading_objects: list[SupportsTrade] = list(self.classes.values())
+        trading_objects: list[SupportsTrade] = list(self)
         trading_objects.append(self.government)
         # When this is executed self will be a State_Data object
         self._market = Market(trading_objects, self)  # type: ignore
@@ -441,7 +455,7 @@ class State_Data_Creation_And_Do_Month:
         Returns the number of employees available to be hired this month.
         """
         employees = 0.0
-        for social_class in self.classes.values():
+        for social_class in self:
             if social_class.employable:
                 employees += social_class.population
         return employees
@@ -452,7 +466,11 @@ class State_Data_Creation_And_Do_Month:
         Creates a State_Data object from the given dict.
         """
         # When this is executed cls will be State_Data or a subtype
-        state: State_Data = cls(data["month"], data["year"])  # type: ignore
+        state: State_Data = cls(  # type: ignore
+            Month[data["month"]]
+            if isinstance(data["month"], str) else data["month"],
+            int(data["year"])
+        )
 
         nobles = Nobles.from_dict(state, data["classes"]["nobles"])
         artisans = Artisans.from_dict(state, data["classes"]["artisans"])
@@ -466,17 +484,31 @@ class State_Data_Creation_And_Do_Month:
             Class_Name.others: others
         }
 
-        state.prices = Resources(data["prices"])
+        state.prices = Resources.from_raw_dict(data["prices"])
 
         if "laws" in data:
-            state.sm.tax_rates["personal"] = data["laws"]["tax_personal"]
-            state.sm.tax_rates["property"] = data["laws"]["tax_property"]
-            state.sm.tax_rates["income"] = data["laws"]["tax_income"]
-            state.sm.others_minimum_wage = data["laws"]["wage_minimum"]
-            state.government.wage = data["laws"]["wage_government"]
-            state.government.wage_autoregulation = \
-                data["laws"]["wage_autoregulation"]
-            state.sm.max_prices = data["laws"]["max_prices"]
+            state.sm.tax_rates["personal"] = Arithmetic_Dict({
+                Class_Name[name] if isinstance(name, str) else name:
+                float(value)
+                for name, value
+                in data["laws"]["tax_personal"].items()
+            })
+            state.sm.tax_rates["property"] = Arithmetic_Dict({
+                Class_Name[name] if isinstance(name, str) else name:
+                float(value)
+                for name, value
+                in data["laws"]["tax_property"].items()
+            })
+            state.sm.tax_rates["income"] = Arithmetic_Dict({
+                Class_Name[name] if isinstance(name, str) else name:
+                float(value)
+                for name, value
+                in data["laws"]["tax_income"].items()
+            })
+            state.sm.others_minimum_wage = float(data["laws"]["wage_minimum"])
+            state.sm.max_prices = Resources.from_raw_dict(
+                data["laws"]["max_prices"]
+            )
 
         return state
 
@@ -489,21 +521,31 @@ class State_Data_Creation_And_Do_Month:
             "year": self.year,
             "month": self.month,
             "classes": {
-                "nobles": self.classes[Class_Name.nobles].to_dict(),
-                "artisans": self.classes[Class_Name.artisans].to_dict(),
-                "peasants": self.classes[Class_Name.peasants].to_dict(),
-                "others": self.classes[Class_Name.others].to_dict()
+                "nobles": self.nobles.to_dict(),
+                "artisans": self.artisans.to_dict(),
+                "peasants": self.peasants.to_dict(),
+                "others": self.others.to_dict()
             },
             "government": self.government.to_dict(),
-            "prices": self.prices.copy(),
+            "prices": self.prices.to_raw_dict(),
             "laws": {
-                "tax_personal": self.sm.tax_rates["personal"].copy(),
-                "tax_property": self.sm.tax_rates["property"].copy(),
-                "tax_income": self.sm.tax_rates["income"].copy(),
+                "tax_personal": {
+                    class_name.name: value
+                    for class_name, value
+                    in self.sm.tax_rates["personal"].items()
+                },
+                "tax_property": {
+                    class_name.name: value
+                    for class_name, value
+                    in self.sm.tax_rates["property"].items()
+                },
+                "tax_income": {
+                    class_name.name: value
+                    for class_name, value
+                    in self.sm.tax_rates["income"].items()
+                },
                 "wage_minimum": self.sm.others_minimum_wage,
-                "wage_government": self.government.wage,
-                "wage_autoregulation": self.government.wage_autoregulation,
-                "max_prices": self.sm.max_prices.copy(),
+                "max_prices": self.sm.max_prices.to_raw_dict(),
             }
         }
         return data
@@ -513,7 +555,7 @@ class State_Data_Creation_And_Do_Month:
         Does the natural population growth for all classes.
         """
         factor = self.sm.default_growth_factor / 12
-        for social_class in self.classes.values():
+        for social_class in self:
             old_pop = social_class.population
             social_class.grow_population(factor)
             if __debug__:
@@ -525,7 +567,7 @@ class State_Data_Creation_And_Do_Month:
         Does starvation and freezing to fix negative food and wood.
         Starving or freezing is marked with a bool attribute of the class.
         """
-        for social_class in self.classes.values():
+        for social_class in self:
             old_pop = social_class.population
 
             missing_food = social_class.missing_resources.food
@@ -567,7 +609,7 @@ class State_Data_Creation_And_Do_Month:
         """
         Resets promotion and demotion flags on all classes to False.
         """
-        for social_class in self.classes.values():
+        for social_class in self:
             social_class.promoted_from = False
             social_class.promoted_to = False
             social_class.demoted_from = False
@@ -577,7 +619,7 @@ class State_Data_Creation_And_Do_Month:
         """
         Does demotions to fix as many negative resources as possible.
         """
-        for social_class in self.classes.values():
+        for social_class in self:
             lower_class = social_class.lower_class
             lower_name = lower_class.class_name
 
@@ -605,7 +647,7 @@ class State_Data_Creation_And_Do_Month:
         """
         Secures and validates all classes and the government.
         """
-        for social_class in self.classes.values():
+        for social_class in self:
             social_class.validate()
             social_class.handle_empty_class()
         self.government.validate()
@@ -620,24 +662,22 @@ class State_Data_Creation_And_Do_Month:
         the promoted people, in range [0, 1]
         transferred is the number of promoted people
         """
-        if not isinf(increase_price):
+        if isinf(increase_price):
+            return 0, 0
+        try:
             avg_wealth = from_wealth / from_pop
-            # Average relative to increase price
-            avger_wealth = avg_wealth / increase_price
-            # Math™
-            part_promoted = max(min(log(
-                avger_wealth + 0.6666, 100
-            ), 1), 0)
-            part_paid = (part_promoted - 1) ** 3 + 1
+        except ZeroDivisionError:
+            return 0, 0
 
-            transferred = part_promoted * from_pop
+        # Average relative to increase price
+        avger_wealth = avg_wealth / increase_price
+        # Math™
+        part_promoted = max(min(log(
+            avger_wealth + 0.6666, 100
+        ), 1), 0)
+        part_paid = (part_promoted - 1) ** 3 + 1
 
-            # quick check if Math™ hasn't failed
-            # that is, if the class can afford such a promotion
-            assert part_paid * from_wealth < transferred * increase_price
-        else:
-            part_paid = 0.0
-            transferred = 0.0
+        transferred = part_promoted * from_pop
 
         return part_paid, transferred
 
@@ -647,10 +687,11 @@ class State_Data_Creation_And_Do_Month:
         """
         Does one promotion on the given classes.
         """
-        from_wealth = sum((class_from.resources * self.prices).values())
-        part_paid, transferred = State_Data._promotion_math(
-            from_wealth, class_from.population, increase_price
-        )
+        from_wealth = class_from.resources.worth(self.prices)
+        part_paid, transferred = \
+            State_Data_Creation_And_Do_Month._promotion_math(
+                from_wealth, class_from.population, increase_price
+            )
 
         class_to.resources += class_from.resources * part_paid
         class_from.resources -= class_from.resources * part_paid
@@ -679,9 +720,10 @@ class State_Data_Creation_And_Do_Month:
         summed_price = (increase_price_1 + increase_price_2)
         increase_price = summed_price / 2
 
-        part_paid, transferred = State_Data._promotion_math(
-            from_wealth, class_from.population, increase_price
-        )
+        part_paid, transferred = \
+            State_Data_Creation_And_Do_Month._promotion_math(
+                from_wealth, class_from.population, increase_price
+            )
 
         part_paid_1 = part_paid * increase_price_1 / summed_price
         part_paid_2 = part_paid * increase_price_2 / summed_price
@@ -708,40 +750,43 @@ class State_Data_Creation_And_Do_Month:
         """
         Does all the promotions of one month end.
         """
-        nobles = self.classes[Class_Name.nobles]
-        artisans = self.classes[Class_Name.artisans]
-        peasants = self.classes[Class_Name.peasants]
-        others = self.classes[Class_Name.others]
 
-        if others.population > 0:
-            if (not others.starving) and (not others.freezing):
+        if self.others.population > 0:
+            if not (self.others.starving or self.others.freezing):
                 # Peasants and artisans (from others):
-                increase_price_1 = self.sm.increase_price_factor * \
-                    sum((INBUILT_RESOURCES[Class_Name.peasants] * self.prices
-                         ).values())
-                increase_price_2 = self.sm.increase_price_factor * \
-                    sum((INBUILT_RESOURCES[Class_Name.artisans] * self.prices
-                         ).values())
-                self._do_double_promotion(others, peasants, increase_price_1,
-                                          artisans, increase_price_2)
+                increase_price_pes = self.sm.increase_price_factor * \
+                    (INBUILT_RESOURCES[Class_Name.peasants]
+                     - INBUILT_RESOURCES[Class_Name.others]).worth(self.prices)
+                increase_price_art = self.sm.increase_price_factor * \
+                    (INBUILT_RESOURCES[Class_Name.artisans]
+                     - INBUILT_RESOURCES[Class_Name.others]).worth(self.prices)
+                self._do_double_promotion(
+                    self.others, self.peasants, increase_price_pes,
+                    self.artisans, increase_price_art
+                )
 
         # Check the nobles' cap
-        if nobles.population < self.sm.nobles_cap * \
+        if self.nobles.population < self.sm.nobles_cap * \
                 self.get_available_employees():
-            # Increase price for nobles
-            increase_price = self.sm.increase_price_factor * \
-                sum((INBUILT_RESOURCES[Class_Name.nobles] * self.prices
-                     ).values())
+            # Increase prices for nobles
+            increase_price_pes_to_n = self.sm.increase_price_factor * \
+                (INBUILT_RESOURCES[Class_Name.nobles]
+                 - INBUILT_RESOURCES[Class_Name.peasants]).worth(self.prices)
+            increase_price_art_to_n = self.sm.increase_price_factor * \
+                (INBUILT_RESOURCES[Class_Name.nobles]
+                 - INBUILT_RESOURCES[Class_Name.artisans]).worth(self.prices)
 
-            if peasants.population > 0:
-                if (not peasants.starving) and (not peasants.freezing):
+            if self.peasants.population > 0:
+                if not (self.peasants.starving or self.peasants.freezing):
                     # Nobles (from peasants):
-                    self._do_one_promotion(peasants, nobles, increase_price)
+                    self._do_one_promotion(self.peasants, self.nobles,
+                                           increase_price_pes_to_n)
 
-            if artisans.population > 0:
-                if (not artisans.starving) and (not artisans.freezing):
+            if self.artisans.population > 0:
+                if not (self.artisans.starving or self.artisans.freezing):
                     # Nobles (from artisans):
-                    self._do_one_promotion(artisans, nobles, increase_price)
+                    self._do_one_promotion(self.artisans, self.nobles,
+                                           increase_price_art_to_n)
 
     def _get_personal_taxes(self,
                             populations: Arithmetic_Dict[Class_Name],
@@ -801,7 +846,7 @@ class State_Data_Creation_And_Do_Month:
             for class_name, tax
             in rel_taxes.items()
         }
-        for social_class in self.classes.values():
+        for social_class in self:
             tax: Resources = social_class.real_resources * \
                 rel_taxes[social_class.class_name]
             self.government.resources += tax
@@ -830,16 +875,16 @@ class State_Data_Creation_And_Do_Month:
         Adds the given number of brigands of the given strength to the state.
         """
         # Monthly rate of turning criminal: (happiness)^4 / (1,5 * 10^9)
-        old_strength = self.brigands * self.brigand_strength
+        old_strength = self.brigands * self.brigands_strength
         new_strength = number * strength
         total_strength = old_strength + new_strength
         self.brigands += number
-        self.brigand_strength = total_strength / self.brigands
+        self.brigands_strength = total_strength / self.brigands
 
     @property
     def total_population(self) -> float:
         total = self.government.soldiers.number
-        for social_class in self.classes.values():
+        for social_class in self:
             total += social_class.population
         total += self.brigands
         return total
@@ -851,7 +896,7 @@ class State_Data_Creation_And_Do_Month:
         """
         crime_rate = self.brigands / self.total_population
 
-        for social_class in self.classes.values():
+        for social_class in self:
             stolen = social_class.real_resources * (crime_rate / 2)
             stolen.land = 0
             social_class.resources -= stolen
@@ -867,9 +912,11 @@ class State_Data_Creation_And_Do_Month:
         """
         Makes people from unhappy social classes flee to become brigands.
         """
-        for social_class in self.classes.values():
+        for social_class in self:
             if social_class.happiness < 0:
-                flee_rate = State_Data._get_flee_rate(social_class.happiness)
+                flee_rate = State_Data_Creation_And_Do_Month._get_flee_rate(
+                    social_class.happiness
+                )
                 fled = social_class.population * flee_rate
                 self._add_brigands(
                     fled, BRIGAND_STRENGTH_CLASS[social_class.class_name]
@@ -879,7 +926,9 @@ class State_Data_Creation_And_Do_Month:
            and self.government.soldiers.number > 0:
             soldiers_happiness = -100 * self.government.missing_food / \
                 self.government.soldiers.number
-            flee_rate = State_Data._get_flee_rate(soldiers_happiness)
+            flee_rate = State_Data_Creation_And_Do_Month._get_flee_rate(
+                soldiers_happiness
+            )
             for sold, number in self.government.soldiers.items():
                 fled = number * flee_rate
                 self._add_brigands(fled, BRIGAND_STRENGTH_SOLDIER[sold])
@@ -904,13 +953,13 @@ class State_Data_Creation_And_Do_Month:
             print(f"Ending month {self.month} {self.year}")
         # Check for game over
         someone_alive = False
-        for social_class in self.classes.values():
+        for social_class in self:
             if social_class.population > 0:
                 someone_alive = True
         if not someone_alive:
             raise EveryoneDeadError
 
-        for social_class in self.classes.values():
+        for social_class in self:
             if social_class.happiness < REBELLION_THRESHOLD:
                 raise RebellionError(social_class.class_name)
 
@@ -932,19 +981,19 @@ class State_Data_Creation_And_Do_Month:
         })
 
         # decay happiness
-        for social_class in self.classes.values():
+        for social_class in self:
             social_class.decay_happiness()
 
         # growth - resources might become negative
         self._do_growth()
 
         # production
-        for social_class in self.classes.values():
+        for social_class in self:
             social_class.produce()
         self._employ()
 
         # consumption (and crime)
-        for social_class in self.classes.values():
+        for social_class in self:
             social_class.consume()
         self.government.consume()
         self._do_crime()
@@ -955,7 +1004,6 @@ class State_Data_Creation_And_Do_Month:
         # demotions - should fix all except food and some wood
         self._reset_flags()
         self._do_demotions()
-        self._secure_classes()
 
         # starvation - should fix all remaining resources
         self._do_starvation()

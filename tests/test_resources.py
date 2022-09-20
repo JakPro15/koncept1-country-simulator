@@ -1,4 +1,5 @@
 from math import inf
+from typing import Any
 
 from ..sources.auxiliaries.enums import Resource
 from ..sources.auxiliaries.resources import Resources
@@ -92,6 +93,66 @@ def test_setters():
     assert res.iron == 11.1
     assert res.tools == -3.4
     assert res.land == 3.34
+
+
+def test_deleters():
+    res_dict = {
+        Resource.food: 1,
+        Resource.wood: 2,
+        Resource.stone: 3,
+        Resource.iron: 4,
+        Resource.tools: 5,
+        Resource.land: 6
+    }
+    res = Resources(res_dict)
+
+    del res.food
+    assert res.food == 0
+    assert res.wood == 2
+    assert res.stone == 3
+    assert res.iron == 4
+    assert res.tools == 5
+    assert res.land == 6
+
+    del res.wood
+    assert res.food == 0
+    assert res.wood == 0
+    assert res.stone == 3
+    assert res.iron == 4
+    assert res.tools == 5
+    assert res.land == 6
+
+    del res.stone
+    assert res.food == 0
+    assert res.wood == 0
+    assert res.stone == 0
+    assert res.iron == 4
+    assert res.tools == 5
+    assert res.land == 6
+
+    del res.iron
+    assert res.food == 0
+    assert res.wood == 0
+    assert res.stone == 0
+    assert res.iron == 0
+    assert res.tools == 5
+    assert res.land == 6
+
+    del res.tools
+    assert res.food == 0
+    assert res.wood == 0
+    assert res.stone == 0
+    assert res.iron == 0
+    assert res.tools == 0
+    assert res.land == 6
+
+    del res.land
+    assert res.food == 0
+    assert res.wood == 0
+    assert res.stone == 0
+    assert res.iron == 0
+    assert res.tools == 0
+    assert res.land == 0
 
 
 def test_dict_get():
@@ -226,6 +287,11 @@ def test_inherited_arithmetic():
         Resource.wood: 123,
         Resource.stone: 100
     })
+    assert -a == {
+        Resource.food: -234,
+        Resource.wood: -123,
+        Resource.land: -10
+    }
     assert a + b == {
         Resource.food: 300,
         Resource.wood: 246,
@@ -239,7 +305,7 @@ def test_inherited_arithmetic():
     }
     assert a * b == {
         Resource.food: 234 * 66,
-        Resource.wood: 123 ** 2
+        Resource.wood: 123 * 123
     }
     assert a / b == {
         Resource.food: 234 / 66,
@@ -294,8 +360,8 @@ def test_to_raw_dict():
     }
 
 
-def test_from_raw_dict():
-    a_raw = {
+def test_from_raw_dict_strings():
+    a_raw: dict[str, float] = {
         "food": 234,
         "wood": 123,
         "stone": 2,
@@ -309,6 +375,27 @@ def test_from_raw_dict():
     assert a == {
         Resource.food: 234,
         Resource.wood: 123,
+        Resource.land: 10,
+        Resource.stone: 2
+    }
+
+
+def test_from_raw_dict_any():
+    a_raw: dict[Any, float] = {
+        "food": 234,
+        Resource.wood: 123.4,
+        "stone": 2,
+        "iron": 0,
+        "część": 123,
+        "land": 10,
+        "abc": 10,
+        3456: 123.2
+    }
+    a = Resources.from_raw_dict(a_raw)
+    assert isinstance(a, Resources)
+    assert a == {
+        Resource.food: 234,
+        Resource.wood: 123.4,
         Resource.land: 10,
         Resource.stone: 2
     }

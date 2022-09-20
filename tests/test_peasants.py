@@ -123,8 +123,8 @@ def test_real_resources():
 
 def test_optimal_resources():
     state = State_Data.generate_empty_state()
-    state.classes[Class_Name.peasants].population = 50
-    assert state.classes[Class_Name.peasants].optimal_resources == \
+    state.peasants.population = 50
+    assert state.peasants.optimal_resources == \
         state.sm.optimal_resources[Class_Name.peasants] * 50
 
 
@@ -147,8 +147,6 @@ def test_missing_resources():
 
 def test_class_overpopulation_1():
     state = State_Data.generate_empty_state()
-    peasants = state.classes[Class_Name.peasants]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: -500,
@@ -158,7 +156,7 @@ def test_class_overpopulation_1():
     missing_wood = 500
     missing_land = 20
 
-    peasants.resources = resources
+    state.peasants.resources = resources
 
     inbuilt_wood = INBUILT_RESOURCES[Class_Name.peasants][Resource.wood] - \
         INBUILT_RESOURCES[Class_Name.others][Resource.wood]
@@ -167,13 +165,11 @@ def test_class_overpopulation_1():
 
     overpop = max(missing_wood / inbuilt_wood, missing_land / inbuilt_land)
 
-    assert peasants.class_overpopulation == overpop
+    assert state.peasants.class_overpopulation == overpop
 
 
 def test_class_overpopulation_2():
     state = State_Data.generate_empty_state()
-    peasants = state.classes[Class_Name.peasants]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: -50,
@@ -183,7 +179,7 @@ def test_class_overpopulation_2():
     missing_wood = 50
     missing_land = 200
 
-    peasants.resources = resources
+    state.peasants.resources = resources
 
     inbuilt_wood = INBUILT_RESOURCES[Class_Name.peasants][Resource.wood] - \
         INBUILT_RESOURCES[Class_Name.others][Resource.wood]
@@ -192,13 +188,11 @@ def test_class_overpopulation_2():
 
     overpop = max(missing_wood / inbuilt_wood, missing_land / inbuilt_land)
 
-    assert peasants.class_overpopulation == overpop
+    assert state.peasants.class_overpopulation == overpop
 
 
 def test_class_overpopulation_3():
     state = State_Data.generate_empty_state()
-    peasants = state.classes[Class_Name.peasants]
-
     resources = Resources({
         Resource.food: 200,
         Resource.wood: 500,
@@ -208,9 +202,9 @@ def test_class_overpopulation_3():
         Resource.land: 0
     })
 
-    peasants.resources = resources
+    state.peasants.resources = resources
 
-    assert peasants.class_overpopulation == 0
+    assert state.peasants.class_overpopulation == 0
 
 
 def test_grow_population_1():
@@ -432,14 +426,13 @@ def test_handle_empty_class_emptying():
         Resource.tools: 100,
         Resource.land: 0
     })
-    peasants = state.classes[Class_Name.peasants]
 
-    peasants.resources = resources.copy()
-    peasants._population = 0.3  # type: ignore
+    state.peasants.resources = resources.copy()
+    state.peasants._population = 0.3  # type: ignore
 
-    peasants.handle_empty_class()
-    assert peasants.population == 0
-    assert peasants.resources == {}
+    state.peasants.handle_empty_class()
+    assert state.peasants.population == 0
+    assert state.peasants.resources == {}
     assert state.government.resources == \
         resources + INBUILT_RESOURCES[Class_Name.peasants] * 0.3
 
@@ -454,14 +447,13 @@ def test_handle_empty_class_not_emptying():
         Resource.tools: 100,
         Resource.land: 0
     })
-    peasants = state.classes[Class_Name.peasants]
 
-    peasants.resources = resources.copy()
-    peasants._population = 0.5  # type: ignore
+    state.peasants.resources = resources.copy()
+    state.peasants._population = 0.5  # type: ignore
 
-    peasants.handle_empty_class()
-    assert peasants.population == 0.5
-    assert peasants.resources == resources
+    state.peasants.handle_empty_class()
+    assert state.peasants.population == 0.5
+    assert state.peasants.resources == resources
     assert state.government.resources == {}
 
 

@@ -23,6 +23,7 @@ class Government:
     optimal_resources - how much resources the govt wants to own
     max_employees - how many employees can the govt employ
     """
+    # mutable default arguments - they are copied anyway
     def __init__(self, parent: State_Data, res: Resources = Resources(),
                  optimal_res: Resources = Resources(),
                  secure_res: Resources = Resources(),

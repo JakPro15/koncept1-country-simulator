@@ -54,7 +54,7 @@ class State_Modifiers:
         self.starvation_mortality = STARVATION_MORTALITY
         self.freezing_mortality = FREEZING_MORTALITY
 
-        self.max_prices = DEFAULT_PRICES * MAX_PRICES
+        self.max_prices: Resources = DEFAULT_PRICES * MAX_PRICES
 
         self.worker_land_usage = WORKER_LAND_USAGE
 
@@ -74,14 +74,14 @@ class State_Modifiers:
                 Resource.iron: 0,
                 Resource.tools:
                 (4 * self.parent.get_available_employees() /
-                 self.parent.classes[Class_Name.nobles].population) + 4
-                if self.parent.classes[Class_Name.nobles].population > 0
+                 self.parent.nobles.population) + 4
+                if self.parent.nobles.population > 0
                 else 4,
                 Resource.land:
                 (self.worker_land_usage *
                  self.parent.get_available_employees() /
-                 self.parent.classes[Class_Name.nobles].population)
-                if self.parent.classes[Class_Name.nobles].population > 0
+                 self.parent.nobles.population)
+                if self.parent.nobles.population > 0
                 else 0,
             }),
             Class_Name.artisans: Resources({

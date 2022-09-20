@@ -1,3 +1,4 @@
+from typing import Any
 from ..sources.auxiliaries.constants import (KNIGHT_FIGHTING_STRENGTH,
                                              KNIGHT_FOOD_CONSUMPTION)
 from ..sources.auxiliaries.enums import Soldier
@@ -34,6 +35,22 @@ def test_setters():
     sol.footmen = 5
     assert sol.knights == 2
     assert sol.footmen == 5
+
+
+def test_deleters():
+    sol_dict = {
+        Soldier.knights: 1,
+        Soldier.footmen: 2
+    }
+    sol = Soldiers(sol_dict)
+
+    del sol.knights
+    assert sol.knights == 0
+    assert sol.footmen == 2
+
+    del sol.footmen
+    assert sol.knights == 0
+    assert sol.footmen == 0
 
 
 def test_dict_get():
@@ -152,8 +169,8 @@ def test_to_raw_dict():
     }
 
 
-def test_from_raw_dict():
-    a_raw = {
+def test_from_raw_dict_strings():
+    a_raw: dict[str, float] = {
         "knights": 234,
         "footmen": 123,
         "abc": 10
@@ -166,5 +183,25 @@ def test_from_raw_dict():
     assert isinstance(a, Soldiers)
     assert a == {
         Soldier.knights: 234,
+        Soldier.footmen: 123
+    }
+
+
+def test_from_raw_dict_any():
+    a_raw: dict[Any, float] = {
+        "knights": 234.5,
+        Soldier.footmen: 123,
+        "abc": 10,
+        "ąbć": 10.1,
+        2345: 5432
+    }
+    a = Soldiers({
+        Soldier.knights: 234.5,
+        Soldier.footmen: 123
+    })
+    a = Soldiers.from_raw_dict(a_raw)
+    assert isinstance(a, Soldiers)
+    assert a == {
+        Soldier.knights: 234.5,
         Soldier.footmen: 123
     }

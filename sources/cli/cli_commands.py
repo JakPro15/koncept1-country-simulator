@@ -657,7 +657,7 @@ def state(args: list[str], interface: Interface) -> None:
             data = [
                 round(social_class.population)
                 for social_class
-                in interface.state.classes.values()
+                in interface.state
             ]
             print("Current population:")
             for index, class_name in enumerate(CLASS_NAME_STR):
@@ -668,7 +668,7 @@ def state(args: list[str], interface: Interface) -> None:
                 social_class.class_name.name:
                 round(social_class.real_resources, 1)
                 for social_class
-                in interface.state.classes.values()
+                in interface.state
             }
             data["government"] = \
                 round(interface.state.government.real_resources, 1)
@@ -695,7 +695,7 @@ def state(args: list[str], interface: Interface) -> None:
 
         elif args[1] == "total_resources":
             data = Resources()
-            for social_class in interface.state.classes.values():
+            for social_class in interface.state:
                 data += social_class.real_resources
             data += interface.state.government.real_resources
             print("Current total resources:")
@@ -705,7 +705,7 @@ def state(args: list[str], interface: Interface) -> None:
             print("Current growth modifiers (S - starving, F - freezing, "
                   "P - promoted from, D - demoted from, p - promoted to, "
                   "d - demoted to):")
-            for social_class in interface.state.classes.values():
+            for social_class in interface.state:
                 print(get_modifiers_from_class(social_class))
         elif args[1] == "government":
             print("Government overview:")

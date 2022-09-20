@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from numbers import Real
-from typing import Mapping
+from typing import Any, Mapping
 
 from typing_extensions import Self
 
@@ -44,6 +44,10 @@ class Resources(Arithmetic_Dict[Resource]):
     def food(self, new: float) -> None:
         self[Resource.food] = new
 
+    @food.deleter
+    def food(self) -> None:
+        del self[Resource.food]
+
     @property
     def wood(self) -> float:
         return self[Resource.wood]
@@ -51,6 +55,10 @@ class Resources(Arithmetic_Dict[Resource]):
     @wood.setter
     def wood(self, new: float) -> None:
         self[Resource.wood] = new
+
+    @wood.deleter
+    def wood(self) -> None:
+        del self[Resource.wood]
 
     @property
     def stone(self) -> float:
@@ -60,6 +68,10 @@ class Resources(Arithmetic_Dict[Resource]):
     def stone(self, new: float) -> None:
         self[Resource.stone] = new
 
+    @stone.deleter
+    def stone(self) -> None:
+        del self[Resource.stone]
+
     @property
     def iron(self) -> float:
         return self[Resource.iron]
@@ -67,6 +79,10 @@ class Resources(Arithmetic_Dict[Resource]):
     @iron.setter
     def iron(self, new: float) -> None:
         self[Resource.iron] = new
+
+    @iron.deleter
+    def iron(self) -> None:
+        del self[Resource.iron]
 
     @property
     def tools(self) -> float:
@@ -76,6 +92,10 @@ class Resources(Arithmetic_Dict[Resource]):
     def tools(self, new: float) -> None:
         self[Resource.tools] = new
 
+    @tools.deleter
+    def tools(self) -> None:
+        del self[Resource.tools]
+
     @property
     def land(self) -> float:
         return self[Resource.land]
@@ -83,6 +103,10 @@ class Resources(Arithmetic_Dict[Resource]):
     @land.setter
     def land(self, new: float) -> None:
         self[Resource.land] = new
+
+    @land.deleter
+    def land(self) -> None:
+        del self[Resource.land]
 
     def worth(self, prices: Mapping[Resource, float]) -> float:
         """
@@ -102,15 +126,20 @@ class Resources(Arithmetic_Dict[Resource]):
         return {key.name: self[key] for key in Resource}
 
     @classmethod
-    def from_raw_dict(cls, raw_dict: Mapping[str, float]) -> Self:
+    def from_raw_dict(cls, raw_dict: Mapping[Any, float]) -> Self:
         """
         Creates a Resources object from the given raw dict, with resource
         names, not enumerators, as keys.
         Ignores all keys that do not correspond to Resource enumerators.
+        If the dict contains enumerators as keys, each enum key is taken
+        instead of the corresponding string key.
         """
-        new_dict = {
-            res: raw_dict.get(res.name, 0) for res in Resource
-        }
+        new_dict: dict[Resource, float] = {}
+        for res in Resource:
+            try:
+                new_dict[res] = raw_dict[res]
+            except KeyError:
+                new_dict[res] = raw_dict.get(res.name, 0)
         return cls(new_dict)
 
     def __delitem__(self, __k: Resource) -> None:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from numbers import Real
-from typing import Mapping
+from typing import Any, Mapping
 
 from typing_extensions import Self
 
@@ -44,6 +44,10 @@ class Soldiers(Arithmetic_Dict[Soldier]):
     def footmen(self, new: float) -> None:
         self[Soldier.footmen] = new
 
+    @footmen.deleter
+    def footmen(self) -> None:
+        del self[Soldier.footmen]
+
     @property
     def knights(self) -> float:
         return self.get(Soldier.knights, 0.0)
@@ -51,6 +55,10 @@ class Soldiers(Arithmetic_Dict[Soldier]):
     @knights.setter
     def knights(self, new: float) -> None:
         self[Soldier.knights] = new
+
+    @knights.deleter
+    def knights(self) -> None:
+        del self[Soldier.knights]
 
     @property
     def strength(self) -> float:
@@ -73,15 +81,20 @@ class Soldiers(Arithmetic_Dict[Soldier]):
         return {key.name: self[key] for key in Soldier}
 
     @classmethod
-    def from_raw_dict(cls, raw_dict: Mapping[str, float]) -> Self:
+    def from_raw_dict(cls, raw_dict: Mapping[Any, float]) -> Self:
         """
         Creates a Soldiers object from the given raw dict, with soldier names,
         not enumerators, as keys.
         Ignores all keys that do not correspond to Soldier enumerators.
+        If the dict contains enumerators as keys, each enum key is taken
+        instead of the corresponding string key.
         """
-        new_dict = {
-            sol: raw_dict.get(sol.name, 0) for sol in Soldier
-        }
+        new_dict: dict[Soldier, float] = {}
+        for res in Soldier:
+            try:
+                new_dict[res] = raw_dict[res]
+            except KeyError:
+                new_dict[res] = raw_dict.get(res.name, 0)
         return cls(new_dict)
 
     def __delitem__(self, __k: Soldier) -> None:
