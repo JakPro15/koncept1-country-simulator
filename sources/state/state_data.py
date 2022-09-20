@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from math import inf
+from typing_extensions import Self
 
 from ..auxiliaries.constants import (BASE_BATTLE_LOSSES, CLASS_TO_SOLDIER,
                                      INBUILT_RESOURCES, PLUNDER_FACTOR,
@@ -9,9 +10,9 @@ from ..auxiliaries.enums import Class_Name, Resource
 from ..auxiliaries.resources import Resources
 from ..auxiliaries.soldiers import Soldiers
 from .social_classes.class_file import Class
-from .state_data_employ_and_commands import (Artisans, Government, Nobles,
-                                             Others, Peasants,
-                                             State_Data_Creation_And_Do_Month)
+from .state_data_base_and_do_month import (Artisans, Government, Nobles,
+                                           Others, Peasants,
+                                           State_Data_Base_And_Do_Month)
 
 
 class InvalidCommandError(ValueError):
@@ -20,7 +21,7 @@ class InvalidCommandError(ValueError):
     """
 
 
-class State_Data(State_Data_Creation_And_Do_Month):
+class State_Data(State_Data_Base_And_Do_Month):
     """
     Represents the data of an entire state, including all its classes.
     Properties:
@@ -31,7 +32,7 @@ class State_Data(State_Data_Creation_And_Do_Month):
     prices - last month's resource prices on the market
     """
     @classmethod
-    def generate_empty_state(cls):
+    def generate_empty_state(cls) -> Self:
         """
         Creates a finalized state object, with all classes empty.
         """
@@ -138,7 +139,7 @@ class State_Data(State_Data_Creation_And_Do_Month):
 
         self._secure_classes()
 
-    def do_recruit(self, class_name: Class_Name, number: float):
+    def do_recruit(self, class_name: Class_Name, number: float) -> None:
         """
         Recruits the given number of people from the given social class to the
         military.
@@ -192,7 +193,7 @@ class State_Data(State_Data_Creation_And_Do_Month):
         """
         ally_strength = self.government.soldiers.strength
         if target == "crime":
-            enemy_strength = self.brigands * self.brigand_strength
+            enemy_strength = self.brigands * self.brigands_strength
             ratio = ally_strength / enemy_strength \
                 if enemy_strength > 0 else inf
             ally_losses, enemy_losses = self._get_battle_losses(ratio)

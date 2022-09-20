@@ -17,8 +17,8 @@ from ..abstract_interface.interface import (Interface, InvalidArgumentError,
 from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
                                  Month, Resource)
 from ..auxiliaries.resources import Resources
-from ..state.state_data_employ_and_commands import (EveryoneDeadError,
-                                                    RebellionError)
+from ..state.state_data_base_and_do_month import (EveryoneDeadError,
+                                                  RebellionError)
 from .cli_game_commands import (fight, laws, optimal, promote, recruit, secure,
                                 transfer)
 

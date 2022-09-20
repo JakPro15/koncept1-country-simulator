@@ -106,7 +106,7 @@ class Month_Data(TypedDict):
     happiness: dict[str, float]
 
 
-class State_Data_Creation_And_Do_Month:
+class State_Data_Base_And_Do_Month:
     def __init__(self, starting_month: Month = Month.January,
                  starting_year: int = 0) -> None:
         """
@@ -313,7 +313,7 @@ class State_Data_Creation_And_Do_Month:
                                  for social_class
                                  in employers_classes})
         ratios = wages.calculate_ratios()
-        State_Data_Creation_And_Do_Month._add_employees(ratios * employees)
+        State_Data_Base_And_Do_Month._add_employees(ratios * employees)
 
         checked = 0
         while checked < len(employers_classes):
@@ -325,7 +325,7 @@ class State_Data_Creation_And_Do_Month:
                     social_class.employees = social_class.max_employees
                     del wages[social_class]
                     ratios = wages.calculate_ratios()
-                    State_Data_Creation_And_Do_Month._add_employees(
+                    State_Data_Base_And_Do_Month._add_employees(
                         ratios * employees
                     )
                 else:
@@ -420,10 +420,10 @@ class State_Data_Creation_And_Do_Month:
 
         produced, used = self._get_produced_and_used(ratioed_employees)
 
-        State_Data_Creation_And_Do_Month._set_employers_employees(
+        State_Data_Base_And_Do_Month._set_employers_employees(
             employers_classes, employees, emp_ratio
         )
-        State_Data_Creation_And_Do_Month._employees_to_profit(
+        State_Data_Base_And_Do_Month._employees_to_profit(
             employers_classes
         )
 
@@ -645,7 +645,7 @@ class State_Data_Creation_And_Do_Month:
 
     def _secure_classes(self) -> None:
         """
-        Secures and validates all classes and the government.
+        Validates all classes and the government, and checks for empty classes.
         """
         for social_class in self:
             social_class.validate()
@@ -689,7 +689,7 @@ class State_Data_Creation_And_Do_Month:
         """
         from_wealth = class_from.resources.worth(self.prices)
         part_paid, transferred = \
-            State_Data_Creation_And_Do_Month._promotion_math(
+            State_Data_Base_And_Do_Month._promotion_math(
                 from_wealth, class_from.population, increase_price
             )
 
@@ -721,7 +721,7 @@ class State_Data_Creation_And_Do_Month:
         increase_price = summed_price / 2
 
         part_paid, transferred = \
-            State_Data_Creation_And_Do_Month._promotion_math(
+            State_Data_Base_And_Do_Month._promotion_math(
                 from_wealth, class_from.population, increase_price
             )
 
@@ -914,7 +914,7 @@ class State_Data_Creation_And_Do_Month:
         """
         for social_class in self:
             if social_class.happiness < 0:
-                flee_rate = State_Data_Creation_And_Do_Month._get_flee_rate(
+                flee_rate = State_Data_Base_And_Do_Month._get_flee_rate(
                     social_class.happiness
                 )
                 fled = social_class.population * flee_rate
@@ -926,7 +926,7 @@ class State_Data_Creation_And_Do_Month:
            and self.government.soldiers.number > 0:
             soldiers_happiness = -100 * self.government.missing_food / \
                 self.government.soldiers.number
-            flee_rate = State_Data_Creation_And_Do_Month._get_flee_rate(
+            flee_rate = State_Data_Base_And_Do_Month._get_flee_rate(
                 soldiers_happiness
             )
             for sold, number in self.government.soldiers.items():

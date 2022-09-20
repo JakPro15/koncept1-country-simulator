@@ -241,7 +241,7 @@ class Class(ABC):
                     self.resources[resource] = 0
                 else:
                     raise ValidationError(
-                        f"{resource.name} in {self.class_name} negative"
+                        f"{resource.name} in {self.class_name.name} negative"
                     )
 
     def decay_happiness(self) -> None:

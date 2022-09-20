@@ -15,8 +15,8 @@ from ..auxiliaries.enums import CLASS_NAME_STR, RESOURCE_STR, Class_Name
 from ..cli.cli_commands import ShutDownCommand
 from ..gui.number_select_dialog import Number_Select_Dialog
 from ..gui.resources_display import Resources_Display
-from ..state.state_data_employ_and_commands import (EveryoneDeadError,
-                                                    RebellionError)
+from ..state.state_data_base_and_do_month import (EveryoneDeadError,
+                                                  RebellionError)
 from .auxiliaries import crashing_slot
 from .execute_dialog import Execute_Dialog
 from .save_dialog import Save_Dialog
