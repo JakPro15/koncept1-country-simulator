@@ -1,4 +1,4 @@
-from typing import Any, Hashable, TypeVar
+from typing import Any
 
 from ..state.state_data import State_Data
 from ..state.state_data_base_and_do_month import Month_Data
@@ -41,10 +41,6 @@ class History:
             else:
                 state.execute_commands([line])
         return result
-
-    Key1 = TypeVar("Key1", bound=Hashable)
-    Key2 = TypeVar("Key2", bound=Hashable)
-    T = TypeVar("T")
 
     def population(self) -> list[dict[str, float]]:
         """
