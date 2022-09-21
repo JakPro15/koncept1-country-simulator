@@ -519,7 +519,7 @@ class State_Data_Base_And_Do_Month:
         """
         data = {
             "year": self.year,
-            "month": self.month,
+            "month": self.month.name,
             "classes": {
                 "nobles": self.nobles.to_dict(),
                 "artisans": self.artisans.to_dict(),

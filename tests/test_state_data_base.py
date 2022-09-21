@@ -1086,7 +1086,7 @@ def test_to_dict():
 
     data = {
         "year": 81,
-        "month": Month.April,
+        "month": "April",
         "classes": {
             "nobles": nobles.to_dict(),
             "artisans": artisans.to_dict(),

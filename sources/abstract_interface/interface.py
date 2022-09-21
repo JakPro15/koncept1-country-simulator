@@ -7,6 +7,7 @@ from ..auxiliaries.constants import (CLASS_TO_SOLDIER, INBUILT_RESOURCES,
                                      RECRUITMENT_COST)
 from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
                                  Resource)
+from ..auxiliaries.soldiers import Soldiers
 from ..state.state_data import State_Data
 from .history import History
 
@@ -53,26 +54,36 @@ class Interface:
     Properties:
     state - the State_Data object the interface handles
     history - History of the State_Data object
+    to_load can be a string - name of the save to be loaded, or
+    a State_Data object directly (in this case the history is set to be
+    empty). If None is given, a new State_Data object will be created for
+    the Interface.
     """
     @overload
-    def __init__(self, to_load: str) -> None:
+    def __init__(self, to_load: str, /) -> None:
         ...
 
     @overload
-    def __init__(self, to_load: State_Data | None = None) -> None:
+    def __init__(self, to_load: State_Data | None = None,
+                 history: History | None = None, /) -> None:
         ...
 
-    def __init__(self, to_load: str | State_Data | None = None) -> None:
+    def __init__(self, to_load: str | State_Data | None = None,
+                 history: History | None = None, /) -> None:
         """
         Creates an Interface for the given state.
-        to_load can be a string - name of the save to be loaded, or
-        a State_Data object directly (in this case the history is set to be
-        empty). If None is given, a new State_Data object will be created for
-        the Interface.
         """
-        if isinstance(to_load, State_Data):
+        if to_load is None:
+            self.state = State_Data.generate_empty_state()
+            self.history = History(self.state.to_dict(), [])
+            self.save_name: str | None = None
+            self.fought: bool = False
+        elif isinstance(to_load, State_Data):
             self.state: State_Data = to_load
-            self.history: History = History(self.state.to_dict(), [])
+            if history is not None:
+                self.history = history
+            else:
+                self.history: History = History(self.state.to_dict(), [])
             self.save_name: str | None = None
             self.fought: bool = False
         else:
@@ -156,7 +167,7 @@ class Interface:
         self.state.do_transfer(class_name, resource, amount, demote)
 
         self.history.add_history_line(
-            f"transfer {class_name} {resource} {amount}"
+            f"transfer {class_name.name} {resource.name} {amount}"
         )
 
     def secure_resources(self, resource: Resource, amount: float | None
@@ -176,7 +187,7 @@ class Interface:
         self.state.do_secure(resource, amount)
 
         self.history.add_history_line(
-            f"secure {resource} {amount}"
+            f"secure {resource.name} {amount}"
         )
 
     def set_govt_optimal(self, resource: Resource, amount: float) -> None:
@@ -188,7 +199,7 @@ class Interface:
         self.state.do_optimal(resource, amount)
 
         self.history.add_history_line(
-            f"optimal {resource} {amount}"
+            f"optimal {resource.name} {amount}"
         )
 
     laws_conditions: dict[str, tuple[Callable[[float], bool],
@@ -242,7 +253,7 @@ class Interface:
         self.state.do_force_promotion(class_name, number)
 
         self.history.add_history_line(
-            f"promote {class_name} {number}"
+            f"promote {class_name.name} {number}"
         )
 
     def recruit(self, class_name: Class_Name, number: float) -> None:
@@ -262,7 +273,7 @@ class Interface:
         self.state.do_recruit(class_name, number)
 
         self.history.add_history_line(
-            f"recruit {class_name} {number}"
+            f"recruit {class_name.name} {number}"
         )
 
     def get_brigands(
@@ -273,7 +284,7 @@ class Interface:
         mode is off.
         """
         brigands: float = self.state.brigands
-        strength: float = self.state.brigand_strength
+        strength: float = self.state.brigands_strength
         if debug:
             return brigands, strength
         else:
@@ -290,7 +301,7 @@ class Interface:
             est_strength = (strength, strength + 0.5)
             return est_brigands, est_strength
 
-    def fight(self, target: str):
+    def fight(self, target: str) -> tuple[bool, Soldiers, float]:
         """
         Executes an attack against the given target.
         """

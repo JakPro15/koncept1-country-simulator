@@ -14,9 +14,9 @@ def dict_eq(dict1: dict[Any, float], dict2: dict[Any, float]) -> bool:
 
 
 class replace:
-    def __init__(self, class_: Type[Any], attr_name: str, new_attr: Any
+    def __init__(self, class_or_object: Any, attr_name: str, new_attr: Any
                  ) -> None:
-        self.class_ = class_
+        self.class_ = class_or_object
         self.attr_name = attr_name
         self.new_attr = new_attr
 

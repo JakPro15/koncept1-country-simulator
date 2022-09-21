@@ -112,10 +112,7 @@ class Resources(Arithmetic_Dict[Resource]):
         """
         Returns the value of these Resources under the given prices.
         """
-        result = 0
-        for res in Resource:
-            result += self[res] * prices[res]
-        return result
+        return sum((self * prices).values())
 
     def to_raw_dict(self) -> dict[str, float]:
         """

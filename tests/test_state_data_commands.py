@@ -2,22 +2,24 @@ from math import inf
 from typing import Any
 
 from pytest import approx  # type: ignore
-from sources.auxiliaries.constants import (BASE_BATTLE_LOSSES,
-                                           INBUILT_RESOURCES,
-                                           KNIGHT_FIGHTING_STRENGTH,
-                                           OTHERS_MINIMUM_WAGE, PLUNDER_FACTOR,
-                                           RECRUITMENT_COST, TAX_RATES)
-from sources.auxiliaries.enums import Class_Name, Resource, Soldier
-from sources.auxiliaries.resources import Resources
-from sources.auxiliaries.soldiers import Soldiers
-from sources.auxiliaries.testing import replace
-from sources.state.government import Government
-from sources.state.social_classes.artisans import Artisans
-from sources.state.social_classes.class_file import Class
-from sources.state.social_classes.nobles import Nobles
-from sources.state.social_classes.others import Others
-from sources.state.social_classes.peasants import Peasants
-from sources.state.state_data import State_Data
+
+from ..sources.auxiliaries.constants import (BASE_BATTLE_LOSSES,
+                                             INBUILT_RESOURCES,
+                                             KNIGHT_FIGHTING_STRENGTH,
+                                             OTHERS_MINIMUM_WAGE,
+                                             PLUNDER_FACTOR, RECRUITMENT_COST,
+                                             TAX_RATES)
+from ..sources.auxiliaries.enums import Class_Name, Resource, Soldier
+from ..sources.auxiliaries.resources import Resources
+from ..sources.auxiliaries.soldiers import Soldiers
+from ..sources.auxiliaries.testing import replace
+from ..sources.state.government import Government
+from ..sources.state.social_classes.artisans import Artisans
+from ..sources.state.social_classes.class_file import Class
+from ..sources.state.social_classes.nobles import Nobles
+from ..sources.state.social_classes.others import Others
+from ..sources.state.social_classes.peasants import Peasants
+from ..sources.state.state_data import State_Data
 
 
 def test_generate_empty_state():

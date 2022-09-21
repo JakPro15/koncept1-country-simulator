@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from math import inf
+
 from typing_extensions import Self
 
 from ..auxiliaries.constants import (BASE_BATTLE_LOSSES, CLASS_TO_SOLDIER,

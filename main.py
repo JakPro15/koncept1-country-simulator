@@ -1,5 +1,5 @@
-from sources.cli.cli import command_line_interface
-from sources.gui.gui import graphical_user_interface
+from .sources.cli.cli import command_line_interface
+from .sources.gui.gui import graphical_user_interface
 from sys import argv
 import argparse
 
