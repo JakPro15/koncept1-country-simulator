@@ -1,5 +1,3 @@
-from .sources.cli.cli import command_line_interface
-from .sources.gui.gui import graphical_user_interface
 from sys import argv
 import argparse
 
@@ -21,8 +19,10 @@ def main(arguments: list[str]):
     args = parser.parse_args(arguments[1:])
 
     if args.gui:
+        from sources.gui.gui import graphical_user_interface
         graphical_user_interface(args.load[0])
     elif args.cli:
+        from sources.cli.cli import command_line_interface
         command_line_interface(args.load[0])
 
 

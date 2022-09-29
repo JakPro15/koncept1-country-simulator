@@ -1,4 +1,7 @@
-from typing import Any, Type
+from contextlib import contextmanager
+from io import StringIO
+import sys
+from typing import Any, Generator, Type
 
 from pytest import approx  # type: ignore
 
@@ -42,3 +45,25 @@ class create:
     def __exit__(self, class_: Type[Any], attr_name: str, new_attr: Any
                  ) -> None:
         delattr(self.class_, self.attr_name)
+
+
+@contextmanager
+def capture_standard_output() -> Generator[StringIO, None, None]:
+    fake_stdout = StringIO()
+    old_stdout = sys.stdout
+    try:
+        sys.stdout = fake_stdout
+        yield fake_stdout
+    finally:
+        sys.stdout = old_stdout
+
+
+@contextmanager
+def set_standard_input(text: str) -> Generator[StringIO, None, None]:
+    fake_stdin = StringIO(text)
+    old_stdin = sys.stdin
+    try:
+        sys.stdin = fake_stdin
+        yield fake_stdin
+    finally:
+        sys.stdin = old_stdin

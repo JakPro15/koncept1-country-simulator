@@ -950,7 +950,7 @@ class State_Data_Base_And_Do_Month:
         on to the next. Returns a dict with data from the month.
         """
         if __debug__:
-            print(f"Ending month {self.month} {self.year}")
+            print(f"Ending month {self.month.name} {self.year}")
         # Check for game over
         someone_alive = False
         for social_class in self:

@@ -12,6 +12,12 @@
                 "tools": 400,
                 "land": 500
             },
+            "starving": false,
+            "freezing": false,
+            "demoted_from": false,
+            "demoted_to": false,
+            "promoted_from": false,
+            "promoted_to": false,
             "happiness": 0
         },
         "artisans": {
@@ -24,6 +30,12 @@
                 "tools": 40,
                 "land": 0
             },
+            "starving": false,
+            "freezing": false,
+            "demoted_from": false,
+            "demoted_to": false,
+            "promoted_from": false,
+            "promoted_to": false,
             "happiness": 0
         },
         "peasants": {
@@ -36,6 +48,12 @@
                 "tools": 100,
                 "land": 1000
             },
+            "starving": false,
+            "freezing": false,
+            "demoted_from": false,
+            "demoted_to": false,
+            "promoted_from": false,
+            "promoted_to": false,
             "happiness": 0
         },
         "others": {
@@ -48,6 +66,12 @@
                 "tools": 0,
                 "land": 0
             },
+            "starving": false,
+            "freezing": false,
+            "demoted_from": false,
+            "demoted_to": false,
+            "promoted_from": false,
+            "promoted_to": false,
             "happiness": 0
         }
     },
@@ -66,7 +90,7 @@
             "stone": 100,
             "iron": 100,
             "tools": 100,
-            "land": 500
+            "land": 2000
         },
         "secure_resources": {
             "food": 0,
@@ -75,7 +99,16 @@
             "iron": 0,
             "tools": 0,
             "land": 0
-        }
+        },
+        "wage": 0.5,
+        "wage_autoregulation": true,
+        "soldiers": {
+            "footmen": 0,
+            "knights": 0
+        },
+        "missing_food": 0,
+        "employees": 0,
+        "old_wage": 0.5
     },
     "prices": {
         "food": 1,
@@ -84,5 +117,34 @@
         "iron": 2.334545,
         "tools": 2.672727,
         "land": 10
+    },
+    "laws": {
+        "tax_personal": {
+            "nobles": 0.0,
+            "artisans": 0.0,
+            "peasants": 0.0,
+            "others": 0.0
+        },
+        "tax_property": {
+            "nobles": 0.0,
+            "artisans": 0.0,
+            "peasants": 0.0,
+            "others": 0.0
+        },
+        "tax_income": {
+            "nobles": 0.0,
+            "artisans": 0.0,
+            "peasants": 0.0,
+            "others": 0.0
+        },
+        "wage_minimum": 0.5,
+        "max_prices": {
+            "food": Infinity,
+            "wood": Infinity,
+            "stone": Infinity,
+            "iron": Infinity,
+            "tools": Infinity,
+            "land": Infinity
+        }
     }
 }

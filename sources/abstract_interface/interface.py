@@ -40,6 +40,14 @@ class InvalidArgumentError(Exception):
     pass
 
 
+class NoSoldiersError(Exception):
+    pass
+
+
+class AlreadyFoughtError(Exception):
+    pass
+
+
 def check_arg(condition: bool, desc: str) -> None:
     """
     Raises InvalidArgumentError with given description if condition is false.
@@ -101,13 +109,15 @@ class Interface:
         try:
             starting_state_file_name = \
                 "saves/" + dirname + "/starting_state.json"
-            with open(starting_state_file_name, 'r') as load_file:
+            with open(starting_state_file_name, 'r',
+                      encoding="utf-8") as load_file:
                 starting_state = json.load(load_file)
 
             self.state = State_Data.from_dict(starting_state)
 
             history_file_name = "saves/" + dirname + "/history.txt"
-            with open(history_file_name, 'r') as load_file:
+            with open(history_file_name, 'r',
+                      encoding="utf-8") as load_file:
                 history_lines = load_file.read().splitlines()
 
             self.history = History(starting_state, history_lines)
@@ -131,13 +141,15 @@ class Interface:
         try:
             starting_state_file_name = \
                 "saves/" + dirname + "/starting_state.json"
-            with open(starting_state_file_name, 'w') as save_file:
+            with open(starting_state_file_name, 'w',
+                      encoding="utf-8") as save_file:
                 json.dump(
                     self.history.starting_state_dict, save_file, indent=4
                 )
 
             history_file_name = "saves/" + dirname + "/history.txt"
-            with open(history_file_name, 'w') as save_file:
+            with open(history_file_name, 'w',
+                      encoding="utf-8") as save_file:
                 for line in self.history.history_lines:
                     save_file.write(line + '\n')
         except IOError:
@@ -305,6 +317,11 @@ class Interface:
         """
         Executes an attack against the given target.
         """
+        if self.state.government.soldiers.number < 1:
+            raise NoSoldiersError
+        if self.fought:
+            raise AlreadyFoughtError
+
         enemies = max(floor(gauss(100, 20)), 10) if target != "crime" else None
         results = self.state.do_fight(target, enemies)
         self.fought = True

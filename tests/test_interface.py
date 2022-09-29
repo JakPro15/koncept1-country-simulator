@@ -1,15 +1,16 @@
 import builtins
+import json
 from contextlib import contextmanager
 from io import StringIO
-import json
 from typing import Any, Generator
 
 from pytest import raises
-from ..sources.auxiliaries.soldiers import Soldiers
 
 from ..sources.abstract_interface.history import History
-from ..sources.abstract_interface.interface import (Interface,
+from ..sources.abstract_interface.interface import (AlreadyFoughtError,
+                                                    Interface,
                                                     InvalidArgumentError,
+                                                    NoSoldiersError,
                                                     NotEnoughClassPopulation,
                                                     NotEnoughClassResources,
                                                     NotEnoughGovtResources,
@@ -17,6 +18,7 @@ from ..sources.abstract_interface.interface import (Interface,
 from ..sources.auxiliaries.constants import INBUILT_RESOURCES, RECRUITMENT_COST
 from ..sources.auxiliaries.enums import Class_Name, Resource, Soldier
 from ..sources.auxiliaries.resources import Resources
+from ..sources.auxiliaries.soldiers import Soldiers
 from ..sources.auxiliaries.testing import replace
 from ..sources.state.state_data import State_Data
 
@@ -72,9 +74,9 @@ def test_load_data():
     state_data_dict = state.to_dict()
 
     @contextmanager
-    def fake_open(filename: str, mode: str = 'r'
+    def fake_open(filename: str, mode: str = 'r', encoding: str | None = None
                   ) -> Generator[StringIO, None, None]:
-        opens.append((filename, mode))
+        opens.append((filename, mode, encoding))
         result = StringIO()
         with replace(result, "read", result.getvalue):
             if "starting_state" in filename:
@@ -96,8 +98,8 @@ def test_load_data():
         assert interface.state.to_dict() == state.to_dict()
 
         assert opens == [
-            ("saves/hehe/starting_state.json", "r"),
-            ("saves/hehe/history.txt", "r")
+            ("saves/hehe/starting_state.json", "r", "utf-8"),
+            ("saves/hehe/history.txt", "r", "utf-8")
         ]
 
 
@@ -115,9 +117,9 @@ def test_save_data():
     history_lines = StringIO()
 
     @contextmanager
-    def fake_open(filename: str, mode: str = 'r'
+    def fake_open(filename: str, mode: str = 'r', encoding: str | None = None
                   ) -> Generator[StringIO, None, None]:
-        opens.append((filename, mode))
+        opens.append((filename, mode, encoding))
         if "starting_state" in filename:
             yield starting_state
         elif "history" in filename:
@@ -133,8 +135,8 @@ def test_save_data():
         assert history_lines.getvalue().strip() == "next 2"
 
         assert opens == [
-            ("saves/hehe/starting_state.json", "w"),
-            ("saves/hehe/history.txt", "w")
+            ("saves/hehe/starting_state.json", "w", "utf-8"),
+            ("saves/hehe/history.txt", "w", "utf-8")
         ]
 
 
@@ -498,6 +500,9 @@ def test_fight():
         fights.append(args)
 
     with replace(State_Data, "do_fight", fake_do_fight):
+        with raises(NoSoldiersError):
+            Interface().fight("crime")
+
         state = State_Data.generate_empty_state()
         state.government.soldiers = Soldiers(
             {Soldier.knights: 5, Soldier.footmen: 40}
@@ -508,6 +513,11 @@ def test_fight():
         interface = Interface()
         interface.state = state
         interface.history = history
+
+        interface.fought = True
+        with raises(AlreadyFoughtError):
+            interface.fight("crime")
+        interface.fought = False
 
         interface.fight("plunder")
 
@@ -520,7 +530,9 @@ def test_fight():
             "next 6",
             f"fight plunder {random_enemies}"
         ]
+        assert interface.fought is True
 
+        interface.fought = False
         interface.fight("crime")
 
         assert fights == [
@@ -532,3 +544,4 @@ def test_fight():
             f"fight plunder {random_enemies}",
             "fight crime None"
         ]
+        assert interface.fought is True
