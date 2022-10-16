@@ -1,5 +1,6 @@
-from sys import argv
+import sys
 import argparse
+from sources.auxiliaries import globals
 
 
 def main(arguments: list[str]):
@@ -16,7 +17,12 @@ def main(arguments: list[str]):
     parser.add_argument('-l', '--load', help='name of the save from which to '
                         'load game state; not given means a new game is '
                         'started', nargs=1, type=str, default=['starting'])
+    parser.add_argument('-d', '--debug', action='store_true', help='whether to'
+                        ' launch the program in debug mode')
     args = parser.parse_args(arguments[1:])
+
+    if args.debug:
+        globals.debug = True
 
     if args.gui:
         from sources.gui.gui import graphical_user_interface
@@ -27,4 +33,4 @@ def main(arguments: list[str]):
 
 
 if __name__ == "__main__":
-    main(argv)
+    main(sys.argv)

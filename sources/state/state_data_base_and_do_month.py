@@ -12,6 +12,7 @@ from ..auxiliaries.constants import (BRIGAND_STRENGTH_CLASS,
                                      REBELLION_THRESHOLD, WAGE_CHANGE,
                                      WOOD_CONSUMPTION)
 from ..auxiliaries.enums import Class_Name, Month, Resource
+from ..auxiliaries import globals
 from ..auxiliaries.resources import Resources
 from .government import Government
 from .market import Market, SupportsTrade
@@ -558,9 +559,11 @@ class State_Data_Base_And_Do_Month:
         for social_class in self:
             old_pop = social_class.population
             social_class.grow_population(factor)
-            if __debug__:
-                print(f"Grown {social_class.population - old_pop} "
-                      f"{social_class.class_name.name}")
+            if globals.debug:
+                globals.warning_out.write(
+                    f"Grown {social_class.population - old_pop} "
+                    f"{social_class.class_name.name}"
+                )
 
     def _do_starvation(self) -> None:
         """
@@ -601,9 +604,11 @@ class State_Data_Base_And_Do_Month:
                 social_class.population = 0
                 social_class.happiness = 0
 
-            if __debug__:
-                print(f"Starved {old_pop - social_class.population} "
-                      f"{social_class.class_name.name}")
+            if globals.debug:
+                globals.warning_out.write(
+                    f"Starved {old_pop - social_class.population} "
+                    f"{social_class.class_name.name}"
+                )
 
     def _reset_flags(self) -> None:
         """
@@ -640,8 +645,10 @@ class State_Data_Base_And_Do_Month:
                 social_class.demoted_from = True
                 lower_class.demoted_to = True
 
-            if __debug__:
-                print(f"Demoted {moved_pop} {social_class.class_name.name}")
+            if globals.debug:
+                globals.warning_out.write(
+                    f"Demoted {moved_pop} {social_class.class_name.name}"
+                )
 
     def _secure_classes(self) -> None:
         """
@@ -703,9 +710,11 @@ class State_Data_Base_And_Do_Month:
             class_from.promoted_from = True
             class_to.promoted_to = True
 
-        if __debug__:
-            print(f"Promoted {transferred} {class_from.class_name.name} to "
-                  f"{class_to.class_name.name}")
+        if globals.debug:
+            globals.warning_out.write(
+                f"Promoted {transferred} {class_from.class_name.name} to "
+                f"{class_to.class_name.name}"
+            )
 
     def _do_double_promotion(
         self, class_from: Class, class_to_1: Class, increase_price_1: float,
@@ -741,10 +750,12 @@ class State_Data_Base_And_Do_Month:
             class_to_1.promoted_to = True
             class_to_2.promoted_to = True
 
-        if __debug__:
-            print(f"Double promoted {transferred} {class_from.class_name.name}"
-                  f" to {class_to_1.class_name.name} and "
-                  f"{class_to_2.class_name.name}")
+        if globals.debug:
+            globals.warning_out.write(
+                f"Double promoted {transferred} {class_from.class_name.name}"
+                f" to {class_to_1.class_name.name} and "
+                f"{class_to_2.class_name.name}"
+            )
 
     def _do_promotions(self) -> None:
         """
@@ -949,8 +960,10 @@ class State_Data_Base_And_Do_Month:
         Does all the needed calculations and changes to end the month and move
         on to the next. Returns a dict with data from the month.
         """
-        if __debug__:
-            print(f"Ending month {self.month.name} {self.year}")
+        if globals.debug:
+            globals.warning_out.write(
+                f"Ending month {self.month.name} {self.year}"
+            )
         # Check for game over
         someone_alive = False
         for social_class in self:

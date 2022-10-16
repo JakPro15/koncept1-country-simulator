@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import sys
 from abc import ABC, abstractmethod
 from math import floor
+from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QDialog, QGridLayout, QHBoxLayout, QLabel,
@@ -25,14 +25,28 @@ from .transfer_dialog import Transfer_Dialog
 # @TODO: Add estimated happiness to transfer dialog
 
 
-class AbstractScene(QWidget, ABC):
-    @abstractmethod
-    def __init__(self, parent: Command_Window) -> None:
-        ...
+class MetaAbstractWidget(type(QWidget), type(ABC)):
+    pass
 
-    @abstractmethod
-    def update(self) -> None:
-        ...
+
+if TYPE_CHECKING:
+    class AbstractScene(QWidget, ABC):
+        @abstractmethod
+        def __init__(self, parent: Command_Window) -> None:
+            ...
+
+        @abstractmethod
+        def update(self) -> None:
+            ...
+else:
+    class AbstractScene(QWidget, metaclass=MetaAbstractWidget):
+        @abstractmethod
+        def __init__(self, parent: Command_Window) -> None:
+            ...
+
+        @abstractmethod
+        def update(self) -> None:
+            ...
 
 
 class Scene_Classes(AbstractScene):
@@ -292,8 +306,9 @@ class Command_Window(QDialog):
     def update(self) -> None:
         # Main menu
         save_string = self.interface.save_name
-        month = f"{self.interface.state.month} {self.interface.state.year}"
-        if save_string == "":
+        month = f"{self.interface.state.month.name}" \
+                f" {self.interface.state.year}"
+        if save_string is None:
             save_string = f"New game: {month}"
         else:
             save_string = f'Loaded game "{save_string}": {month}'
@@ -313,14 +328,9 @@ class Command_Window(QDialog):
 
     @crashing_slot
     def execute_command(self):
-        real_stdout = sys.stdout
-        real_stdin = sys.stdin
-        try:
-            dialog = Execute_Dialog(self)
-            dialog.exec()
-        finally:
-            sys.stdout = real_stdout
-            sys.stdin = real_stdin
+        dialog = Execute_Dialog(self)
+        dialog.exec()
+        self.update()
 
     @crashing_slot
     def next_month(self):

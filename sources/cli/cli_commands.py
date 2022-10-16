@@ -14,6 +14,7 @@ from ..abstract_interface.interface import (Interface, InvalidArgumentError,
                                             SaveAccessError, check_arg)
 from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
                                  Month, Resource)
+from ..auxiliaries import globals
 from ..auxiliaries.resources import Resources
 from ..state.social_classes.class_file import Class
 from .cli_game_commands import (InternalCommandError, cond_round, fight,
@@ -614,7 +615,7 @@ def state(args: list[str], interface: Interface) -> None:
             line = f"{class_name.title(): >10}"
             for resource in Resource:
                 line += \
-                    f"{round_format(data[class_name][resource], 2, 7): >7}"
+                    f"{round_format(data[class_name][resource], 2, 6): >7}"
             print(line)
 
     elif args[1] == "prices":
@@ -683,7 +684,7 @@ def state(args: list[str], interface: Interface) -> None:
         for class_name in Class_Name:
             line += f"  {round_format(taxes[class_name], 2, 6): ^7}"
         print(line)
-        govt_wage = interface.state.government.old_wage
+        govt_wage = round(interface.state.government.old_wage, 2)
         autoreg = interface.state.government.wage_autoregulation
         line = f"Current wage for government employees: {govt_wage}"
         line += f" (autoregulation {'on' if autoreg else 'off'})"
@@ -729,7 +730,7 @@ def state(args: list[str], interface: Interface) -> None:
 
     elif args[1] == "military":
         data = interface.state.government.soldiers
-        if not __debug__:
+        if not globals.debug:
             data = round(data, 0)
         print("Current state of the military:")
         print(f"Footmen: {data.footmen}")

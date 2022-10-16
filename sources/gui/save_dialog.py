@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from os import mkdir
 from os.path import isdir

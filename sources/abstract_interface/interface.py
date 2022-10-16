@@ -7,6 +7,7 @@ from ..auxiliaries.constants import (CLASS_TO_SOLDIER, INBUILT_RESOURCES,
                                      RECRUITMENT_COST)
 from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
                                  Resource)
+from ..auxiliaries import globals
 from ..auxiliaries.soldiers import Soldiers
 from ..state.state_data import State_Data
 from .history import History
@@ -289,7 +290,7 @@ class Interface:
         )
 
     def get_brigands(
-        self, debug: bool = __debug__
+        self, debug: bool = globals.debug
     ) -> tuple[float, float] | tuple[tuple[int, int], tuple[float, float]]:
         """
         Returns a tuple: number of brigands, their strength; estimated if debug

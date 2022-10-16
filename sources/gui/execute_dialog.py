@@ -1,10 +1,11 @@
-import sys
-from io import StringIO
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit,
                                QPushButton, QVBoxLayout)
 
+from ..auxiliaries.testing import capture_standard_output, set_standard_input
 from ..cli import cli
 from .auxiliaries import crashing_slot
 
@@ -42,10 +43,7 @@ class Execute_Dialog(QDialog):
 
     @crashing_slot
     def confirmed(self) -> None:
-        output_stream = StringIO()
-        input_stream = StringIO("1")
-        sys.stdout = output_stream
-        sys.stdin = input_stream
         command = self.command_line.text().strip()
-        cli.execute(command, self._parent.interface)
-        self.output_label.setText(output_stream.getvalue())
+        with set_standard_input("1"), capture_standard_output() as stdout:
+            cli.execute(command, self._parent.interface)
+        self.output_label.setText(stdout.getvalue())

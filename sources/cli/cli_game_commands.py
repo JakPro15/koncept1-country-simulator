@@ -10,6 +10,7 @@ from ..abstract_interface.interface import (Interface, InvalidArgumentError,
                                             check_arg)
 from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
                                  Resource)
+from ..auxiliaries import globals
 
 
 class InternalCommandError(Exception):
@@ -72,7 +73,7 @@ def cond_round(amount: float, pref_debug: int, pref_normal: int,
     Rounds and converts to a string (using round_format) the given amount to
     pref_debug digits if in debug mode, otherwise to pref_normal digits.
     """
-    if __debug__:
+    if globals.debug:
         return round_format(amount, pref_debug, max_chars)
     else:
         return round_format(amount, pref_normal, max_chars)
@@ -345,14 +346,14 @@ def fight(args: list[str], interface: Interface) -> None:
     target = arg1s.pop()
 
     results = interface.fight(target)
-    dead_soldiers = results[1] if __debug__ else round(results[1], 0)
+    dead_soldiers = results[1] if globals.debug else round(results[1], 0)
     print("The battle has been", "won." if results[0] else "lost.")
     print(dead_soldiers.knights,
           f"knight{'s' if dead_soldiers.knights != 1 else ''} and",
           dead_soldiers.footmen,
           f"footm{'e' if dead_soldiers.footmen != 1 else 'a'}n died.")
     if args[1] == "crime":
-        dead_brigands = results[2] if __debug__ else round(results[2])
+        dead_brigands = results[2] if globals.debug else round(results[2])
         print(dead_brigands,
               f"brigand{'s' if dead_brigands != 1 else ''} died.")
     elif args[1] == "conquest":
