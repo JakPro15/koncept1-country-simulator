@@ -11,7 +11,7 @@ def graphical_user_interface(dirname: str):
 
     try:
         window = Command_Window(dirname)
-        globals.warning_out = globals.WarningOutput(window)
+        globals.warning_out = globals.GUIWarningOutput(window)
     except BaseException:
         if globals.debug:
             traceback.print_exc()

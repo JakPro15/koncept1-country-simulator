@@ -886,11 +886,12 @@ class State_Data_Base_And_Do_Month:
         Adds the given number of brigands of the given strength to the state.
         """
         # Monthly rate of turning criminal: (happiness)^4 / (1,5 * 10^9)
-        old_strength = self.brigands * self.brigands_strength
-        new_strength = number * strength
-        total_strength = old_strength + new_strength
-        self.brigands += number
-        self.brigands_strength = total_strength / self.brigands
+        if number > 0:
+            old_strength = self.brigands * self.brigands_strength
+            new_strength = number * strength
+            total_strength = old_strength + new_strength
+            self.brigands += number
+            self.brigands_strength = total_strength / self.brigands
 
     @property
     def total_population(self) -> float:

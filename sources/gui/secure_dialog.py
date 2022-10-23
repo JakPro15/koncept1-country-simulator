@@ -10,27 +10,24 @@ from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit,
                                QWidget)
 
 from ..abstract_interface.interface import Interface
-from ..auxiliaries.enums import Class_Name, Resource
-from ..auxiliaries.resources import Resources
-from ..state.social_classes.class_file import Class
-from .auxiliaries import Value_Label, crashing_slot
+from ..auxiliaries.enums import Resource
+from .auxiliaries import crashing_slot
 
 if TYPE_CHECKING:
     from .command_window import Command_Window
 
 
-class Transfer_Row(QWidget):
+class Secure_Row(QWidget):
     value_changed = Signal()
 
-    def __init__(self, class_name: Class_Name, res: Resource,
-                 parent: Transfer_Dialog) -> None:
+    def __init__(self, res: Resource, parent: Secure_Dialog) -> None:
         super().__init__(parent)
         self._parent = parent
         self.resource = res
-        self.old_govt = floor(
-            self._parent.interface.state.government.real_resources[res])
-        self.old_class = floor(self._parent.interface.state.classes[
-            class_name].real_resources[res])
+        self.old_free = floor(
+            self._parent.interface.state.government.resources[res])
+        self.old_secure = floor(
+            self._parent.interface.state.government.secure_resources[res])
 
         self.label = QLabel(res.name.title())
         self.label.setFixedWidth(35)
@@ -39,8 +36,8 @@ class Transfer_Row(QWidget):
 
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimumWidth(300)
-        self.slider.setMinimum(-self.old_govt)
-        self.slider.setMaximum(self.old_class)
+        self.slider.setMinimum(-self.old_free)
+        self.slider.setMaximum(self.old_secure)
         self.slider.valueChanged[int].connect(  # type: ignore
             self.slider_changed
         )
@@ -48,7 +45,7 @@ class Transfer_Row(QWidget):
         self.left_edit = QLineEdit()
         self.left_edit.setValidator(QRegularExpressionValidator(r"^\d*$"))
         self.left_edit.setFixedWidth(50)
-        self.left_edit.setText(str(self.old_class))
+        self.left_edit.setText(str(self.old_secure))
         self.left_edit.textEdited[str].connect(  # type: ignore
             self.left_edit_changed
         )
@@ -56,7 +53,7 @@ class Transfer_Row(QWidget):
         self.right_edit = QLineEdit()
         self.right_edit.setValidator(QRegularExpressionValidator(r"^\d*$"))
         self.right_edit.setFixedWidth(50)
-        self.right_edit.setText(str(self.old_govt))
+        self.right_edit.setText(str(self.old_free))
         self.right_edit.textEdited[str].connect(  # type: ignore
             self.right_edit_changed
         )
@@ -71,8 +68,8 @@ class Transfer_Row(QWidget):
 
     @crashing_slot
     def slider_changed(self, slider_value: int) -> None:
-        self.left_edit.setText(str(self.old_class - slider_value))
-        self.right_edit.setText(str(self.old_govt + slider_value))
+        self.left_edit.setText(str(self.old_secure - slider_value))
+        self.right_edit.setText(str(self.old_free + slider_value))
         self.value_changed.emit()
 
     @crashing_slot
@@ -82,7 +79,7 @@ class Transfer_Row(QWidget):
             if int(text) > max:
                 QMessageBox.warning(self, "Warning", "Invalid value")
                 self.left_edit.setText(str(max))
-            self.slider.setValue(self.old_class - int(self.left_edit.text()))
+            self.slider.setValue(self.old_secure - int(self.left_edit.text()))
 
     @crashing_slot
     def right_edit_changed(self, text: str) -> None:
@@ -91,39 +88,32 @@ class Transfer_Row(QWidget):
             if int(text) > max:
                 QMessageBox.warning(self, "Warning", "Invalid value")
                 self.right_edit.setText(str(max))
-            self.slider.setValue(int(self.right_edit.text()) - self.old_govt)
+            self.slider.setValue(int(self.right_edit.text()) - self.old_free)
 
     @property
     def transferred(self):
         return -self.slider.value()
 
 
-class Transfer_Dialog(QDialog):
-    def __init__(self, class_name: Class_Name, parent: Command_Window):
+class Secure_Dialog(QDialog):
+    def __init__(self, parent: Command_Window):
         super().__init__(parent)
         self._parent = parent
-        self.class_name = class_name
         self.interface: Interface = self._parent.interface
 
         self.header = QLabel(
-            f"Transferring resources to/from {class_name.name}"
+            "Set amount of the government's secure resources"
         )
 
         self.below_header_layout = QHBoxLayout()
-        self.govt_label = QLabel("Government")
-        self.class_label = QLabel(f"{self.class_name.name.title()}")
+        self.free_label = QLabel("Tradeable resources")
+        self.secure_label = QLabel("Secure resources")
 
-        self.below_header_layout.addWidget(self.class_label)
+        self.below_header_layout.addWidget(self.secure_label)
         self.below_header_layout.addStretch()
-        self.below_header_layout.addWidget(self.govt_label)
+        self.below_header_layout.addWidget(self.free_label)
 
-        self.rows = [Transfer_Row(class_name, res, self) for res in Resource]
-        for row in self.rows:
-            row.value_changed[None].connect(self.changed)  # type: ignore
-
-        self.estimated_happiness = Value_Label(
-            "Estimated happiness after transfer", rounding=2
-        )
+        self.rows = [Secure_Row(res, self) for res in Resource]
 
         self.confirm_button = QPushButton("Confirm")
         self.confirm_button.clicked[None].connect(  # type: ignore
@@ -136,31 +126,16 @@ class Transfer_Dialog(QDialog):
         for row in self.rows:
             self.layout_.addWidget(row)
         self.layout_.addWidget(self.confirm_button)
-        self.layout_.addWidget(self.estimated_happiness)
 
         self.setLayout(self.layout_)
         self.setMinimumWidth(300)
-        self.setWindowTitle("Transfer")
-
-    @crashing_slot
-    def changed(self) -> None:
-        social_class = self.interface.state.classes[self.class_name]
-        seized = Resources({
-            res: -row.transferred for res, row, in zip(Resource, self.rows)
-        })
-        seized_money = seized.worth(self.interface.state.prices)
-        happiness_change = Class.resources_seized_happiness(
-            seized_money / social_class.population
-        )
-        self.estimated_happiness.value = \
-            social_class.happiness + happiness_change
+        self.setWindowTitle("Secure")
 
     @crashing_slot
     def confirmed(self) -> None:
         for row in self.rows:
-            self.interface.transfer_resources(
-                self.class_name, row.resource, row.transferred,
-                demote=(row.resource == Resource.land)
+            self.interface.secure_resources(
+                row.resource, row.transferred
             )
         self._parent.update()
         self.accept()

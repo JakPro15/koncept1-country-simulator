@@ -18,10 +18,12 @@ def crashing_slot(inner: Callable[P, V]) -> Callable[P, V]:
 
 class Value_Label(QLabel):
     def __init__(self, desc: str, value: float | None = None,
-                 parent: QWidget | None = None) -> None:
+                 parent: QWidget | None = None, rounding: int | None = None
+                 ) -> None:
         super().__init__(parent)
         self._desc: str = desc
         self._value: float | None = value
+        self.rounding: int | None = rounding
         self.update()
 
     @property
@@ -43,7 +45,9 @@ class Value_Label(QLabel):
         self._update()
 
     def _update(self) -> None:
-        if self.value:
-            self.setText(f"{self.desc}: {self.value}")
-        else:
+        if self.value is None:
             self.setText(f"{self.desc}:")
+        elif self.rounding:
+            self.setText(f"{self.desc}: {round(self.value, self.rounding)}")
+        else:
+            self.setText(f"{self.desc}: {self.value}")

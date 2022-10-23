@@ -9,10 +9,10 @@ from ..abstract_interface.interface import (AlreadyFoughtError,
                                             NotEnoughClassResources,
                                             NotEnoughGovtResources,
                                             SaveAccessError)
+from ..auxiliaries import globals
 from ..state.state_data_base_and_do_month import (EveryoneDeadError,
                                                   RebellionError)
 from .cli_commands import COMMANDS, ShutDownCommand, fill_command
-from ..auxiliaries import globals
 
 
 def command_line_interface(dirname_to_load: str) -> None:
@@ -88,7 +88,7 @@ def execute(command: str, interface: Interface):
                 raise ShutDownCommand
             except RebellionError as e:
                 print("GAME OVER")
-                print(f"{str(e).title()} have rebelled.")
+                print(f"{e.class_name.title()} have rebelled.")
                 raise ShutDownCommand
         else:
             print("Invalid command. Enter help for a list of"

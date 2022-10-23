@@ -161,9 +161,9 @@ BASE_BATTLE_LOSSES = 0.2
 PLUNDER_FACTOR = 500
 
 GOVT_LEFT_LABELS = [
-    "Tradeable resources",
-    "Secure resources",
-    "Optimal resources"
+    "Tradeable resources:",
+    "Secure resources:",
+    "Optimal resources:"
 ]
 
 HAPPINESS_DECAY = 0.2

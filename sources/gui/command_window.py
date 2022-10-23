@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from math import floor
-from typing import TYPE_CHECKING
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QDialog, QGridLayout, QHBoxLayout, QLabel,
-                               QMessageBox, QPushButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QMessageBox,
+                               QPushButton, QVBoxLayout, QWidget)
 
 from ..abstract_interface.interface import (Interface, MalformedSaveError,
                                             SaveAccessError)
-from ..auxiliaries.constants import GOVT_LEFT_LABELS, INBUILT_RESOURCES
-from ..auxiliaries.enums import CLASS_NAME_STR, RESOURCE_STR, Class_Name
+from ..auxiliaries.constants import INBUILT_RESOURCES
+from ..auxiliaries.enums import Class_Name
 from ..cli.cli_commands import ShutDownCommand
 from ..gui.number_select_dialog import Number_Select_Dialog
 from ..gui.resources_display import Resources_Display
@@ -19,179 +16,13 @@ from ..state.state_data_base_and_do_month import (EveryoneDeadError,
                                                   RebellionError)
 from .auxiliaries import crashing_slot
 from .execute_dialog import Execute_Dialog
+from .optimal_dialog import Optimal_Dialog
 from .save_dialog import Save_Dialog
+from .scenes.abstract_scene import Abstract_Scene
+from .scenes.classes_scene import Scene_Classes
+from .scenes.govt_scene import Scene_Govt
+from .secure_dialog import Secure_Dialog
 from .transfer_dialog import Transfer_Dialog
-
-# @TODO: Add estimated happiness to transfer dialog
-
-
-class MetaAbstractWidget(type(QWidget), type(ABC)):
-    pass
-
-
-if TYPE_CHECKING:
-    class AbstractScene(QWidget, ABC):
-        @abstractmethod
-        def __init__(self, parent: Command_Window) -> None:
-            ...
-
-        @abstractmethod
-        def update(self) -> None:
-            ...
-else:
-    class AbstractScene(QWidget, metaclass=MetaAbstractWidget):
-        @abstractmethod
-        def __init__(self, parent: Command_Window) -> None:
-            ...
-
-        @abstractmethod
-        def update(self) -> None:
-            ...
-
-
-class Scene_Classes(AbstractScene):
-    def __init__(self, parent: Command_Window) -> None:
-        super().__init__(parent)
-        self._parent = parent
-        self.top_labels = [
-            QLabel(res.title(), self)
-            for res in RESOURCE_STR + ["population", "happiness"]
-        ]
-        self.left_labels = [
-            QLabel(f"{class_name.title()}:", self)
-            for class_name in CLASS_NAME_STR
-        ]
-
-        self.main_layout = QGridLayout(self)
-        for i, label in enumerate(self.top_labels):
-            label.setAlignment(Qt.AlignCenter)
-            self.main_layout.addWidget(label, 0, i + 1 if i < 6 else i + 3)
-        for i, label in enumerate(self.left_labels):
-            right_center_align: Qt.Alignment = Qt.AlignRight | Qt.AlignVCenter
-            label.setAlignment(right_center_align)
-            self.main_layout.addWidget(label, i + 1, 0)
-
-        self.resources_labels: list[Resources_Display] = []
-        for i in range(len(self.left_labels)):
-            self.resources_labels.append(Resources_Display())
-            self.resources_labels[i].setAlignment(Qt.AlignCenter)
-            self.resources_labels[i].add_to_grid_layout(
-                self.main_layout, i + 1, 1
-            )
-
-        self.population_labels: list[QLabel] = []
-        for i in range(len(self.left_labels)):
-            self.population_labels.append(QLabel())
-            self.population_labels[i].setAlignment(Qt.AlignCenter)
-            self.main_layout.addWidget(self.population_labels[i], i + 1, 9)
-
-        self.happiness_labels: list[QLabel] = []
-        for i in range(len(self.left_labels)):
-            self.happiness_labels.append(QLabel())
-            self.happiness_labels[i].setAlignment(Qt.AlignCenter)
-            self.main_layout.addWidget(self.happiness_labels[i], i + 1, 10)
-
-        self.transfer_buttons: list[QPushButton] = []
-
-        for i, class_name in enumerate(Class_Name):
-            self.transfer_buttons.append(QPushButton("Transfer"))
-
-            def this_transfer(state: None = None) -> None:
-                nonlocal class_name
-                self._parent.transfer(class_name)
-
-            self.transfer_buttons[i].clicked[None].connect(  # type: ignore
-                this_transfer
-            )
-            self.main_layout.addWidget(self.transfer_buttons[i], i + 1, 7)
-
-        self.promote_buttons: list[QPushButton] = []
-        for i, class_name in enumerate(list(Class_Name)[:3]):
-            self.promote_buttons.append(QPushButton("Promote"))
-
-            def this_promote(state: None = None) -> None:
-                nonlocal class_name
-                self._parent.promote(class_name)
-
-            self.promote_buttons[i].clicked[None].connect(  # type: ignore
-                this_promote
-            )
-            self.main_layout.addWidget(self.promote_buttons[i], i + 1, 8)
-
-        self.setLayout(self.main_layout)
-        self.update()
-
-    def update(self) -> None:
-        ress = {
-            class_name.name: round(
-                self._parent.interface.state.classes[class_name].resources, 2)
-            for class_name in Class_Name
-        }
-
-        pops = {
-            class_name.name: round(
-                self._parent.interface.state.classes[class_name].population)
-            for class_name in Class_Name
-        }
-
-        haps = {
-            class_name.name: round(
-                self._parent.interface.state.classes[class_name].happiness, 2)
-            for class_name in Class_Name
-        }
-
-        for i in range(len(self.resources_labels)):
-            class_name = CLASS_NAME_STR[i]
-            self.resources_labels[i].set_resources(ress[class_name])
-            self.population_labels[i].setText(f"{pops[class_name]}")
-            self.happiness_labels[i].setText(f"{haps[class_name]}")
-
-        for i, button in enumerate(self.transfer_buttons):
-            button.setEnabled(
-                self._parent.interface.state.classes[
-                    Class_Name(i)].population > 0
-            )
-
-
-class Scene_Govt(AbstractScene):
-    def __init__(self, parent: Command_Window):
-        super().__init__(parent)
-        self._parent = parent
-
-        self.top_labels = [
-            QLabel(res.title(), self)
-            for res in RESOURCE_STR
-        ]
-        self.left_labels = [
-            QLabel(text, self) for text in GOVT_LEFT_LABELS
-        ]
-
-        self.layout_ = QGridLayout(self)
-        for i, label in enumerate(self.top_labels):
-            label.setAlignment(Qt.AlignCenter)
-            self.layout_.addWidget(label, 0, i + 1)
-        for i, label in enumerate(self.left_labels):
-            right_center_align: Qt.Alignment = Qt.AlignRight | Qt.AlignVCenter
-            label.setAlignment(right_center_align)
-            self.layout_.addWidget(label, i + 1, 0)
-
-        self.data_labels: list[Resources_Display] = []
-        for i in range(len(self.left_labels)):
-            self.data_labels.append(Resources_Display())
-            self.data_labels[i].setAlignment(Qt.AlignCenter)
-            self.data_labels[i].add_to_grid_layout(self.layout_, i + 1, 1)
-        self.setLayout(self.layout_)
-        self.update()
-
-    def update(self):
-        ress = round(self._parent.interface.state.government.resources, 2)
-        self.data_labels[0].set_resources(ress)
-        ress = round(
-            self._parent.interface.state.government.secure_resources, 2)
-        self.data_labels[1].set_resources(ress)
-        ress = round(
-            self._parent.interface.state.government.optimal_resources, 2)
-        self.data_labels[2].set_resources(ress)
 
 
 class Command_Window(QDialog):
@@ -291,12 +122,12 @@ class Command_Window(QDialog):
         self.layout_.addStretch()
         self.setLayout(self.layout_)
 
-        self.scene_set: AbstractScene | None = None
+        self.scene_set: Abstract_Scene | None = None
         self.update()
 
         self.setMinimumSize(900, 600)
 
-    def set_scene(self, new_scene: AbstractScene) -> None:
+    def set_scene(self, new_scene: Abstract_Scene) -> None:
         if self.scene_set:
             self.layout_.removeWidget(self.scene_set)
             self.scene_set.deleteLater()
@@ -343,7 +174,7 @@ class Command_Window(QDialog):
             raise ShutDownCommand from e
         except RebellionError as e:
             QMessageBox.information(self, "Game Over", "GAME OVER\n"
-                                    f"{str(e).title()} have rebelled.")
+                                    f"{e.class_name.title()} have rebelled.")
             raise ShutDownCommand from e
         self.update()
 
@@ -380,10 +211,20 @@ class Command_Window(QDialog):
         else:
             promote_dialog = Number_Select_Dialog(
                 0, min(floor(lower_class.population), res_max), "Promote",
-                f"How many {lower_class.class_name} do you want to"
-                f" promote to {class_name}?"
+                f"How many {lower_class.class_name.name} do you want to"
+                f" promote to {class_name.name}?"
             )
             number = promote_dialog.exec()
 
             self.interface.force_promotion(class_name, number)
             self.update()
+
+    @crashing_slot
+    def secure(self):
+        secure_dialog = Secure_Dialog(self)
+        secure_dialog.exec()
+
+    @crashing_slot
+    def optimal(self):
+        optimal_dialog = Optimal_Dialog(self)
+        optimal_dialog.exec()
