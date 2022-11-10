@@ -178,11 +178,17 @@ def test_next_month_next() -> None:
 
 def test_transfer():
     transfers: list[Any] = []
+    now_demotes = 0
 
     def fake_do_transfer(self: State_Data, *args: Any) -> None:
         transfers.append(args)
 
-    with replace(State_Data, "do_transfer", fake_do_transfer):
+    def fake_demote_now(self: State_Data) -> None:
+        nonlocal now_demotes
+        now_demotes += 1
+
+    with replace(State_Data, "do_transfer", fake_do_transfer), \
+         replace(State_Data, "demote_now", fake_demote_now):
         state = State_Data.generate_empty_state()
         state.government.resources = Resources(300)
         state.nobles.population = 100
@@ -205,6 +211,15 @@ def test_transfer():
             "next 6",
             "transfer nobles food 100"
         ]
+        assert now_demotes == 0
+
+        interface.transfer_resources(Class_Name.artisans, Resource.wood, 0,
+                                     True)
+        assert history.history_lines == [
+            "next 6",
+            "transfer nobles food 100"
+        ]
+        assert now_demotes == 1
 
 
 def test_secure():
@@ -234,6 +249,17 @@ def test_secure():
         ]
 
         interface.secure_resources(Resource.iron, None)
+        assert secures == [
+            (Resource.food, 100),
+            (Resource.iron, 300)
+        ]
+        assert history.history_lines == [
+            "next 6",
+            "secure food 100",
+            "secure iron 300"
+        ]
+
+        interface.secure_resources(Resource.land, 0)
         assert secures == [
             (Resource.food, 100),
             (Resource.iron, 300)
@@ -280,14 +306,12 @@ def test_optimal():
         interface.set_govt_optimal(Resource.land, 0)
         assert optimals == [
             (Resource.food, 100),
-            (Resource.iron, 50),
-            (Resource.land, 0)
+            (Resource.iron, 50)
         ]
         assert history.history_lines == [
             "next 6",
             "optimal food 100",
-            "optimal iron 50",
-            "optimal land 0"
+            "optimal iron 50"
         ]
 
 

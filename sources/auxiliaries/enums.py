@@ -33,8 +33,8 @@ class Resource(Enum):
 
 
 class Soldier(Enum):
-    footmen = auto()
     knights = auto()
+    footmen = auto()
 
 
 CLASS_NAME_STR = [class_name.name for class_name in Class_Name]

@@ -47,6 +47,14 @@ class State_Data(State_Data_Base_And_Do_Month):
         state.government = Government(state)
         return state
 
+    def demote_now(self):
+        """
+        Does demotions and security. Used if other parts of command are
+        skipped, but demotions need to be done.
+        """
+        self._do_demotions()
+        self._secure_classes()
+
     def do_transfer(self, class_name: Class_Name, resource: Resource,
                     amount: float, demote: bool = True) -> None:
         """
@@ -65,8 +73,7 @@ class State_Data(State_Data_Base_And_Do_Month):
             )
 
         if demote:
-            self._do_demotions()
-            self._secure_classes()
+            self.demote_now()
 
     def do_secure(self, resource: Resource, amount: float) -> None:
         """

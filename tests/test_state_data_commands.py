@@ -42,6 +42,29 @@ def test_generate_empty_state():
     assert vars(state.government) == vars(Government(state))
 
 
+def test_demote_now():
+    demotions = 0
+    secures = 0
+
+    def fake_do_demotions(self: State_Data):
+        nonlocal demotions
+        demotions += 1
+
+    def fake_secure_classes(self: State_Data):
+        nonlocal secures
+        secures += 1
+
+    with replace(State_Data, "_do_demotions", fake_do_demotions), \
+         replace(State_Data, "_secure_classes", fake_secure_classes):
+        State_Data().demote_now()
+        assert demotions == 1
+        assert secures == 1
+
+        State_Data().demote_now()
+        assert demotions == 2
+        assert secures == 2
+
+
 def test_do_transfer_from_government():
     state = State_Data.generate_empty_state()
     state.nobles.population = 20

@@ -24,7 +24,7 @@ class Value_Label(QLabel):
         self._desc: str = desc
         self._value: float | None = value
         self.rounding: int | None = rounding
-        self.update()
+        self._update()
 
     @property
     def desc(self) -> str:
@@ -47,7 +47,10 @@ class Value_Label(QLabel):
     def _update(self) -> None:
         if self.value is None:
             self.setText(f"{self.desc}:")
-        elif self.rounding:
-            self.setText(f"{self.desc}: {round(self.value, self.rounding)}")
+        elif self.rounding is not None:
+            value = round(self.value, self.rounding)
+            if self.rounding <= 0:
+                value = int(value)
+            self.setText(f"{self.desc}: {value}")
         else:
             self.setText(f"{self.desc}: {self.value}")

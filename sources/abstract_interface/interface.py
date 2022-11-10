@@ -170,6 +170,11 @@ class Interface:
         Transfers the given amount of a resource from government to the given
         class. Negative amount signifies a reverse direction of the transfer.
         """
+        if amount == 0:
+            if demote:
+                self.state.demote_now()
+            return
+
         if self.state.classes[class_name].population == 0:
             raise EmptyClassError
         if self.state.government.real_resources[resource] < amount:
@@ -190,6 +195,9 @@ class Interface:
         untradeable (secured). Negative amount signifies making a resource
         tradeable again.
         """
+        if amount == 0:
+            return
+
         if amount is None:
             amount = self.state.government.resources[resource]
 
@@ -207,8 +215,10 @@ class Interface:
         """
         Sets government's optimal resource to the given value.
         """
-        check_arg(amount >= 0, "negative optimal resources")
+        if amount == self.state.government.optimal_resources[resource]:
+            return
 
+        check_arg(amount >= 0, "negative optimal resources")
         self.state.do_optimal(resource, amount)
 
         self.history.add_history_line(

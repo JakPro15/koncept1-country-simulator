@@ -7,8 +7,10 @@ from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QMessageBox,
 
 from ..abstract_interface.interface import (Interface, MalformedSaveError,
                                             SaveAccessError)
-from ..auxiliaries.constants import INBUILT_RESOURCES
+from ..auxiliaries.constants import (CLASS_TO_SOLDIER, INBUILT_RESOURCES,
+                                     RECRUITMENT_COST)
 from ..auxiliaries.enums import Class_Name
+from ..auxiliaries import globals
 from ..cli.cli_commands import ShutDownCommand
 from ..gui.number_select_dialog import Number_Select_Dialog
 from ..gui.resources_display import Resources_Display
@@ -21,13 +23,21 @@ from .save_dialog import Save_Dialog
 from .scenes.abstract_scene import Abstract_Scene
 from .scenes.classes_scene import Scene_Classes
 from .scenes.govt_scene import Scene_Govt
+from .scenes.military_scene import Scene_Military
 from .secure_dialog import Secure_Dialog
 from .transfer_dialog import Transfer_Dialog
 
+from typing import cast
+from ..abstract_interface.interface import NoSoldiersError
+
 
 class Command_Window(QDialog):
-    def __init__(self, dirname: str, parent: QWidget | None = None):
+    def __init__(self, dirname: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        if globals.debug:
+            self.setWindowTitle("Koncept 1 - debug mode")
+        else:
+            self.setWindowTitle("Koncept 1")
 
         # Load the game
         self.interface = Interface()
@@ -103,10 +113,13 @@ class Command_Window(QDialog):
             QPushButton("History", self)
         ]
         self.l3_menus_buttons[0].clicked[None].connect(  # type: ignore
-            lambda: self.set_scene(Scene_Classes(self))
+            crashing_slot(lambda: self.set_scene(Scene_Classes(self)))
         )
         self.l3_menus_buttons[1].clicked[None].connect(  # type: ignore
-            lambda: self.set_scene(Scene_Govt(self))
+            crashing_slot(lambda: self.set_scene(Scene_Govt(self)))
+        )
+        self.l3_menus_buttons[2].clicked[None].connect(  # type: ignore
+            crashing_slot(lambda: self.set_scene(Scene_Military(self)))
         )
 
         self.l3_layout = QHBoxLayout()
@@ -158,13 +171,13 @@ class Command_Window(QDialog):
             self.scene_set.update()
 
     @crashing_slot
-    def execute_command(self):
+    def execute_command(self) -> None:
         dialog = Execute_Dialog(self)
         dialog.exec()
         self.update()
 
     @crashing_slot
-    def next_month(self):
+    def next_month(self) -> None:
         try:
             self.interface.next_month()
         except EveryoneDeadError as e:
@@ -179,22 +192,22 @@ class Command_Window(QDialog):
         self.update()
 
     @crashing_slot
-    def save_game(self):
+    def save_game(self) -> None:
         save_dialog = Save_Dialog(self, False)
         save_dialog.exec()
 
     @crashing_slot
-    def delete_save(self):
+    def delete_save(self) -> None:
         save_dialog = Save_Dialog(self, True)
         save_dialog.exec()
 
     @crashing_slot
-    def transfer(self, class_name: Class_Name):
+    def transfer(self, class_name: Class_Name) -> None:
         transfer_dialog = Transfer_Dialog(class_name, self)
         transfer_dialog.exec()
 
     @crashing_slot
-    def promote(self, class_name: Class_Name):
+    def promote(self, class_name: Class_Name) -> None:
         lower_class = self.interface.state.classes[class_name].lower_class
 
         cost = (INBUILT_RESOURCES[class_name] -
@@ -220,11 +233,81 @@ class Command_Window(QDialog):
             self.update()
 
     @crashing_slot
-    def secure(self):
+    def secure(self) -> None:
         secure_dialog = Secure_Dialog(self)
         secure_dialog.exec()
 
     @crashing_slot
-    def optimal(self):
+    def optimal(self) -> None:
         optimal_dialog = Optimal_Dialog(self)
         optimal_dialog.exec()
+
+    @crashing_slot
+    def recruit(self, class_name: Class_Name) -> None:
+        social_class = self.interface.state.classes[class_name]
+        soldier_type = CLASS_TO_SOLDIER[class_name]
+        cost = RECRUITMENT_COST[soldier_type]
+        res_maxes = self.interface.state.government.real_resources / cost
+        res_max = floor(min(res_maxes.values()))
+
+        if res_max <= 0:
+            QMessageBox.warning(self, "Warning", "The government does not have"
+                                " enough resources for this operation")
+        elif floor(social_class.population) <= 0:
+            QMessageBox.warning(self, "Warning", "The class to recruit from is"
+                                " empty")
+        else:
+            recruit_dialog = Number_Select_Dialog(
+                0, min(floor(social_class.population), res_max), "Recruit",
+                f"How many {class_name.name} do you want to recruit"
+                f" as {soldier_type.name}?"
+            )
+            number = recruit_dialog.exec()
+
+            self.interface.recruit(class_name, number)
+            self.update()
+
+    @crashing_slot
+    def fight(self, target: str) -> None:
+        target_message: str = ""
+        if target == "crime":
+            target_message = "brigands"
+        elif target == "plunder":
+            target_message = "neighbours for loot"
+        elif target == "land":
+            target_message = "neighbours for land"
+
+        reply = cast(QMessageBox.StandardButton, QMessageBox.question(
+            self, "Confirm", f"Do you really want to attack {target_message}"
+            " with all your soldiers?", QMessageBox.Yes, QMessageBox.No
+        ))
+        if reply == QMessageBox.Yes:
+            try:
+                results = self.interface.fight(target)
+
+                dead_soldiers = \
+                    results[1] if globals.debug else round(results[1], 0)
+                reply_message = "The battle has been" + \
+                    (" won.\n" if results[0] else " lost.\n")
+                reply_message += f"{dead_soldiers.knights} knight" + \
+                    f"{'s' if dead_soldiers.knights != 1 else ''} and "\
+                    f"{dead_soldiers.footmen} " + \
+                    f"footm{'e' if dead_soldiers.footmen != 1 else 'a'}n" + \
+                    " died.\n"
+                if target == "crime":
+                    dead_brigands = \
+                        results[2] if globals.debug else round(results[2])
+                    reply_message += f"{dead_brigands} brigand" + \
+                        f"{'s' if dead_brigands != 1 else ''} died."
+                elif target == "conquest":
+                    reply_message += f"Conquered {round(results[2], 2)} land."
+                elif target == "plunder":
+                    reply_message += f"Plundered {round(results[2], 2)}" + \
+                        " food, wood, stone, iron and tools."
+                QMessageBox.information(self, "Fight results", reply_message)
+            except NoSoldiersError:
+                QMessageBox.warning(
+                    self, "Warning", "You don't have enough soldiers to"
+                    " attack."
+                )
+            self.update()
