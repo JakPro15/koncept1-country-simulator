@@ -19,3 +19,12 @@ class Nobles(Class):
         """
         Nobles do not produce anything by themselves.
         """
+
+    def recruitment_happiness(self, recruited: float) -> float:
+        """
+        Returns the change in happiness of the social class from which a given
+        number of people was recruited. Should be called before the
+        recruitment takes place (before population changes).
+        """
+        part_recruited = recruited / self.population
+        return -part_recruited * 1000

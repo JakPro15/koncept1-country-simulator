@@ -1,24 +1,27 @@
 from __future__ import annotations
 
 from math import floor
+from typing import cast
 
 from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QMessageBox,
                                QPushButton, QVBoxLayout, QWidget)
 
 from ..abstract_interface.interface import (Interface, MalformedSaveError,
-                                            SaveAccessError)
-from ..auxiliaries.constants import (CLASS_TO_SOLDIER, INBUILT_RESOURCES,
-                                     RECRUITMENT_COST)
-from ..auxiliaries.enums import Class_Name
+                                            NoSoldiersError, SaveAccessError)
 from ..auxiliaries import globals
+from ..auxiliaries.constants import (CLASS_TO_SOLDIER, INBUILT_RESOURCES,
+                                     RECRUITABLE_PART, RECRUITMENT_COST)
+from ..auxiliaries.enums import Class_Name
 from ..cli.cli_commands import ShutDownCommand
-from ..gui.number_select_dialog import Number_Select_Dialog
+from ..gui.number_select_dialog import (Number_Select_Dialog,
+                                        NumberSelectRejected)
 from ..gui.resources_display import Resources_Display
 from ..state.state_data_base_and_do_month import (EveryoneDeadError,
                                                   RebellionError)
 from .auxiliaries import crashing_slot
 from .execute_dialog import Execute_Dialog
 from .optimal_dialog import Optimal_Dialog
+from .recruit_dialog import RecruitDialog
 from .save_dialog import Save_Dialog
 from .scenes.abstract_scene import Abstract_Scene
 from .scenes.classes_scene import Scene_Classes
@@ -26,9 +29,6 @@ from .scenes.govt_scene import Scene_Govt
 from .scenes.military_scene import Scene_Military
 from .secure_dialog import Secure_Dialog
 from .transfer_dialog import Transfer_Dialog
-
-from typing import cast
-from ..abstract_interface.interface import NoSoldiersError
 
 
 class Command_Window(QDialog):
@@ -227,10 +227,12 @@ class Command_Window(QDialog):
                 f"How many {lower_class.class_name.name} do you want to"
                 f" promote to {class_name.name}?"
             )
-            number = promote_dialog.exec()
-
-            self.interface.force_promotion(class_name, number)
-            self.update()
+            try:
+                number = promote_dialog.exec()
+                self.interface.force_promotion(class_name, number)
+                self.update()
+            except NumberSelectRejected:
+                pass
 
     @crashing_slot
     def secure(self) -> None:
@@ -257,15 +259,16 @@ class Command_Window(QDialog):
             QMessageBox.warning(self, "Warning", "The class to recruit from is"
                                 " empty")
         else:
-            recruit_dialog = Number_Select_Dialog(
-                0, min(floor(social_class.population), res_max), "Recruit",
-                f"How many {class_name.name} do you want to recruit"
-                f" as {soldier_type.name}?"
+            recruit_dialog = RecruitDialog(
+                0, min(floor(social_class.population * RECRUITABLE_PART),
+                       res_max), social_class
             )
-            number = recruit_dialog.exec()
-
-            self.interface.recruit(class_name, number)
-            self.update()
+            try:
+                number = recruit_dialog.exec()
+                self.interface.recruit(class_name, number)
+                self.update()
+            except NumberSelectRejected:
+                pass
 
     @crashing_slot
     def fight(self, target: str) -> None:

@@ -16,7 +16,7 @@ def crashing_slot(inner: Callable[P, V]) -> Callable[P, V]:
     return crashing_inner
 
 
-class Value_Label(QLabel):
+class ValueLabel(QLabel):
     def __init__(self, desc: str, value: float | None = None,
                  parent: QWidget | None = None, rounding: int | None = None
                  ) -> None:

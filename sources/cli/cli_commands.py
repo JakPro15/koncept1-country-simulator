@@ -21,6 +21,7 @@ from .cli_game_commands import (InternalCommandError, cond_round, fight,
                                 fill_command, format_iterable, laws, optimal,
                                 promote, recruit, round_format, secure,
                                 transfer)
+from ..auxiliaries.constants import RECRUITABLE_PART
 
 
 class ShutDownCommand(Exception):
@@ -225,8 +226,8 @@ def help_command(command: str) -> None:
         print("    <CLASS> specifies which class to recruit people from."
               " Nobles are made into knights, artisans, peasants and others'"
               "into footmen.")
-        print("<VALUE> must be nonnegative and not higher than <CLASS> "
-              "population.")
+        print("<VALUE> must be nonnegative and not higher than "
+              f"{RECRUITABLE_PART} of <CLASS> population.")
     elif command == "fight":
         print("fight <TARGET>")
         print("Send all soldiers to fight. "

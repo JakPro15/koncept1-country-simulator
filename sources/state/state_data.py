@@ -156,6 +156,7 @@ class State_Data(State_Data_Base_And_Do_Month):
         soldier_type = CLASS_TO_SOLDIER[class_name]
         cost = RECRUITMENT_COST[soldier_type] * number
 
+        class_from.happiness += class_from.recruitment_happiness(number)
         class_from.population -= number
 
         self.government.resources -= cost

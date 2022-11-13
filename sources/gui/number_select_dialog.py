@@ -7,6 +7,10 @@ from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLineEdit,
 from .auxiliaries import crashing_slot
 
 
+class NumberSelectRejected(Exception):
+    pass
+
+
 class Number_Select_Dialog(QDialog):
     def __init__(self, min: int, max: int, window_title: str, header: str,
                  parent: QWidget | None = None):
@@ -67,5 +71,6 @@ class Number_Select_Dialog(QDialog):
         self.accept()
 
     def exec(self) -> int:
-        super().exec()
+        if not bool(super().exec()):
+            raise NumberSelectRejected
         return self.slider.value()

@@ -4,7 +4,7 @@ from random import gauss
 from typing import Callable, overload
 
 from ..auxiliaries.constants import (CLASS_TO_SOLDIER, INBUILT_RESOURCES,
-                                     RECRUITMENT_COST)
+                                     RECRUITMENT_COST, RECRUITABLE_PART)
 from ..auxiliaries.enums import (CLASS_NAME_STR, RESOURCE_STR, Class_Name,
                                  Resource)
 from ..auxiliaries import globals
@@ -287,7 +287,8 @@ class Interface:
         check_arg(number >= 0, "negative number of people")
         soldier_type = CLASS_TO_SOLDIER[class_name]
 
-        if self.state.classes[class_name].population < number:
+        if self.state.classes[class_name].population * RECRUITABLE_PART \
+           < number:
             raise NotEnoughClassPopulation
         if self.state.government.real_resources < \
            RECRUITMENT_COST[soldier_type] * number:
@@ -303,8 +304,8 @@ class Interface:
         self, debug: bool = globals.debug
     ) -> tuple[float, float] | tuple[tuple[int, int], tuple[float, float]]:
         """
-        Returns a tuple: number of brigands, their strength; estimated if debug
-        mode is off.
+        Returns a tuple: (number of brigands, their strength); estimated if
+        debug mode is off.
         """
         brigands: float = self.state.brigands
         strength: float = self.state.brigands_strength

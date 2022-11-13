@@ -269,3 +269,11 @@ class Class(ABC):
         of resources was seized by the government.
         """
         return worth_seized_per_capita * -5
+
+    @abstractmethod
+    def recruitment_happiness(self, recruited: float) -> float:
+        """
+        Returns the change in happiness of the social class from which a given
+        number of people was recruited. Should be called before the
+        recruitment takes place (before population changes).
+        """

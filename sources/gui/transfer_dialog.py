@@ -13,7 +13,7 @@ from ..abstract_interface.interface import Interface
 from ..auxiliaries.enums import Class_Name, Resource
 from ..auxiliaries.resources import Resources
 from ..state.social_classes.class_file import Class
-from .auxiliaries import Value_Label, crashing_slot
+from .auxiliaries import ValueLabel, crashing_slot
 
 if TYPE_CHECKING:
     from .command_window import Command_Window
@@ -121,7 +121,7 @@ class Transfer_Dialog(QDialog):
         for row in self.rows:
             row.value_changed[None].connect(self.changed)  # type: ignore
 
-        self.estimated_happiness = Value_Label(
+        self.estimated_happiness = ValueLabel(
             "Estimated happiness after transfer", rounding=2
         )
 

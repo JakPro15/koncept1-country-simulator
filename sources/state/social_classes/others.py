@@ -21,3 +21,12 @@ class Others(Class):
         """
         Others do not produce anything by themselves.
         """
+
+    def recruitment_happiness(self, recruited: float) -> float:
+        """
+        Returns the change in happiness of the social class from which a given
+        number of people was recruited. Should be called before the
+        recruitment takes place (before population changes).
+        """
+        percent_recruited = 100 * recruited / self.population
+        return -0.05 * percent_recruited ** 2 + 0.5 * percent_recruited

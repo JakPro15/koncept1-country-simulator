@@ -7,15 +7,11 @@ from PySide6.QtWidgets import QGridLayout, QLabel, QPushButton
 
 from ...auxiliaries.enums import CLASS_NAME_STR, Class_Name
 from .abstract_scene import Abstract_Scene
-from ..auxiliaries import crashing_slot, Value_Label
+from ..auxiliaries import crashing_slot, ValueLabel
 from ...auxiliaries.constants import Soldier
 
 if TYPE_CHECKING:
     from ..command_window import Command_Window
-
-
-# @TODO: Fix exploit when recruiting an entire class seizes their resources
-# for free
 
 
 class Scene_Military(Abstract_Scene):
@@ -73,10 +69,10 @@ class Scene_Military(Abstract_Scene):
         self.soldiers_label = QLabel("Government soldiers:")
         self.main_layout.addWidget(self.soldiers_label, 0, 5)
 
-        self.soldier_labels: list[Value_Label] = []
+        self.soldier_labels: list[ValueLabel] = []
         for i, soldier in enumerate(Soldier):
-            self.soldier_labels.append(Value_Label(f"{soldier.name.title()}",
-                                                   rounding=0))
+            self.soldier_labels.append(ValueLabel(f"{soldier.name.title()}",
+                                                  rounding=0))
             self.main_layout.addWidget(self.soldier_labels[i], i + 1, 5)
 
         self.revolt_label = QLabel()
@@ -110,8 +106,11 @@ class Scene_Military(Abstract_Scene):
         for i, button in enumerate(self.fight_buttons):
             self.main_layout.addWidget(button, 7, 2 * i + 1, 1, 2)
 
-        self.fight_desc_label = QLabel("You can fight only once a round.")
-        self.main_layout.addWidget(self.fight_desc_label, 8, 1, 1, 2)
+        self.fight_desc_label = QLabel(
+            "You can fight only once a round, and you need at least one"
+            " soldier."
+        )
+        self.main_layout.addWidget(self.fight_desc_label, 8, 1, 1, 4)
 
         self.setLayout(self.main_layout)
         self.update()
@@ -164,4 +163,8 @@ class Scene_Military(Abstract_Scene):
             )
 
         for button in self.fight_buttons:
-            button.setEnabled(not self._parent.interface.fought)
+            if self._parent.interface.state.government.soldiers.number < 1 or \
+                 self._parent.interface.fought:
+                button.setEnabled(False)
+            else:
+                button.setEnabled(True)
