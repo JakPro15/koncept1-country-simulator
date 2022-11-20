@@ -28,6 +28,7 @@ from .scenes.classes_scene import Scene_Classes
 from .scenes.govt_scene import Scene_Govt
 from .scenes.military_scene import Scene_Military
 from .secure_dialog import Secure_Dialog
+from .scenes.laws_scene import Scene_Laws
 from .transfer_dialog import Transfer_Dialog
 
 
@@ -120,6 +121,9 @@ class Command_Window(QDialog):
         )
         self.l3_menus_buttons[2].clicked[None].connect(  # type: ignore
             crashing_slot(lambda: self.set_scene(Scene_Military(self)))
+        )
+        self.l3_menus_buttons[3].clicked[None].connect(  # type: ignore
+            crashing_slot(lambda: self.set_scene(Scene_Laws(self)))
         )
 
         self.l3_layout = QHBoxLayout()

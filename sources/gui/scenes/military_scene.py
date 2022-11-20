@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QGridLayout, QLabel, QPushButton
@@ -71,8 +71,10 @@ class Scene_Military(Abstract_Scene):
 
         self.soldier_labels: list[ValueLabel] = []
         for i, soldier in enumerate(Soldier):
-            self.soldier_labels.append(ValueLabel(f"{soldier.name.title()}",
-                                                  rounding=0))
+            self.soldier_labels.append(
+                ValueLabel(f"{soldier.name.title()}",
+                           rounding=3 if __debug__ else 0)
+            )
             self.main_layout.addWidget(self.soldier_labels[i], i + 1, 5)
 
         self.revolt_label = QLabel()
@@ -84,7 +86,7 @@ class Scene_Military(Abstract_Scene):
 
         self.main_layout.addWidget(self.crime_label, 0, 6)
         self.main_layout.addWidget(self.brigands_label, 1, 6)
-        self.main_layout.addWidget(self.brigands_strength_label, 2, 6)
+        self.main_layout.addWidget(self.brigands_strength_label, 2, 6, 1, 2)
 
         self.fight_label = QLabel("Combat options:")
         self.main_layout.addWidget(self.fight_label, 6, 1)
@@ -157,9 +159,10 @@ class Scene_Military(Abstract_Scene):
                 f"Brigand strength: {strength[0]}-{strength[1]}"
             )
         else:
-            self.brigands_label.setText(f"Brigands: {brigands}")
+            brigands, strength = cast(float, brigands), cast(float, strength)
+            self.brigands_label.setText(f"Brigands: {round(brigands, 3)}")
             self.brigands_strength_label.setText(
-                f"Brigand strength: {strength}"
+                f"Brigand strength: {round(strength, 3)}"
             )
 
         for button in self.fight_buttons:
