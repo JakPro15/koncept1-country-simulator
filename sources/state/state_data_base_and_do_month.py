@@ -965,17 +965,6 @@ class State_Data_Base_And_Do_Month:
             globals.warning_out.write(
                 f"Ending month {self.month.name} {self.year}"
             )
-        # Check for game over
-        someone_alive = False
-        for social_class in self:
-            if social_class.population > 0:
-                someone_alive = True
-        if not someone_alive:
-            raise EveryoneDeadError
-
-        for social_class in self:
-            if social_class.happiness < REBELLION_THRESHOLD:
-                raise RebellionError(social_class.class_name)
 
         # Save old data to calculate the changes
         old_resources = {
@@ -1012,15 +1001,16 @@ class State_Data_Base_And_Do_Month:
         self.government.consume()
         self._do_crime()
 
-        # taxes
-        self._do_taxes(old_net_worths)
-
         # demotions - should fix all except food and some wood
         self._reset_flags()
         self._do_demotions()
 
         # starvation - should fix all remaining resources
         self._do_starvation()
+
+        # taxes
+        self._do_taxes(old_net_worths)
+        self._do_demotions()
 
         # security and flushing
         self._secure_classes()
@@ -1036,6 +1026,18 @@ class State_Data_Base_And_Do_Month:
         # calculations done - advance to the next month
         self._secure_classes()
         self._advance_month()
+
+        # Check for game over
+        someone_alive = False
+        for social_class in self:
+            if social_class.population > 0:
+                someone_alive = True
+        if not someone_alive:
+            raise EveryoneDeadError
+
+        for social_class in self:
+            if social_class.happiness < REBELLION_THRESHOLD:
+                raise RebellionError(social_class.class_name)
 
         # Create returned dict
         res_after = {

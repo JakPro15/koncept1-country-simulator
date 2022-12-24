@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QPushButton
-
-from .abstract_scene import Abstract_Scene
-from ...state.state_data import InvalidCommandError
-from ...auxiliaries.enums import Class_Name
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtWidgets import (QCheckBox, QGridLayout, QLabel, QLineEdit,
+                               QPushButton)
+
+from ...auxiliaries.enums import Class_Name, Resource
+from ...state.state_data import InvalidCommandError
+from .abstract_scene import Abstract_Scene
 
 if TYPE_CHECKING:
     from ..command_window import Command_Window
@@ -18,53 +19,93 @@ class Scene_Laws(Abstract_Scene):
     def __init__(self, parent: Command_Window) -> None:
         super().__init__(parent)
         self._parent = parent
+        self.state = parent.interface.state
         self.main_layout = QGridLayout(self)
 
         self.left_labels: list[QLabel] = []
         self.specific_labels: list[QLabel] = []
         self.law_line_edits: list[QLineEdit] = []
-        self.law_buttons: list[QPushButton] = []
         row = 0
-        right_bottom_align: Qt.Alignment = Qt.AlignRight | Qt.AlignBottom
+        right_bottom: Qt.Alignment = Qt.AlignRight | Qt.AlignBottom
+        right_center: Qt.Alignment = Qt.AlignRight | Qt.AlignCenter
 
         for law in ["tax_personal", "tax_property", "tax_income"]:
-            label, tooltip = self.get_label_and_tooltip(law)
-            label_widget = QLabel(label)
-            label_widget.setToolTip(tooltip)
-            label_widget.setAlignment(right_bottom_align)
-            self.left_labels.append(label_widget)
-            self.main_layout.addWidget(label_widget, row, 0, 1, 2)
+            label = self.get_label_widget(law, right_bottom)
+            self.left_labels.append(label)
+            self.main_layout.addWidget(label, row, 0, 1, 2)
 
             for class_name in Class_Name:
                 class_label = QLabel(f"{class_name.name.title()}:")
+                class_label.setAlignment(right_center)
                 self.specific_labels.append(class_label)
                 self.main_layout.addWidget(class_label, row, 2)
 
-                class_edit = QLineEdit("")
+                line_edit = QLineEdit("")
                 if law == "tax_personal":
-                    class_edit.setValidator(QRegularExpressionValidator(
+                    line_edit.setValidator(QRegularExpressionValidator(
                         r"^\d+\.\d*$"
                     ))
-                    class_edit.setToolTip("Value must be nonnegative.")
+                    line_edit.setToolTip("Value must be nonnegative.")
                 else:
-                    class_edit.setValidator(QRegularExpressionValidator(
+                    line_edit.setValidator(QRegularExpressionValidator(
                         r"^((1\.0*)|(0\.\d*))$"
                     ))
-                    class_edit.setToolTip(
+                    line_edit.setToolTip(
                         "Value must be between 0 and 1 (including endpoints)."
                     )
-                self.law_line_edits.append(class_edit)
-                self.main_layout.addWidget(class_edit, row, 3)
-
-                class_button = QPushButton("Confirm change")
-                self.law_buttons.append(class_button)
-                self.main_layout.addWidget(class_button, row, 4)
+                self.law_line_edits.append(line_edit)
+                self.main_layout.addWidget(line_edit, row, 3)
 
                 row += 1
 
-        for law in ["wage_minimum", "wage_government", "wage_autoregulation",
-                    "max_prices"]:
-            ...
+        self.main_layout.setColumnMinimumWidth(4, 50)
+        for row, law in enumerate(["wage_minimum", "wage_government"]):
+            label = self.get_label_widget(law, right_center)
+            self.left_labels.append(label)
+            self.main_layout.addWidget(label, row, 5, 1, 3)
+
+            line_edit = QLineEdit("")
+            line_edit.setValidator(QRegularExpressionValidator(
+                r"^((1\.0*)|(0\.\d*))$"
+            ))
+            line_edit.setToolTip(
+                "Value must be between 0 and 1 (including endpoints)."
+            )
+            self.law_line_edits.append(line_edit)
+            self.main_layout.addWidget(line_edit, row, 8)
+
+        label = self.get_label_widget("wage_autoregulation", right_center)
+        self.left_labels.append(label)
+        self.main_layout.addWidget(label, 2, 5, 1, 3)
+
+        self.autoregulation_checkbox = QCheckBox()
+        self.main_layout.addWidget(self.autoregulation_checkbox, 2, 8)
+
+        label = self.get_label_widget("max_prices", right_bottom)
+        self.left_labels.append(label)
+        self.main_layout.addWidget(label, 3, 5, 1, 2)
+
+        row = 3
+        for resource in Resource:
+            class_label = QLabel(f"{resource.name.title()}:")
+            class_label.setAlignment(right_center)
+            self.specific_labels.append(class_label)
+            self.main_layout.addWidget(class_label, row, 7)
+
+            line_edit = QLineEdit("")
+            line_edit.setValidator(QRegularExpressionValidator(
+                r"^(\d+\.\d*|inf)$"
+            ))
+            line_edit.setToolTip("Value must be nonnegative.")
+            self.law_line_edits.append(line_edit)
+            self.main_layout.addWidget(line_edit, row, 8)
+
+            row += 1
+
+        self.confirm_button = QPushButton("Save changes")
+        self.main_layout.addWidget(self.confirm_button, 100, 0, 1, 9)
+        self.confirm_button.clicked[None].connect(  # type: ignore
+            self.set_laws)
 
         self.setLayout(self.main_layout)
         self.update()
@@ -100,12 +141,69 @@ class Scene_Laws(Abstract_Scene):
         else:
             raise InvalidCommandError
 
+    @staticmethod
+    def get_label_widget(law: str, alignment: Qt.Alignment) -> QLabel:
+        """
+        Returns a label widget for the given law.
+        """
+        label, tooltip = Scene_Laws.get_label_and_tooltip(law)
+        label_widget = QLabel(label)
+        label_widget.setToolTip(tooltip)
+        label_widget.setAlignment(alignment)
+        return label_widget
+
     def update(self) -> None:
-        row = 0
+        i = 0
         for law in ["tax_personal", "tax_property", "tax_income"]:
-            taxes = self._parent.interface.state.sm.tax_rates[
+            taxes = self.state.sm.tax_rates[
                 law.split('_')[1]
             ]
             for class_name in Class_Name:
-                self.law_line_edits[row].setText(str(taxes[class_name]))
-                row += 1
+                self.law_line_edits[i].setText(str(taxes[class_name]))
+                i += 1
+
+        min_wage = self.state.sm.others_minimum_wage
+        self.law_line_edits[i].setText(str(min_wage))
+        i += 1
+
+        govt_wage = max(self.state.government.wage,
+                        self.state.sm.others_minimum_wage)
+        self.law_line_edits[i].setText(str(govt_wage))
+        self.law_line_edits[i].setEnabled(
+            not self.state.government.wage_autoregulation
+        )
+        i += 1
+        self.autoregulation_checkbox.setChecked(
+            self.state.government.wage_autoregulation
+        )
+
+        max_prices = self.state.sm.max_prices
+        for resource in Resource:
+            self.law_line_edits[i].setText(str(max_prices[resource]))
+            i += 1
+
+    def set_laws(self) -> None:
+        i = 0
+        for law in ["tax_personal", "tax_property", "tax_income"]:
+            for class_name in Class_Name:
+                self.state.sm.tax_rates[law.split('_')[1]][class_name] = \
+                    float(self.law_line_edits[i].text())
+                i += 1
+
+        self.state.sm.others_minimum_wage = \
+            float(self.law_line_edits[i].text())
+        i += 1
+
+        self.state.government.wage = max(float(self.law_line_edits[i].text()),
+                                         self.state.sm.others_minimum_wage)
+        i += 1
+        self.state.government.wage_autoregulation = \
+            self.autoregulation_checkbox.isChecked()
+
+        self.state.sm.max_prices
+        for resource in Resource:
+            self.state.sm.max_prices[resource] = \
+                float(self.law_line_edits[i].text())
+            i += 1
+
+        self.update()
