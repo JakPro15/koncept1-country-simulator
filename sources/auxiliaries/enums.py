@@ -24,12 +24,12 @@ class Class_Name(Enum):
 
 
 class Resource(Enum):
-    food = auto()
-    wood = auto()
-    stone = auto()
-    iron = auto()
-    tools = auto()
-    land = auto()
+    food = 0
+    wood = 1
+    stone = 2
+    iron = 3
+    tools = 4
+    land = 5
 
 
 class Soldier(Enum):
