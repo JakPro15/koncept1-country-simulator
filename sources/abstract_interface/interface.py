@@ -284,6 +284,7 @@ class Interface:
         Recruits the given number of people from the given social class to the
         military.
         """
+        print(self.state.classes[class_name].population)
         check_arg(number >= 0, "negative number of people")
         soldier_type = CLASS_TO_SOLDIER[class_name]
 

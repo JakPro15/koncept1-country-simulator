@@ -1317,6 +1317,9 @@ def test_do_demotions():
         def class_name(self) -> Class_Name:
             return self._name
 
+        def recruitment_happiness(self, recruited: float) -> float:
+            return 0
+
         def produce(self) -> None:
             return super().produce()
 

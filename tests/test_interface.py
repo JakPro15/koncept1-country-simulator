@@ -446,8 +446,8 @@ def test_recruit():
 
     with replace(State_Data, "do_recruit", fake_do_recruit):
         state = State_Data.generate_empty_state()
-        state.nobles.population = 300
-        state.artisans.population = 50
+        state.nobles.population = 525
+        state.artisans.population = 200
         state.peasants.population = 60
         state.others.population = 200000
         state.government.resources = RECRUITMENT_COST[Soldier.knights] * 40

@@ -956,6 +956,21 @@ class State_Data_Base_And_Do_Month:
         # Increase of number of criminals
         self._make_new_brigands()
 
+    def _check_game_over(self) -> None:
+        """
+        Checks whether anyone is alive in the country and whether a rebellion is going to happen.
+        """
+        someone_alive = False
+        for social_class in self:
+            if social_class.population > 0:
+                someone_alive = True
+        if not someone_alive:
+            raise EveryoneDeadError
+
+        for social_class in self:
+            if social_class.happiness < REBELLION_THRESHOLD:
+                raise RebellionError(social_class.class_name)
+
     def do_month(self) -> Month_Data:
         """
         Does all the needed calculations and changes to end the month and move
@@ -965,6 +980,9 @@ class State_Data_Base_And_Do_Month:
             globals.warning_out.write(
                 f"Ending month {self.month.name} {self.year}"
             )
+
+        # Check whether there is any point in calculating the month
+        self._check_game_over()
 
         # Save old data to calculate the changes
         old_resources = {
@@ -1028,16 +1046,7 @@ class State_Data_Base_And_Do_Month:
         self._advance_month()
 
         # Check for game over
-        someone_alive = False
-        for social_class in self:
-            if social_class.population > 0:
-                someone_alive = True
-        if not someone_alive:
-            raise EveryoneDeadError
-
-        for social_class in self:
-            if social_class.happiness < REBELLION_THRESHOLD:
-                raise RebellionError(social_class.class_name)
+        self._check_game_over()
 
         # Create returned dict
         res_after = {
